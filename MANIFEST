@@ -83,6 +83,9 @@ public/template/Repository/combo_complex_nav.inc
 public/template/blank.html
 public/javascript/razglobal.js
 public/javascript/Repository/Grid/grid.js
+docs/Ext.html  
+docs/Merge.html  
+docs/Tags.html
 docs/samples/samples.html
 docs/samples/autoform.html
 docs/samples/cookie.html

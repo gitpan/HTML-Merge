@@ -67,6 +67,8 @@ AUTHOR
 
     *   Versions 1,2,3.35 - 3.45 written by Roi Illouz.
 
+        Versions 3.46 - manitained by Oded resnik and Gabor Szabo.
+
     *   Version 3 written by Ariel Brosh RIP (till ver 3.34).
 
     *   Toolbox written by Eial Solodki.
@@ -87,7 +89,7 @@ SEE ALSO
 
 NAME
     Merge tags - Tag summary for Merge. HTML::Merge - Embedded HTML/SQL/Perl
-    system by Raz Information Systems.
+    (c) Raz Information Systems LTD.
 
 DATABASE TAGS
     *   <$RDB='[Database type:]Database name[:Host][,User[,Password]]'>

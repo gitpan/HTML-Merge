@@ -3,7 +3,7 @@ __END__
 =head1 NAME
 
 Merge tags - Tag summary for Merge.
-HTML::Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.
+HTML::Merge - Embedded HTML/SQL/Perl (c) Raz Information Systems LTD.
  
 
 =head1 DATABASE TAGS

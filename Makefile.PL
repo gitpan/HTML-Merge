@@ -45,7 +45,7 @@ install-docs :: docs README
 
 install-samples :: docs README
 	$(PERL) createsamples.pl	
-	$(MOD_INSTALL) samples $(DATA)/merge/docs/samples
+	$(MOD_INSTALL) docs/samples $(DATA)/merge/docs/samples
 
 .SUFFIXES: .txt .pm .html
 

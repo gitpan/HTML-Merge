@@ -31,3 +31,5 @@ Revision history for Perl extension HTML::Merge.
 3.45  Sat Nov 20 19:11:13 IDT 2004  
 	- New grid in the repository sample application
    
+3.47  Sat Dec 18 12:22:14 ITD 2004
+	- Updated documenation
