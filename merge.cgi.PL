@@ -25,13 +25,38 @@ if (exists $ENV{'GATEWAY_INTERFACE'}
 
 }
 
+
+print header;
+
+if (param('__default__')) {
+	my $sub = param("sub");
+	my $fun = "Default$sub";
+
+	require HTML::Merge::Development;
+	my $code = UNIVERSAL::can('HTML::Merge::Development', $fun);
+
+	if ($code) {
+        	&$code;
+	 	exit;
+	}
+
+	HTML::Merge::Development::DefaultError("Improper use of Merge internal");
+	exit;
+}
+
+$HTML::Merge::context = [];
+
 &HTML::Merge::Engine::ReadConfig;
+
 
 my $template = param('template') || $HTML::Merge::Ini::DEF_TEMPLATE;
 
+$HTML::Merge::template = $template;
+
 unless ($mod_perl) {
 	my $candidate = $ENV{'PATH_INFO'};
-	if ($candidate) {
+	# CAUTION - this can contain the session id
+	if ($candidate && $candidate =~ /\./) {
 		$template = $candidate;
 	}
 }
@@ -39,7 +64,35 @@ unless ($mod_perl) {
 my $input;
 my $output;
 
+if ($HTML::Merge::Ini::SESSION_METHOD eq 'U') {
+	my $e = HTML::Merge::Engine->CreateObject;
+	require HTML::Merge::Filter;
+	tie *FIO, 'HTML::Merge::Filter', $e, select;
+	select \*FIO;
+}
+ 
 if ($template) {
+
+	if ($HTML::Merge::Ini::DB_DATABASE && $HTML::Merge::Ini::SESSION_DB
+			&& $HTML::Merge::Ini::USE_SECURITY) {
+		my $signal = 'STOP';
+		eval {
+			my $engine = HTML::Merge::Engine->CreateObject;
+			$HTML::Merge::context = [$template, 0];
+
+			unless ($engine->CanEnter) {
+				require HTML::Merge::Development;
+				$template = $HTML::Merge::Ini::SECURITY_ACCESS_DENIED_TEMPLATE;
+				unless ($template) {
+					&HTML::Merge::Development::DefaultForbidden;
+					die $signal;			
+				}
+			}
+		};
+		exit if ($@ =~ /$signal/);
+	}
+
+
 	$input = "$HTML::Merge::Ini::TEMPLATE_PATH/$template";
 	$output = "$HTML::Merge::Ini::CACHE_PATH/$template.pl";
 }
@@ -48,24 +101,35 @@ my $candidate;
 my $private;
 my $path;
 
+# private_ convention is obsolete
+
 my %candidates = ('log' => $HTML::Merge::Ini::MERGE_ERROR_LOG_PATH,
 		  'error' => $HTML::Merge::Ini::MERGE_ERROR_PATH,
 		  'toolbox' => $HTML::Merge::Ini::TOOLBOX_PATH);
 
-while (($private, $path) = each %candidates) {
-	$candidate = param("private_$private");
-	last if $candidate;
-}
+if (undef) {
+	while (($private, $path) = each %candidates) {
+		$candidate = param("private_$private");
+		last if $candidate;
+	}
 
 
-if ($candidate && $HTML::Merge::Ini::DEVELOPMENT) {
-	$template = $candidate;
-	$input = "$HTML::Merge::Ini::MERGE_ABSOLUTE_PATH/$path/$template";
-	$output = "$HTML::Merge::Ini::CACHE_PATH/private/$private/$template.pl";
+	if ($candidate && ($HTML::Merge::Ini::DEVELOPMENT
+		|| $private eq 'error')) {
+		if ($private eq 'toolbox' || $private eq 'log') {
+			HTML::Merge::Error::ForceError("private_$private deprecated");
+			exit;
+		}
+		$template = $candidate;
+		$input = "$HTML::Merge::Ini::MERGE_ABSOLUTE_PATH/$path/$template";
+		$output = "$HTML::Merge::Ini::CACHE_PATH/private/$private/$template.pl";
+	}
 }
 
 foreach (split/\//, $template) {
 	if ($_ eq '..') {
+		HTML::Merge::Error::ForceError("Template name $template is invalid");
+		exit; # Under mod_perl calls Apache::exit
 		print "Status: 403 Permission denied\n";
 		print "Content-type: text/plain\n\n";
 		print "Template name $template is invalid\n";
@@ -81,6 +145,8 @@ foreach (@keys) {
 }
 
 unless (-f $input || !$input) {
+	HTML::Merge::Error::ForceError("$template not found");
+	exit; # Under mod_perl calls Apache::exit
 	print "Status: 404 File not found\n";
 	print "Content-type: text/plain\n\n";
 	print "$template not found\n";
@@ -97,15 +163,16 @@ if ($source > $dest || $HTML::Merge::Ini::ALWAYS_COMPILE) {
 		&HTML::Merge::Compile::CompileFile($input, $output);
 	} if $input;
 	if ($@) {
+		unlink $output;
+		HTML::Merge::Error::ForceError("$template: $@");
+		exit; # Under mod_perl calls Apache::exit
 		print "Status: 501 Merge errors\n";
 		print "Content-type: text/plain\n\n";
 		print $@;
-		unlink $output;
 		exit;
 	}
 }
 
-print "Content-type: text/html\n\n";
 
 if ($HTML::Merge::Ini::DEVELOPMENT && !$candidate && $input) {
 	HTML::Merge::Error::OpenMergeErrorLog();
@@ -114,6 +181,8 @@ if ($HTML::Merge::Ini::DEVELOPMENT && !$candidate && $input) {
 if ($candidate || param('__MERGE_DEV_LIVE__')) {
 	$HTML::Merge::Ini::STOP_ON_ERROR = undef;
 }
+
+@HTML::Merge::cleanups = ();
 
 $| = 1;
 
@@ -128,10 +197,20 @@ if ($input) {
 	&HTML::Merge::Development::DefaultPage;
 }
 
+my $fh = select;
+if (tied($fh)) {
+	select $fh->{'out'};
+	$fh->Close;
+}
+
 my $error = $@;
 
 if ($@ && $@ !~ /STOP_ON_ERROR/) {
-	eval 'HTML::Merge::Error::HandleError("ERROR", $@);';
+	eval 'HTML::Merge::Error::HandleError("ERROR", $error);';
+}
+
+foreach (@HTML::Merge::cleanups) {
+	eval '&$_';
 }
 
 if ($HTML::Merge::Ini::DEVELOPMENT && !$candidate) {

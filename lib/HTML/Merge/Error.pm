@@ -3,7 +3,7 @@ package HTML::Merge::Error;
 ##################################################################
 # Error.pm -   Contains functions DoError & DoWarning            #
 # Authors : Roi Illouz & Eial Solodki                            #
-# All right reserved - Raz Information Systems Ltd.(c) 1999-2001 #
+# All right reserved - Raz Information Systems Ltd.(c) 1999-2002 #
 # Date : 12/06/2000                                              #
 # Updated : 03/07/2000 14/02/2001 10/10/2001                     #
 ##################################################################
@@ -12,14 +12,16 @@ package HTML::Merge::Error;
 
 use HTML::Merge::Compile;
 use strict;
-use vars qw($OPEN_BOX $CLOSE_BOX $mergerrLogFlag);
+use vars qw($OPEN_BOX $CLOSE_BOX $mergerrLogFlag $year);
+
+$year = (localtime)[5] + 1900;
 
 # Constants ######################################################
 
-#$OPEN_BOX = "<HR><PRE>";
-#$CLOSE_BOX = "</PRE><HR>";
-$OPEN_BOX = "<TEXTAREA ROWS=15 COLS=80>";
-$CLOSE_BOX = "</TEXTAREA>";
+$OPEN_BOX = "<HR><PRE>";
+$CLOSE_BOX = "</PRE><HR>";
+#$OPEN_BOX = "<TEXTAREA ROWS=15 COLS=80>";
+#$CLOSE_BOX = "</TEXTAREA>";
 
 ##################################################################
 sub HandleError
@@ -28,6 +30,10 @@ sub HandleError
 
 	return unless $HTML::Merge::Ini::DEBUG =~ /$type/i;
 		
+	$message =~ s/"/&quot;/g;
+	$message =~ s/</&lt;/g;
+	$message =~ s/>/&gt;/g;
+
 	$type = ucfirst(lc($type));
 	my $code = UNIVERSAL::can(__PACKAGE__, "Do$type");
 	if ($code) {
@@ -120,21 +126,44 @@ sub DoError
 
 		# calling to the web error page,just before crashing...
 		print "// -->\n</SCRIPT></STYLE>\n";
-		print qq!<META HTTP-EQUIV="Refresh" CONTENT="0; URL=$HTML::Merge::Ini::MERGE_PATH/$HTML::Merge::Ini::MERGE_SCRIPT?private_error=$HTML::Merge::Ini::ERROR_MESSAGE&message=$buf&__MERGE_DEV_LIVE__=1">\n!; 
+		my $errtemp = $HTML::Merge::Ini::ERROR_MESSAGE;
+		require HTML::Merge::Development;
+		my $url = $errtemp ? 
+			"$HTML::Merge::Ini::MERGE_PATH/$HTML::Merge::Ini::MERGE_SCRIPT?template=$errtemp" :
+			&HTML::Merge::Development::MakeDefault("Display");
+		print qq!<META HTTP-EQUIV="Refresh" CONTENT="0; URL=$url&message=$buf&__MERGE_DEV_LIVE__=1">\n!; 
 
 		die "STOP_ON_ERROR";
 	}
 }
 
+sub ForceError {
+	my $error = shift;
+	my $save = $HTML::Merge::Ini::STOP_ON_ERROR;
+	$HTML::Merge::Ini::STOP_ON_ERROR = 1;
+	$HTML::Merge::context ||= [];
+	eval { DoError($error); }; 
+	$HTML::Merge::Ini::STOP_ON_ERROR = $save;
+}
+
 sub TimeOut {
-		DoInfo('', 'TIME_OUT');
-		print <<EOM;
+	require HTML::Merge::Development;
+
+	DoInfo('', 'TIME_OUT');
+
+	my $errtemp = $HTML::Merge::Ini::SESSION_TIME_OUT_TEMPLATE;
+	my $url = $errtemp ? 
+		"$HTML::Merge::Ini::MERGE_PATH/$HTML::Merge::Ini::MERGE_SCRIPT?template=$errtemp" :
+		HTML::Merge::Development::MakeDefault("Expire");
+	my $cook;
+	$cook = qq!<META HTTP-EQUIV="Set-Cookie" CONTENT="$HTML::Merge::Ini::SESSION_COOKIE=0">! if $HTML::Merge::Ini::SESSION_METHOD eq 'C';
+	print <<EOM;
 // -->
 </SCRIPT></STYLE>
-<META HTTP-EQUIV="Set-Cookie" CONTENT="$HTML::Merge::Ini::SESSION_COOKIE=0">
-<META HTTP-EQUIV="Refresh" CONTENT="0; URL=$HTML::Merge::Ini::MERGE_PATH/$HTML::Merge::Ini::MERGE_SCRIPT?template=$HTML::Merge::Ini::SESSION_TIME_OUT_TEMPLATE">
+$cook
+<META HTTP-EQUIV="Refresh" CONTENT="0; URL=$url">
 EOM
-		die "STOP_ON_ERROR";
+	die "STOP_ON_ERROR";
 }
 ############################################################################# 
 # open the log file for the Merge Error log
@@ -160,11 +189,10 @@ sub OpenMergeErrorLog
  		require HTML::Merge::Compile;
         print OUTPUT <<EOM;
 <BODY BGCOLOR='white' onLoad=window.focus()>
-<FORM NAME=MergeLogForm>
 <FONT FACE=Arial SIZE=6 COLOR=black><CENTER><B>Merge Log</B></CENTER></FONT><BR><FONT FACE=Arial SIZE=5 COLOR=black><CENTER><I>$template</I></FONT></CENTER><BR>
 <CENTER><TABLE BGCOLOR=yellow><TR><TD><FONT FACE=Arial SIZE=5 COLOR=black>RAZ Information System LTD.</TD></TR></TABLE></CENTER></FONT><BR>
 <FONT FACE=Arial SIZE=5 COLOR=black><CENTER>Version $HTML::Merge::Compile::VERSION</CENTER></FONT><BR>
-<FONT FACE=Arial SIZE=2 COLOR=black>Merge(c) 1999-2001&nbsp;&nbsp;</FONT><A HREF='$HTML::Merge::Ini::SUPPORT_SITE'><FONT FACE=Arial SIZE=2 COLOR=black>http://$HTML::Merge::Ini::SUPPORT_SITE</FONT></A><BR>
+<FONT FACE=Arial SIZE=2 COLOR=black>Merge(c) 1999-$year&nbsp;&nbsp;</FONT><A HREF='$HTML::Merge::Ini::SUPPORT_SITE'><FONT FACE=Arial SIZE=2 COLOR=black>$HTML::Merge::Ini::SUPPORT_SITE</FONT></A><BR>
 <META HTTP-EQUIV="ContentType" CONTENT="text/html; charset=windows-1255"><BR><BR>
 <META NAME="GENERATOR" CONTENT="MERGE v. $HTML::Merge::Compile::VERSION (c) Raz Information Systems www.raz.co.il">
 EOM
@@ -174,7 +202,9 @@ EOM
 # close the log file for the Merge Error log
 sub CloseMergeErrorLog
 {
-	print OUTPUT "</FORM>\n";			
+	print OUTPUT <<HTML;
+<A HREF="javascript: opener.focus(); window.close();">Close</A>
+HTML
 	print OUTPUT CGI::end_html() . "\n";
 	close(OUTPUT);
 }

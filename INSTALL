@@ -1,0 +1,35 @@
+If you are on a system where you can run the Makefile.PL and use make,
+then the package can be installed using the normal MakeMaker process,
+that is
+
+  gunzip HTML-Merge-*.*.tar.gz
+  tar xvf HTML-Merge-*.*
+  cd HTML-Merge-*.*
+  perl Makefile.PL
+  make
+  make test
+  make install
+
+Note: on Linux and FreeBSD this can be shortened to:
+
+  tar zxvf HTML-Merge-*.*.tar.gz
+  cd HTML-Merge-*.*
+  perl Makefile.PL
+  make
+  make test
+  make install
+
+On many other systems this could be written as:
+  gzip -d -c HTML-Merge-*.*.tar.gz | tar xvf -
+  cd HTML-Merge-*.*
+  perl Makefile.PL
+  make
+  make test
+  make install
+
+After install is completed, to actually create an application instance
+run:
+  mergecreateinstance 
+
+Note: mergecreateinstance works better if the module Term::ReadKey::Gnu
+is installed.

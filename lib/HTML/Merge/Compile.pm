@@ -1,11 +1,11 @@
 package HTML::Merge::Compile;
 
-use strict;
-use vars qw($open %enders %printers %tokenizers $VERSION);
+use strict qw(subs vars);
+use vars qw($open %enders %printers %tokenizers $VERSION $DEBUG);
 use Carp;
 use Config;
 
-$VERSION = 3.05;
+$VERSION = '3.28';
 
 BEGIN {
 	eval 'use HTML::Merge::Ext;';
@@ -14,11 +14,13 @@ BEGIN {
 $open = '\$R';
 #my @non_flow = qw(VAR SQL SET PSET PGET PIC STATE INDEX CFG);
 #@non_flow{@non_flow} = @non_flow;
-my @printers = qw(VAR SQL GET PGET INDEX PIC STATE CFG);
+my @printers = qw(VAR SQL GET PGET PVAR INDEX PIC STATE CFG INI LOGIN 
+	AUTH DECIDE EMPTY DATE DAY MONTH YEAR DATEDIFF LASTDAY ADDDATE
+	USER MERGE TEMPLATE TRANSFER DUMP NAME TAG COOKIE);
 @printers{@printers} = @printers;
 #my @stringers = qw(IF SET PSET SETCFG);
 #@stringers{@stringers} = @stringers;
-my @tokenizers = qw(COUNT);
+my @tokenizers = qw();
 @tokenizers{@tokenizers} = @tokenizers;
 
 %enders = qw(END_IF IF END LOOP END_WHILE WHILE);
@@ -27,10 +29,48 @@ my @tokenizers = qw(COUNT);
 use subs qw(quotemeta);
 
 sub WantPrinter {
-	my ($self, $tag) = @_;
+	my ($self, $tag, $dtag, $dline) = @_;
 	my $ret = $self->WantTag($tag);
 	return $ret if ($printers{$tag});
-	$self->Die("$tag is not an output tag, perhaps you forgot to close a string? Output tags are " . join(", ", keys %printers));
+	my $line = $self->Line;
+	$self->Die("$tag is not an output tag, perhaps you forgot to close a string in tag $dtag from line $dline? Output tags are " . join(", ", keys %printers));
+}
+
+sub Translate {
+	my ($self, $exp) = @_;
+	my $result = "\\\\[=\\.]";
+	my $i;
+	my @fetch;
+	my $tail;
+
+	while ($exp =~ s/^(.*?)([QUELD])//i) {
+		my ($before, $token) = ($1, uc($2));
+		$result .= quotemeta(quotemeta($before));
+		if ($token eq 'U') {
+			$result .= '(.*?)';
+			$i++;
+			push(@fetch, "\$$i");
+		} elsif ($token eq 'L') {
+			$result .= '([A-Z])';
+			$i++;
+			push(@fetch, "\$$i");
+		} elsif ($token eq 'Q') {
+			$i++;
+			$result .= "\\\\(['\"])(.*?)\\\\\\$i";
+			$i++;
+			push(@fetch, "\$$i");
+		} elsif ($token eq 'E') {
+			$result .= '(?:';
+			$tail = ')?' . $tail;
+		} elsif ($token eq 'D') {
+			$result .= "\\\\[\\.=]";
+		} else {
+			$self->Die("Unknown notator: $token");
+		}
+	}
+	$result .= quotemeta(quotemeta($exp)) . $tail;
+	my $fetch = '(' . join(", ", @fetch) . ')';
+	($result, $fetch);
 }
 
 sub WantTag {
@@ -43,6 +83,21 @@ sub WantTag {
 	my $un = $inv ? "Un" : "";
 	my $code = UNIVERSAL::can($self, "Do$un$tag");
 	return $code if $code;
+	my $macro = UNIVERSAL::can('HTML::Merge::Ext', "MACRO_$tag");
+	if ($macro) {
+		my $proto = prototype("HTML::Merge::Ext::MACRO_$tag");
+		my $text = quotemeta(&$macro);
+		$proto = " ($proto)" if $proto;
+
+		eval <<EOM;
+		package HTML::Merge::Ext;
+
+		sub API_$tag$proto {
+			Macro("$text", \@_);
+		}
+EOM
+	}
+
 	my @options = !$inv ? qw(API OAPI OUT) : qw(CAPI);
 	foreach my $api (@options) {
 		my $candidate = "${api}_$tag";
@@ -55,29 +110,51 @@ sub WantTag {
 				unless ($proto =~ /^\$*$/);
 			my $n = length($proto);
 			my $shift = join(", ",
-				map {"\$param->[$_]";} (0 .. $n - 1));
+				map {"\$param[$_]";} (0 .. $n - 1));
 			my $stack;
+			my $scope = lc($tag);
 			if ($api eq 'OAPI') {
-				$stack = qq!\$self->Push('api_$tag', \$engine);!;
+				$stack = qq!\$self->Push('$scope', \$engine);!;
 			}
 			if ($api eq 'CAPI') {
-				$stack = qq!\$self->Expect(\$engine, 'api_$tag');!
+				$stack = qq!\$self->Expect(\$engine, '$scope');!
+			}
+			my $desc = UNIVERSAL::can('HTML::Merge::Ext',
+				"DESC_$tag");
+			my $expand;
+			unless ($desc) {
+				$expand = 'my @param = @$param;';
+				$tokenizers{$tag} = 1;
+			} else {
+				if ($api eq 'CAPI') {
+					$expand = 'my @param;';
+				} else {
+					my $txt = &$desc;
+					my ($re, $form) = $self->Translate($txt);
+					$expand = <<EOM;
+	unless (\$param =~ /^$re\$/s) {
+		\$self->Syntax;
+	}
+	my \@param = $form;
+EOM
+				}
 			}
 			my $extend = <<EOM;
 package $ref;
 sub Do$un$tag {
 	my (\$self, \$engine, \$param) = \@_;
-	my \$n = \@\$param;
+	$expand
+	my \$n = \@param;
 	\$self->Die("$n parameters expected for $tag, gotten \$n") unless (\$n == $n);
 	$stack
 	\$HTML::Merge::Ext::ENGINE = \$engine;
+	\$HTML::Merge::Ext::COMPILER = \$self;
 	HTML::Merge::Ext::$candidate($shift);
 }
 EOM
 			eval $extend;
-			die $@ if $@;
+			\$self->Die($@) if $@;
 			$printers{$tag} = ($api eq 'OUT');
-			$tokenizers{$tag} = 1;
 			return $self->WantTag($tag, $inv);
 		}
 	}
@@ -93,44 +170,91 @@ sub quotemeta {
 
 sub Compile {
 	my $self = {'buffer' => '', 'scopes' => []};
-	bless $self;
+	my $class = __PACKAGE__;
+	my $in = $HTML::Merge::config;
+	$in =~ s|/\w+\.\w+$||;
+	$in =~ s|^/*||;
+	$in =~ s/[\/\\]/::/g;
+	$in =~ tr/A-Za-z0-9_://cd;
+	if ($in) {
+		my $code =  <<EOM;
+package ${class}::$in;
+use strict 'vars';
+use vars qw(\@ISA);
+\@ISA = qw($class);
+EOM
+		eval $code;
+		die $@ if $@;
+		$class .= "::$in";
+	}
+	bless $self, $class;
 	$self->{'save'} = $self->{'source'} = shift;
 	$self->{'name'} = shift;
+	$self->{'template'} = $self->{'name'};
+	$self->{'template'} =~ s|^$HTML::Merge::Ini::TEMPLATE_PATH/||;
+	$self->{'force line'} = shift;
 	$self->Main;
 	$self->{'buffer'};
 }
 
-sub Die {
-	my ($self, $error) = @_;
+sub Line {
+	my $self = shift;
+	my $force = $self->{'force line'};
+	return $force if $force;
 	my $lines = scalar(split(/\n/, $self->{'save'}));
 	my $left = substr($self->{'save'}, -length($self->{'source'}));
 	my $ll = scalar(split(/\n/, $left));
 	my $this = $lines - $ll + 1;
+}
+
+sub Mark {
+	my $self = shift;
+	my $name = $self->{'name'};
+	my $this = $self->Line;
+	return unless $name;
+	$self->{'buffer'} .= "\$HTML::Merge::context = [\"$name\", \"$this\"];\n";
+	$self->{'buffer'} .= "#line $this $name\n";
+	return;
+}
+
+sub Die {
+	my ($self, $error) = @_;
+	my $this = $self->Line;
 	my $s = (split(/\n/, $self->{'save'}))[$this - 1];
 	my $name = $self->{'name'};
 	if ($error < 0) {
-		return unless $name;
-		$self->{'buffer'} .= "\$HTML::Merge::context = [\"$name\", \"$this\"];\n";
-		$self->{'buffer'} .= "#line $this $name\n";
-		return;
+		die "Depcrecated: Die(negative)";
 	}
 
 	$name =~ s|^.*/||;		
-	die "Error: $error at $name line $this"
-#	confess "Error: $error at $name line $this"
+	Carp::cluck "Error: $error at $name line $this when doing: $s" if $DEBUG
+		|| $ENV{'MERGE_DEBUG'};
+	die "Error: $error at $name line $this, when doing: $s";
 }
 
 sub Main {
 	my $self = shift;
 	$self->{'source'} =~ s/<(BODY)/<META NAME="GENERATOR" CONTENT="Merge v. $VERSION (c) Raz Information systems www.raz.co.il">\n<$1/i;
-	while ($self->{'source'} =~ s/^(.*?)\<(\/?)$open(\[\w+?\]\.)?([A-Z_]+)//si) {
+	while  ($self->EatOne) {}
+	$self->PrePrint($self->{'source'});
+	$self->{'source'} = '';
+	if (@{$self->{'scopes'}}) {
+		my @scopes = map {join("/", @$_);} @{$self->{'scopes'}};
+		my $stack = join(", ", @scopes);
+		$self->Die("Stack not empty: $stack");
+	}
+}
+
+sub EatOne {
+	my $self = shift;
+	if ($self->{'source'} =~ s/^(.*?)\<(\/?)$open(\[\w+?\]\.)?(\w+)//si) {
 		my ($head, $close, $engine, $tag, $param) = ($1, $2, $3, uc($4));
 		$engine =~ s/^\[(.*)\]\./$1/;
-		$self->Print($head);
+		$self->PrePrint($head);
 		my $code = $self->WantTag($tag, $close);
-		$param = $self->EatParam($tokenizers{$tag});
+		$param = $self->EatParam($tag);
 		$self->Die("Closing tags may not have parameters") if (($close || $enders{$tag}) && ($param && !ref($param) || ref($param) && $#$param >= 0));
-		$self->Die(-1);
+		$self->Mark;
 		if ($printers{$tag}) {
 			$self->{'buffer'} .= "print (";
 		}
@@ -138,14 +262,37 @@ sub Main {
 		if ($printers{$tag}) {
 			$self->{'buffer'} .= ");\n";
 		}
+		return 1;
 	}
-	$self->Print($self->{'source'});
-	$self->{'source'} = '';
-	if (@{$self->{'scopes'}}) {
-		my @scopes = map {join("/", @$_);} @{$self->{'scopes'}};
-		my $stack = join(", ", @scopes);
-		$self->Die("Stack not empty: $stack");
+	undef;
+}
+
+sub Macro {
+	my ($self, $text) = @_;
+	my $length = length($self->{'source'});
+	my $lennow;
+
+	$self->{'source'} = $text . $self->{'source'};
+	for (;;) {
+		$lennow = length($self->{'source'});
+		last if ($lennow <= $length);
+		$self->EatOne || last;
 	}
+	my $remainder = $lennow - $length;
+	$self->Die("macro did not resolve correctly") if ($remainder < 0);
+	$self->PrePrint(substr($self->{'source'}, 0, $remainder));
+	substr($self->{'source'}, 0, $remainder) = "";
+}
+
+sub PrePrint {
+	my ($self, $string) = @_;
+	while ($string =~ s/^(.*?)\0(.*?)\0//) {
+		my ($b4, $bt) = ($1, $2);
+
+		$self->Print($b4);
+		$self->{'buffer'} .= qq'print "$bt";';
+	}
+	$self->Print($string) if $string;
 }
 
 sub Print {
@@ -160,7 +307,9 @@ sub Print {
 }
 
 sub EatParam {
-	my ($self, $tokens) = @_;
+	my ($self, $in) = @_;
+	my $tokens = $tokenizers{$in};
+	my $line = $self->Line;
 	my $state = '';
 	my $text = '';
 	my @tokens;
@@ -169,7 +318,14 @@ sub EatParam {
 		if ($self->{'source'} =~ s/^(.)//s) {
 			$ch = $1;
 		} else {
-			$self->Die("Could not close tag");
+			$self->Die("Could not close tag $in, probably unbalanced quotes");
+		}
+		if ($ch eq "\0") {
+			unless ($self->{'source'} =~ s/^(.*?)\0//) {
+				$self->Die("Unclosed null encpasulation. Check your macro");
+			}
+			$text .= $1;
+			next;
 		}
 		if ($ch eq "'" && $state ne '"') {
 			$text .= "\\'";
@@ -188,7 +344,8 @@ sub EatParam {
 			next;
 		}
 		if ($ch eq '>' && !$state) {
-			return qq!$text! unless $tokens;	
+			$text =~ s/\s+$//;
+			return $text unless $tokens;	
 			return [] unless @tokens;
 			my $pre = shift @tokens;
 			$self->Die("Illegal prefix $pre") if $pre;
@@ -202,32 +359,53 @@ sub EatParam {
 		}
 		if ($ch eq "<") {
 			unless ($self->{'source'} =~ s/^$open//) {
-				$text .= "<"; 
+				$text .= "<";
+				$text .= $self->FindRight if $in eq 'EM';
 				next;
 			}
-			$self->{'source'} =~ s/(\[\w+?\]\.)?([A-Z_]+)//;
+			$self->{'source'} =~ s/(\[\w+?\]\.)?(\w+)//;
 			my $engine = $1;
 			my $tag = uc($2);
 			$engine =~ s/^\[(.*)\]\./$1/;
-			my $code = $self->WantPrinter($tag);
-			my $sub = $self->EatParam($tokenizers{$tag});
-			$text .= '" . ' . &$code($self, $engine, $sub) . ' . "';	
+			my $code;
+			if ($in ne 'EM') {
+				$code = $self->WantPrinter($tag, $in, $line);
+			}
+			my $sub = $self->EatParam($in eq 'EM' ? 'EM' : $tag);
+			if ($in ne 'EM') {
+				$text .= '" . (' . &$code($self, $engine, $sub) . ') . "';
+			}
 		} else {
 			$text .= quotemeta($ch);
 		}
 	}
 }
 
+sub FindRight {
+	my $self = shift;
+	my $count = 1;
+	my $text;
+	while ($self->{'source'} =~ s/^(.*?)([\<\>])//) {
+		$text .= "$1$2";
+		$count += $2 eq '<' ? 1 : -1;
+		return $text unless $count;
+	}
+	return $text;
+}
+
 sub Expect {
 	my ($self, $engine, @options) = @_;
 	my $current = pop @{$self->{'scopes'}};
-	$self->Die("Stack underflow") unless ($current);
+	my @topt = @options;
+	my $last = pop @topt;
+	my $expect = join(", ", @topt) . (@topt ? ' or ' : '') . $last;
+	$self->Die("Stack underflow - a closing tag without a preceding tag, expecting: $expect. Perhaps you forgot $open in the opening tag?") unless ($current);
 	my ($scope, $teng) = @$current;
 	$self->Die("Expected engine '$engine', got '$teng'") unless ($teng eq $engine);
 	foreach (@options) {
 		return if ($_ eq $scope);
 	}
-	$self->Die("Unexpected scope $scope, expecting: " . join(", ", @options));
+	$self->Die("Unexpected scope $scope, expecting: $expect. Perhaps you forgot $open in the opening tag?");
 }
 
 sub Push {
@@ -238,7 +416,7 @@ sub Push {
 sub DoLOOP {
 	my ($self, $engine, $param) = @_;
 	my $limit = undef;
-	if ($param =~ /^\\\.LIMIT\\=(['"]?)(.*)\1$/s) { #'
+	if ($param =~ /^\\\.LIMIT\\=((?:\\['"])?)(.*)\1$/s) { #'
 		$limit = $2;
 	}
 	my $text;
@@ -264,7 +442,7 @@ EOM
 
 sub DoITERATION {
 	my ($self, $engine, $param) = @_;
-	unless ($param =~ /^\\\.LIMIT\\=(['"]?)(.*)\1$/s) { #'
+	unless ($param =~ /^\\\.LIMIT\\=((?:\\['"])?)(.*)\1$/s) { #'
 		$self->Syntax;
 	}
 	my $limit = $2;
@@ -302,7 +480,7 @@ sub DoUnLOOP {
 sub DoFETCH {
 	my ($self, $engine, $param) = @_;
 	$self->Syntax if ($param);
-	"\$engines{\"$engine\"}->Fetch;";
+	"\$engines{\"$engine\"}->Fetch(1);";
 }
 
 sub DoCFG {
@@ -318,12 +496,13 @@ sub DoCFG {
 
 sub DoCFGSET {
         my ($self, $engine, $param) = @_;
-	unless ($param =~ s/^\\\.(.*?)\\=\\(['"])(.*?)\\\2$//) {
+	unless ($param =~ s/^\\\.(.*?)\\=\\(['"])(.*?)\\\2$//s) {
 		$self->Syntax;
 	}
 	"\${\"HTML::Merge::Ini::\"  . \"$1\"} = eval(\"$3\");\n";
 }
 
+*DoVAL = \&DoVAR;
 
 sub DoVAR {
 	my ($self, $engine, $param) = @_;
@@ -346,7 +525,6 @@ sub DoIF {
 	unless ($param =~ s/^\\[\.=]\\(['"])(.*)\\\1$//s) {
 		$self->Syntax;
 	}
-	my $cond = quotemeta($2);
 	my $text = <<EOM;
 HTML::Merge::Error::HandleError('INFO', "$2", 'IF');
 my \$__test = eval("$2");
@@ -356,6 +534,26 @@ EOM
 	$self->Push('if', $engine);
 	$text;
 }
+
+sub DoELSIF {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ s/^\\[\.=]\\(['"])(.*)\\\1$//s) {
+		$self->Syntax;
+	}
+	$self->Expect($engine, 'if');
+	my $text = <<EOM;
+	\$__exit = 0;
+} else {
+	HTML::Merge::Error::HandleError('INFO', "$2", 'IF');
+	\$__exit = eval("$2");
+	HTML::Merge::Error::HandleError('ERROR', \$@) if (\$@);
+}
+if (\$__exit) {
+EOM
+	$self->Push('if', $engine);
+	$text;
+}
+
 
 sub DoUnIF {
 	my ($self, $engine, $param) = @_;
@@ -418,9 +616,10 @@ sub DoPERL {
 	}
 	$self->Syntax if $param;
 	my $code = "";
-	if (!$type || $type eq 'B' || $type eq 'C') {
+	my $line = $self->Line;
+	if ($type eq 'B' || $type eq 'C') {
 		my $flag;
-		while ($self->{'source'} =~ s/^(.*?)\<($open(?:\[\w+\])?[A-Z_]+|\/${open}PERL\>)//is) {
+		while ($self->{'source'} =~ s/^(.*?)\<($open(?:\[\w+\]\.)?\w+|\/${open}PERL\>)//is) {
 			my $let = quotemeta($1);
 			$code .= qq!"$let" . !;
 			my $tag = $2;
@@ -433,8 +632,8 @@ sub DoPERL {
 			if ($tag =~ s/^\[(\w+?)\]\.//) {
 				$engine = $1;
 			}
-			my $coder = $self->WantPrinter($tag);
-			my $param = $self->EatParam($tokenizers{$tag});
+			my $coder = $self->WantPrinter($tag, "PERL", $line);
+			my $param = $self->EatParam($tag);
 			my $codet = &$coder($self, $engine, $param);
 			$code .= "$codet . ";
 		}
@@ -450,16 +649,19 @@ sub DoPERL {
 	my $text = <<EOM;
 \$__result = $code;
 HTML::Merge::Error::HandleError('INFO', \$__result, 'PERL');
-\$__result = eval(\$__result);
+\$__result = eval("\$__result; undef;");
 HTML::Merge::Error::HandleError('ERROR', \$@) if \$@;
 EOM
 	if ($type eq 'A' || $type eq 'C') {
+		$line = $self->Line;
 		$text .= <<EOM;
-use HTML::Merge::Compile;
-\$__result = &HTML::Merge::Compile::Compile(\$__result, "$name");
-HTML::Merge::Error::HandleError('ERROR', \$@) if \$@;
-\$__result = eval(\$__result);
-HTML::Merge::Error::HandleError('ERROR', \$@) if \$@;
+if (\$__result) {
+	use HTML::Merge::Compile;
+	eval { \$__result = &HTML::Merge::Compile::Compile(\$__result, "$name", $line); };
+	HTML::Merge::Error::HandleError('ERROR', \$@) if \$@;
+	\$__result = eval(\$__result);
+	HTML::Merge::Error::HandleError('ERROR', \$@) if \$@;
+}
 EOM
 	}
 	$text;
@@ -467,15 +669,21 @@ EOM
 
 sub DoSET {
         my ($self, $engine, $param) = @_;
-	unless ($param =~ s/^\\\.(.*?)\\=\\(['"])(.*?)\\\2$//) {
+	unless ($param =~ s/^\\\.(.*?)\\=\\(['"])(.*?)\\\2$//s) {
 		$self->Syntax;
 	}
 	"\$vars{\"$1\"} = eval(\"$3\");\n";
 }
 
+sub DoPCLEAR {
+        my ($self, $engine, $param) = @_;
+	$self->Syntax if $param;
+	"\$engines{\"$engine\"}->ErasePersistent;\n";
+}
+
 sub DoPSET {
         my ($self, $engine, $param) = @_;
-	unless ($param =~ s/^\\\.(.*?)\\=\\(['"])(.*?)\\\2$//) {
+	unless ($param =~ s/^\\\.(.*?)\\=\\(['"])(.*?)\\\2$//s) {
 		$self->Syntax;
 	}
 	"\$engines{\"$engine\"}->SetPersistent(\"$1\", eval(\"$3\"));\n";
@@ -491,6 +699,23 @@ sub DoPGET {
 
 *DoPVAR = \&DoPGET;
 *DoGET = \&DoVAR;
+
+sub DoPIMPORT {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ s/^\\\.(.*)$//s) {
+		$self->Syntax;
+	}
+	return "\$hash{\"$1\"} = \$engines{\"$engine\"}->GetPersistent(\"$1\");";
+}
+
+sub DoPEXPORT {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ s/^\\\.(.*)$//s) {
+		$self->Syntax;
+	}
+	return "\$engines{\"$engine\"}->SetPersistent(\"$1\", \$hash{\"$1\"});";
+}
+
 
 *DoREM =&DoEM;
 sub DoEM {}
@@ -554,13 +779,16 @@ if (\$HTML::Merge::Ini::WEB) {
 	require HTTP::Request::Common;
 	import HTTP::Request::Common;
 
+	my \$__url = "$url";
+	\$__url = "http://\$ENV{'SERVER_NAME'}:\$ENV{'SERVER_PORT'}\$__url"
+		unless (\$__url =~ m|://|);
 	my \$__ua = new LWP::UserAgent;
 	my \$__req = GET("$url");
 	my \$__resp = \$__ua->request(\$__req);
 	if (\$__resp->is_success) {
 		print \$__resp->content;
 	} else {
-		die "Web GET to URL $url returned code " . \$__resp->code;
+		HTML::Merge::Error::HandleError('ERROR', "Web GET to URL $url returned code " . \$__resp->code);
 	}
 }
 EOM
@@ -572,10 +800,115 @@ sub DoINDEX {
 	"\$engines{\"$engine\"}->Index";
 }
 
+*DoRERUN = \&DoERUN;
+
+sub DoERUN {
+        my ($self, $engine, $param) = @_;
+	$self->Syntax if $param;
+	"\$engines{\"$engine\"}->ReRun;";
+}
+
+*EQUEST = \&ENUMREQ;
+
+sub DoENUMREQ {
+	my ($self, $engine, $param) = @_;
+	$self->Syntax unless ($param =~ /^\\\.(\w+?)\\\=(\w+)$/s);
+	my ($iterator, $getter) = ($1, $2);
+	$self->Push('enumreq', $engine);
+	qq!foreach (param()) {
+		next if (\$_ eq "template");
+		\$vars{"$iterator"} = \$_;
+		\$vars{"$getter"} = \$vars{\$_};\n!;
+}
+
+sub DoUnENUMREQ {
+	my ($self, $engine, $param) = @_;
+	$self->Expect($engine, 'enumreq');
+	"}\n";
+}
+
+sub DoENUMQUERY {
+	my ($self, $engine, $param) = @_;
+	$self->Syntax unless ($param =~ /^\\\.(\w+?)\\\=(\w+)$/s);
+	my ($iterator, $getter) = ($1, $2);
+	$self->Push('enumquery', $engine);
+	qq!foreach (\$engines{"$engine"}->Columns) {
+		\$vars{"$iterator"} = \$_;
+		\$vars{"$getter"} = \$engines{"$engine"}->Var(\$_);\n!;
+}
+
+sub DoUnENUMQUERY {
+	my ($self, $engine, $param) = @_;
+	$self->Expect($engine, 'enumquery');
+	"}\n";
+}
+
+sub DoMULTI {
+	my ($self, $engine, $param) = @_;
+	$self->Syntax unless ($param =~ /^\\\.(\w+?)\\\=(\w+)$/s);
+	my ($iterator, $getter) = ($1, $2);
+	$self->Push('multi', $engine);
+	qq!foreach (param("$getter")) {
+		\$vars{"$iterator"} = \$_;!;
+}
+
+sub DoUnMULTI {
+	my ($self, $engine, $param) = @_;
+	$self->Expect($engine, 'multi');
+	"}\n";
+}
+
+sub DoGLOB {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.([DF])\\\.(.*?)\\=\\(['"])(.*?)\\\3$/is) {
+		$self->Syntax;
+	}
+	my ($how, $iterator, $mask) = (uc($1), $2, $4);
+	$self->Push('glob', $engine);
+	my $cond = $how eq 'D' ? 'unless' : 'if';
+	qq!\$__x = "$mask";
+	\$__x .= "/*" if (-d \$__x);
+	foreach (glob(\$__x)) {
+		next $cond -d \$_;
+		s|^.*/||;
+		\$vars{"$iterator"} = \$_;\n!
+}
+
+sub DoUnGLOB {
+	my ($self, $engine, $param) = @_;
+	$self->Expect($engine, 'glob');
+	"}\n";
+}
+
+sub DoFTS {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.(.*?)\\=\\(['"])(.*?)\\\2$/is) {
+		$self->Syntax;
+	}
+	my ($iterator, $base) = ($1, $3);
+	$self->Push('fts', $engine);
+	<<EOM;
+	use File::Find;
+	\@__files = ();
+	find(sub {push(\@__files, \$File::Find::name)}, "$base");
+	foreach (\@__files) {
+		\$vars{"$iterator"} = \$_;
+EOM
+}
+
+sub DoUnFTS {
+	my ($self, $engine, $param) = @_;
+	$self->Expect($engine, 'fts');
+	"}\n";
+}
+
 sub DoCOUNT {
 	my ($self, $engine, $param) = @_;
-	$self->Die("COUNT must have four arguments") if ($#$param != 3);
-	my ($var, $from, $to, $step) = @$param;
+	$self->Syntax unless ($param =~ /^\\\.(\w+?)\\\=(.*?)\\\:(.*?)(\\,.*)?$/s);
+	my ($var, $from, $to, $step) = ($1, $2, $3, $4);
+	$step ||= "\\,1";
+	$step =~ s/^\\,//;
+
 	my $i = "\$vars{\"$var\"}";
 	$self->Push('count', $engine);
 	qq!for ($i = "$from"; $i <= "$to"; $i += "$step") {\n!;
@@ -599,12 +932,13 @@ sub DoPIC {
 
 sub PictureF {
 	my ($self, $param) = @_;
-	unless ($param =~ /^(\\?.)\\(['"])(.*?)\\\2$/) {
+	$param =~ s/^\\\((\\?.)\\\)\\\.\\(['"])(.*?)\\\2$/$1\\$2$3\\$2/s;
+	unless ($param =~ /^(\\?.)\\(['"])(.*?)\\\2$/s) {
 		$self->Syntax;
 	}
 	my ($ch, $text) = ($1, $3);
 	<<EOM;
-"" . (\$__s = "$text", \$__s =~ s/\\s/$ch/g, \$__s)[-1];
+"" . (\$__s = "$text", \$__s =~ s/\\s/$ch/g, \$__s)[-1]
 EOM
 }
 
@@ -612,7 +946,9 @@ sub PictureR {
 	my ($self, $param) = @_;
 	my @ary;
 	my $flag;
-	while ($param =~ s/^\s*\\(['"])(.*?)\\\1\s*\\=\s*\\(['"])(.*?)\\\3\s*//s) {
+	$param =~ s/^\\\((.*)\\\)\\\.\\(['"])(.*?)\\\2$/$1\\.\\$2$3\\$2/s;
+	while ($param =~ 
+			s/^\s*\\(['"])(.*?)\\\1\s*\\=\s*\\(['"])(.*?)\\\3\s*//s) {
 		push(@ary, [$2, $4]);
 		if ($param =~ s/^\\\.//) {
 			$flag = 1;
@@ -623,7 +959,7 @@ sub PictureR {
 		}
 	}
 	$self->Die("Syntax error in PIC.R") unless ($flag);
-	unless ($param =~ s/^\\(["'])(.*?)\\\1$//) {
+	unless ($param =~ s/^\\(["'])(.*?)\\\1$//s) {
 		$self->Syntax;
 	}
 	my $text = $2;
@@ -641,27 +977,30 @@ EOM
 
 sub PictureN {
 	my ($self, $param) = @_;
-	my $zero = 0;
-	if ($param =~ s/^Z//) {
-		$zero = 1;
+	my %opts;
+	while ($param =~ s/^([ZF])//) {
+		$opts{$1}++;
 	}
-	unless ($param =~ s/^\\\((.*?)\\\)//) {
+	unless ($param =~ s/^\\\((.*?)\\\)//s) {
 		$self->Syntax;
 	}
 	my $format = $1;
-	unless ($param =~ s/^\\\.\\(["'])(.*?)\\\1$//) {
+	unless ($param =~ s/^\\\.\\(["'])(.*?)\\\1$//s) {
 		$self->Syntax;
 	}
 	my $text = $2;
 	<<EOM;
-"" . (\$__s = "$text" || !$zero ? sprintf("\%${format}f", "$text") : "&nbsp;",
+"" . (\$__s = "$text" || !"$opts{'Z'}" ? sprintf("\%${format}f", "$text") : "&nbsp;",
+	"$opts{'F'}" ? (\$__s =~ 
+	s!(\\d+)!scalar(reverse join(\$HTML::Merge::Ini::THOUSAND_SEPARATOR || ",", (reverse \$1) =~ /(\\d{1,3})/g))!e) : undef, 
+	\$__s =~ s/\\./\$HTML::Merge::Ini::DECIMAL_SEPARATOR || '.'/e,
 	\$__s)[-1]
 EOM
 }
 
 sub DoINC {
         my ($self, $engine, $param) = @_;
-	unless ($param =~ /^\\\.(.*?)([+-]\d+)?$/) {
+	unless ($param =~ /^\\\.(.*?)(\\[+-]\d+)?$/s) {
 		$self->Syntax;
 	}
 	my ($var, $step) = ($1, defined($2) ? $2 : 1);
@@ -676,14 +1015,21 @@ sub DoSTATE {
 	"\$engines{\"$engine\"}->State";
 }
 
+sub DoEMPTY {
+	my ($self, $engine, $param) = @_;
+	$self->Syntax if $param;
+	"\$engines{\"$engine\"}->Empty";
+}
+
 sub DoMAIL {
 	my ($self, $engine, $param) = @_;
-        unless ($param =~ /^\\\.\\(['"])(.*?)\\\1\\\.\\(['"])(.*?)\\\3(.*)$/) {
+        unless ($param =~ /^\\\.\\(['"])(.*?)\\\1\\([\.,])\\(['"])(.*?)\\\4(.*)$/s) {
 		$self->Syntax;
 	}
-	my ($from, $to, $rem, $subject) = ($2, $4, $5);
+	my $del = quotemeta($3);
+	my ($from, $to, $rem, $subject) = ($2, $5, $6);
 	if ($rem) {
-		unless ($rem =~ /^\\\.\\(['"])(.*?)\\\1$/) {
+		unless ($rem =~ /^\\$del\\(['"])(.*?)\\\1$/s) {
 			$self->Syntax;
 		}
 		$subject = $2;
@@ -722,7 +1068,7 @@ EOM
 
 sub DoDB {
 	my ($self, $engine, $param) = @_;
-	unless ($param =~ /^"\\[\.=]\\(['"])(.*?)\\\1"$/) {
+	unless ($param =~ /^\\[\.=]\\(['"])(.*?)\\\1$/s) {
 		$self->Syntax;
 	}
 	my $dsn = $2;
@@ -732,10 +1078,391 @@ sub DoDB {
 	}
 	$dsn1 =~ s/^dbi\\://;
 	my ($type, $db, $host) = split(/\\:/, $dsn1);
-	($type, $db) = ($db, undef) unless ($db);
+	($type, $db) = (undef, $type) unless ($db);
 	<<EOM;
-\$engines{"$engine"}->Connect("$type", "$db", "$host", "$user", "$pass");
+\$engines{"$engine"}->Preconnect("$type", "$db", "$host", "$user", "$pass");
 EOM
+}
+
+sub DoDISCONNECT {
+	my ($self, $engine, $param) = @_;
+	$self->Syntax if $param;
+	qq!delete \$engines{"$engine"};!;
+}
+
+sub DoEXIT {
+	my ($self, $engine, $param) = @_;
+	$self->Die if $param;
+	"die 'STOP_ON_ERROR';\n";
+}
+
+sub DoLOGIN {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\[\.=]\\(['"])(.*?)\\\1\\\,\\(['"])(.*?)\\\3$/s) {
+		$self->Syntax;
+	}
+	my ($user, $pass) = ($2, $4);
+	qq!\$engines{"$engine"}->Login("$user", "$pass")!;
+}
+
+sub DoCHPASS {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\[\.=]\\(['"])(.*?)\\\1$/s) {
+		$self->Syntax;
+	}
+	qq!\$engines{"$engine"}->ChangePassword("$2");!;
+}
+
+sub DoAUTH {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.\\(['"])(.*?)\\\1$/s) {
+		$self->Syntax;
+	}
+	qq!\$engines{"$engine"}->HasKey("$2")!;
+}
+
+sub DoADDUSER {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\[\.=]\\(['"])(.*?)\\\1\\\,\\(['"])(.*?)\\\3$/s) {
+		$self->Syntax;
+	}
+	my ($user, $pass) = ($2, $4);
+	qq!\$engines{"$engine"}->AddUser("$user", "$pass");!;
+}
+
+sub DoDELUSER {
+        my ($self, $engine, $param) = @_;
+        unless ($param =~ /^\\[=\.]\\(['"])(.*?)\\\1$/s) {
+                $self->Syntax;
+        }
+        my ($user) = ($2);
+	qq!\$engines{"$engine"}->DelUser("$user");!;
+}
+
+sub DoJOIN {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\[=\.]\\(['"])(.*?)\\\1\\\,\\(['"])(.*?)\\\3$/s) {
+		$self->Syntax;
+	}
+	my ($user, $group) = ($2, $4);
+	qq!\$engines{"$engine"}->JoinGroup("$user", "$group");!;
+}
+
+sub DoPART {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\[=\.]\\(['"])(.*?)\\\1\\\,\\(['"])(.*?)\\\3$/s) {
+		$self->Syntax;
+	}
+	my ($user, $group) = ($2, $4);
+	qq!\$engines{"$engine"}->PartGroup("$user", "$group");!;
+}
+
+sub DoGRANT {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\[=\.]([UG])\\\.\\(['"])(.*?)\\\2\\\,\\(['"])(.*?)\\\4$/si) {
+		$self->Syntax;
+	}
+	my ($how, $who, $realm) = (uc($1), $3, $5);
+	if ($how eq 'U') {
+		return qq!\$engines{"$engine"}->GrantUser("$who", "$realm");!;
+	}
+	if ($how eq 'G') {
+		return qq!\$engines{"$engine"}->GrantGroup("$who", "$realm");!;
+	}
+}
+
+*DoREVOKE = \&DoEVOKE;
+
+sub DoEVOKE {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\[=\.]([UG])\\\.\\(['"])(.*?)\\\2\\\,\\(['"])(.*?)\\\4$/si) {
+		$self->Syntax;
+	}
+	my ($how, $who, $realm) = (uc($1), $3, $5);
+	if ($how eq 'U') {
+		return qq!\$engines{"$engine"}->RevokeUser("$who", "$realm");!;
+	}
+	if ($how eq 'G') {
+		return qq!\$engines{"$engine"}->RevokeGroup("$who", "$realm");!;
+	}
+}
+
+sub DoATTACH {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\[=\.]\\(['"])(.*?)\\\1\\\,\\(['"])(.*?)\\\3$/s) {
+		$self->Syntax;
+	}
+	my ($template, $subsite) = ($2, $4);
+	qq!\$engines{"$engine"}->Attach("$template", "$subsite");!;
+}
+
+sub DoDETACH {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\[=\.]\\(['"])(.*?)\\\1\\\,\\(['"])(.*?)\\\3$/s) {
+		$self->Syntax;
+	}
+	my ($template, $subsite) = ($2, $4);
+	qq!\$engines{"$engine"}->Detach("$template", "$subsite");!;
+}
+
+
+*DoREQUIRE = \&DoEQUIRE;
+
+sub DoEQUIRE {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\[=\.]\\(['"])(.*?)\\\1\\\,\\(['"])(.*?)\\\3$/s) {
+		$self->Syntax;
+	}
+	my ($template, $realms) = ($2, $4);
+	qq!\$engines{"$engine"}->Require("$template", "$realms");!;
+}
+
+sub DoUSER {
+	my ($self, $engine, $param) = @_;
+	$self->Syntax if $param;
+	qq!\$engines{"$engine"}->GetUser!;
+}
+
+sub DoNAME {
+	my ($self, $engine, $param) = @_;
+	$self->Syntax if $param;
+	qq!scalar(\$engines{"$engine"}->GetUserName)!;
+}
+
+sub DoTAG {
+	my ($self, $engine, $param) = @_;
+	$self->Syntax if $param;
+	qq!(\$engines{"$engine"}->GetUserName)[1]!;
+}
+
+sub DoMERGE {
+	my ($self, $engine, $param) = @_;
+	$self->Syntax if $param;
+	'"$HTML::Merge::Ini::MERGE_PATH/$HTML::Merge::Ini::MERGE_SCRIPT"';
+}
+
+sub DoTEMPLATE {
+	my ($self, $engine, $param) = @_;
+	$self->Syntax if $param;
+	qq!\$HTML::Merge::template!;
+}
+
+sub DoTRANSFER {
+	my ($self, $engine, $param) = @_;
+	my $validate;
+	unless ($param =~ s/^\\\.(.*)$//s) {
+		$self->Syntax;
+	}
+	qq!qq/<INPUT NAME="$1" TYPE=HIDDEN VALUE="\$vars{"$1"}">/!;
+}
+
+sub DoSUBMIT {
+	my ($self, $engine, $param) = @_;
+	my $validate;
+	if ($param =~ s/^\\\.\\(["'])(.*)\\\1$//s) {
+		$validate = " onSubmit=\"$2\"";
+	}
+	$self->Syntax if $param;
+	$self->Push('submit', $engine);
+	<<EOM;
+print qq!<FORM ACTION="\$HTML::Merge::Ini::MERGE_PATH/\$HTML::Merge::Ini::MERGE_SCRIPT" METHOD=POST NAME="autoform"$validate>
+<INPUT NAME="template" TYPE=HIDDEN VALUE="\$HTML::Merge::template">!;
+EOM
+}
+
+sub DoUnSUBMIT {
+	my ($self, $engine, $param) = @_;
+	$self->Expect($engine, 'submit');
+	qq!print "</FORM>\\n";!;
+}
+
+sub DoDECIDE {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.\\(['"])(.*?)\\\1\\\?\\(['"])(.*?)\\\3\\\:\\(['"])(.*?)\\\5$/s) {
+		$self->Syntax;
+	}
+	my ($decision, $true, $false) = ($2, $4, $6);
+	<<EOM;
+	(
+		(eval("$decision") ? "$true" : "$false"),
+		\$@ && HTML::Merge::Error::HandleError('ERROR', \$@)
+	)[0]
+EOM
+}
+
+sub DoDATE {
+	my ($self, $engine, $param) = @_;
+	my $delta = 0;
+	if ($param =~ s/^\\[,\.]((?:\\-)?\d+)$//s) {
+		$delta = $1;
+	}
+	$self->Syntax if $param;
+	<<EOM;
+(\@__t = localtime(time + "$delta" * 3600 * 24), 
+	sprintf("%04d" . ("%02d" x 5), \$__t[5] + 1900, \$__t[4] + 1,
+		\@__t[reverse (0 .. 3)]))[-1]
+EOM
+}
+
+sub DoDAY {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.\\(['"])(.*)\\\1$/s) {
+		$self->Syntax;
+	}
+	qq{substr("$2", 6, 2) * 1};
+}
+
+sub DoMONTH {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.\\(['"])(.*)\\\1$/s) {
+		$self->Syntax;
+	}
+	qq{substr("$2", 4, 2) * 1};
+}
+
+sub DoYEAR {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.\\(['"])(.*)\\\1$/s) {
+		$self->Syntax;
+	}
+	qq{substr("$2", 0, 4)};
+}
+
+sub DoDATEDIFF {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.([HSMD])\\\.(\\['"])?(.*)\2\\,(\\['"])?(.*)\4$/s) {
+		$self->Syntax;
+	}
+	my ($how, $before, $now) = ($1, $3, $5);
+	my %hash = qw(S 1 M 60 H 3600 D 86400);
+	my $div = $hash{$how} || 1;
+	<<EOM;
+(require Time::Local, 
+\$__conv = sub { (shift() =~ /^(\\d{4})(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})/); 
+	Time::Local::timelocal(\$6, \$5, \$4, \$3, \$2 - 1, \$1 - 1900); },
+int((&\$__conv("$now") - &\$__conv("$before")) / $div))[-1]
+EOM
+}
+
+sub DoLASTDAY {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.\\(['"])(.*)\\\1$/s) {
+		$self->Syntax;
+	}
+	<<EOM;
+((\$__y, \$__m, \$__d) = ("$2" =~ /^(\\d{4})(\\d{2})(\\d{2})/),
+\$__base = (qw(31 28 31 30 31 30 31 31 30 31 30 31))[\$__m - 1],
+\$__leap = (\$__y % 4) ? 0 
+	: ((\$__y % 100) ? 1 
+		: ((\$__y % 400) ? 0 : 1)
+	),
+\$__base + (\$__m == 2 ? \$__leap : 0))[-1]
+EOM
+}
+
+sub DoADDDATE {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.\\(['"])(.*)\\\1\\\,\\(['"])(.*)\\\3\\,\\(['"])(.*)\\\5\\,\\(['"])(.*)\\\7$/s) {
+		$self->Syntax;
+	}
+	my ($date, $d, $m, $y) = ($2, $4, $6, $8);
+	<<EOM;
+(require Time::Local,
+("$date") =~ /^(\\d{4})(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})/,
+\$__t = Time::Local::timelocal(\$6, \$5, \$4, \$3, \$2 - 1, \$1 - 1900)
+	+ 3600 * 24 * "$d",
+\@__t = localtime(\$__t),
+\$__t[4] += "$m", \$__t[5] += "$y", 
+\$__t[5] += int(\$__t[4] / 12), \$__t[4] %= 12,
+sprintf("%04d" . ("%02d" x 5), \$__t[5] + 1900, \$__t[4] + 1,
+                \@__t[reverse (0 .. 3)]))[-1]
+EOM
+}
+
+sub DoDIVERT {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.\\(['"])(.*)\\\1$/s) {
+		$self->Syntax;
+	}
+	my $fn = $2;
+	$self->Push('divert', $engine);
+	<<EOM;
+	push(\@__diverts, select);
+	use Symbol;
+	\$__sym = gensym;
+	open(\$__sym, ">>/tmp/merge-\$\$-$fn.divert") || die \$!;
+	select \$__sym;
+	push(\@HTML::Merge::cleanups, eval qq!sub { unlink "/tmp/merge-\$\$-$fn.divert" }!);
+EOM
+	# Value of $fn might contain merge variables, that might change
+	# until cleanup time. Therefore compile cleanup function
+	# with the filename as part of the source.
+}
+
+sub DoUnDIVERT {
+	my ($self, $engine, $param) = @_;
+	$self->Syntax if $param;
+	$self->Expect($engine, 'divert');
+	<<EOM;
+	\$__sym = select;
+	select pop \@__diverts;
+	close \$__sym;
+EOM
+}
+
+sub DoDUMP {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.\\(['"])(.*)\\\1$/s) {
+		$self->Syntax;
+	}
+	my $fn = $2;
+	<<EOM;
+(open(DIVERT_DUMP, "/tmp/merge-\$\$-$fn.divert") || die(\$!), join("", <DIVERT_DUMP>),
+	close(DIVERT_DUMP))[1]
+EOM
+}
+
+*DoCGET = *DoCVAR = \&DoCOOKIE;
+
+sub DoCOOKIE {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ s/^\\\.(.*)$//s) {
+		$self->Syntax;
+	}
+	"\$engines{\"$engine\"}->GetCookie(\"$1\")";
+}
+
+*DoCSET = \&DoCOOKIESET;
+
+sub DoCOOKIESET {
+        my ($self, $engine, $param) = @_;
+	unless ($param =~ s/^\\\.(.*?)\\=\\(['"])(.*?)\\\2((?:\\,.*)?)$//s) {
+		$self->Syntax;
+	}
+	my $expire = substr($4, 2);
+	"\$engines{\"$engine\"}->SetCookie(\"$1\", eval(\"$3\"), \"$expire\");";
+}
+
+sub DoSOURCE {
+        my ($self, $engine, $param) = @_;
+	my $file = '$HTML::Merge::template';
+	if ($param =~ s/^\\\.\\(['"])(.*)\\\1$//s) {
+		$file = $2;
+	}
+	$self->Syntax if $param;
+	$self->Push('source', $engine);
+	<<EOM;
+	require HTML::Merge::Development;
+	print '<A HREF="' . 
+	  HTML::Merge::Development::MakeLink('printsource.pl', "template=$file")
+		. '" TITLE="view source">';
+EOM
+}
+
+sub DoUnSOURCE {
+        my ($self, $engine, $param) = @_;
+	$self->Expect($engine, 'source');
+	qq!print "</A>";!;
 }
 
 sub safecreate {
@@ -752,7 +1479,7 @@ sub safecreate {
 sub CompileFile {
 	my ($file, $out, $sub) = @_;
 
-	open(I, $file);
+	open(I, $file) || die "Cannot open $file: $!";
 	my $text = join("", <I>);
 	close(I); 
 	
@@ -765,6 +1492,35 @@ sub CompileFile {
 	use HTML::Merge::Engine;
 	use HTML::Merge::Error;
 	no strict;
+	sub getvar ($) {
+		$vars{shift()};
+	}
+	sub setvar ($$) {
+		$vars{$_[0]} = $_[1];
+	}
+	sub incvar ($$) {
+		$vars{$_[0]} += $_[1];
+	}
+	sub getfield ($;$) {
+		my ($field, $engine) = @_;
+		$engines{$engine}->Var($field);
+	}
+	sub merge ($) {
+		my $code = shift;
+		require HTML::Merge::Compile;
+		my $text;
+		eval { $text = HTML::Merge::Compile::Compile($code, __FILE__); };
+		HTML::Merge::Error::HandleError('ERROR', $@) if $@;
+		eval $text;
+		HTML::Merge::Error::HandleError('ERROR', $@) if $@;
+	}
+	sub dbh () {
+		$engines{""}->{'dbh'};
+	}
+
+	if (tied(%engines)) {
+		undef %engines;
+	}
 
 	tie %engines, HTML::Merge::Engine;
 	use CGI qw/:standard/;
@@ -803,6 +1559,7 @@ sub Syntax {
 	&DB::Syntax($self);
 }
 
+
 package DB;
 
 sub Syntax {
@@ -818,5 +1575,15 @@ sub Syntax {
 	$self->Die("Syntax error on $sub: $DB::args[2]");
 }
 
+
+package HTML::Merge::Ext;
+
+sub Macro {
+	my $text = shift;
+	$text =~ s/(?<!\\)\$(\d+)/\000$_[$1 - 1]\000/g;
+
+	$HTML::Merge::Ext::COMPILER->Macro($text);
+	return "";
+}
 
 1;

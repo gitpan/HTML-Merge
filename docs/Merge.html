@@ -1,0 +1,106 @@
+<HTML>
+<HEAD>
+<TITLE>Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.</TITLE>
+<LINK REV="made" HREF="mailto:prospector@porky.devel.redhat.com">
+</HEAD>
+
+<BODY>
+
+<A NAME="__index__"></A>
+<!-- INDEX BEGIN -->
+
+<UL>
+
+	<LI><A HREF="#name">NAME</A></LI>
+	<LI><A HREF="#installation">INSTALLATION</A></LI>
+	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
+	<LI><A HREF="#description">DESCRIPTION</A></LI>
+	<LI><A HREF="#files">FILES</A></LI>
+	<LI><A HREF="#author">AUTHOR</A></LI>
+	<LI><A HREF="#copyright">COPYRIGHT</A></LI>
+	<LI><A HREF="#see also">SEE ALSO</A></LI>
+</UL>
+<!-- INDEX END -->
+
+<HR>
+<P>
+<H1><A NAME="name">NAME</A></H1>
+<P>Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.</P>
+<P>
+<HR>
+<H1><A NAME="installation">INSTALLATION</A></H1>
+<P>After installing the package, activate <STRONG>mergecreateinstance</STRONG> to create an instance in your cgi-bin (or modperl) directory.
+Follow the directions you get from <STRONG>mergecreateinstance</STRONG> in order to configure
+your web server.</P>
+<P>You must edit the merge.conf created for you.</P>
+<P>
+<HR>
+<H1><A NAME="synopsis">SYNOPSIS</A></H1>
+<PRE>
+        &lt;HTML&gt;
+        &lt;$RQ.'SELECT * FROM customers'&gt;
+        &lt;$RLOOP&gt;
+        &lt;$RVAR.name&gt; owes &lt;$RVAR.debt&gt;&lt;BR&gt;
+        &lt;/$RLOOP&gt;
+        &lt;A HREF=&quot;/cgi-bin/merge.pl?template=main_menu.html&quot;&gt;
+        &lt;/HTML&gt;</PRE>
+<P>
+<HR>
+<H1><A NAME="description">DESCRIPTION</A></H1>
+<P>Merge is an embedded HTML/Perl/SQL tool used to create dynamic web content.
+All Merge pages are refered to by <STRONG>cgi-bin-dir</STRONG>/merge.pl?template=<STRONG>file.html</STRONG>
+although on CGI mode you can define merge.pl as an handler with the Action
+directive in Apache.</P>
+<P>Using merge.pl under Apache::Registry will utilize Perl's built-in caching to
+cache pages using the <STRONG>do</STRONG> command.</P>
+<P>Merge uses a configuration file to retrieve information about database
+connectivity and debugging. It has an embedded debugging tool and on-line
+configuration. To turn that option on, set DEVELOPMENT to 1 in the 
+configuration file. Don't forget to set it off before deployment.</P>
+<P>Alternate configuration files can appear in <STRONG>/etc/merge.conf</STRONG> and <STRONG>$HOME/.merge</STRONG>.</P>
+<P>
+<HR>
+<H1><A NAME="files">FILES</A></H1>
+<PRE>
+        B&lt;merge.pl&gt; Main script, usually a symbolic link to each instance.</PRE>
+<PRE>
+        B&lt;merge.conf&gt; Configuration, unique per each instance.</PRE>
+<PRE>
+        B&lt;$PREFIX/share/merge/private&gt; Internal scripts.</PRE>
+<PRE>
+        B&lt;$PREFIX/bin/merge.cgi&gt; Main script, central.</PRE>
+<PRE>
+        B&lt;$PREFIX/bin/merge.conf&gt; Template for configuration files.</PRE>
+<PRE>
+        B&lt;$PREFIX/bin/mergecreateinstance&gt; Instance creating script.</PRE>
+<P>
+<HR>
+<H1><A NAME="author">AUTHOR</A></H1>
+<UL>
+<LI>
+Initial design by Oded Resnik, <STRONG><A HREF="mailto:oded@raz.co.il">oded@raz.co.il</A></STRONG>.
+<P></P>
+<LI>
+Versions 1 and 2 written by Roi Illouz, <STRONG><A HREF="mailto:roi@raz.co.il">roi@raz.co.il</A></STRONG>.
+<P></P>
+<LI>
+Version 3 written by Ariel Brosh, <STRONG><A HREF="mailto:ariel@raz.co.il">ariel@raz.co.il</A></STRONG>.
+<P></P>
+<LI>
+Toolbox written by Eial Solodki.
+<P></P></UL>
+<P>
+<HR>
+<H1><A NAME="copyright">COPYRIGHT</A></H1>
+<P>Copyright (c) 1999, 2000, 2001, 2002 Raz Information Systems Ltd.
+<A HREF="http://www.raz.co.il">http://www.raz.co.il</A></P>
+<P>This package is distributed under the same terms as Perl itself, see the 
+Artistic License on Perl's home page.</P>
+<P>
+<HR>
+<H1><A NAME="see also">SEE ALSO</A></H1>
+<P>perl(1), <A HREF="Tags.html">the HTML::Merge::Tags manpage</A>, <A HREF="Ext.html">the HTML::Merge::Ext manpage</A>.</P>
+
+</BODY>
+
+</HTML>

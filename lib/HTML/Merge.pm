@@ -39,26 +39,52 @@ configuration file. Don't forget to set it off before deployment.
 
 Alternate configuration files can appear in B</etc/merge.conf> and B<$HOME/.merge>.
 
+=head1 FILES
+
+	B<merge.pl> Main script, usually a symbolic link to each instance.
+
+	B<merge.conf> Configuration, unique per each instance.
+
+	B<$PREFIX/share/merge/private> Internal scripts.
+
+	B<$PREFIX/bin/merge.cgi> Main script, central.
+
+	B<$PREFIX/bin/merge.conf> Template for configuration files.
+
+	B<$PREFIX/bin/mergecreateinstance> Instance creating script.
+
 =head1 AUTHOR
 
-=item
+=over 4
+
+=item *
 
 Initial design by Oded Resnik, B<oded@raz.co.il>.
 
-=item
+=item *
 
 Versions 1 and 2 written by Roi Illouz, B<roi@raz.co.il>.
 
-=item
+=item *
 
 Version 3 written by Ariel Brosh, B<ariel@raz.co.il>.
 
-=item
+=item *
 
 Toolbox written by Eial Solodki.
 
+=back
+
+=head1 COPYRIGHT
+
+Copyright (c) 1999, 2000, 2001, 2002 Raz Information Systems Ltd.
+http://www.raz.co.il
+
+This package is distributed under the same terms as Perl itself, see the 
+Artistic License on Perl's home page.
+
 =head1 SEE ALSO
 
-perl(1), L<HTML::Merge::Tags>.
+perl(1), L<HTML::Merge::Tags>, L<HTML::Merge::Ext>.
 
 =cut

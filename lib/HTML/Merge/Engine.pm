@@ -3,12 +3,24 @@ package HTML::Merge::Engine;
 use HTML::Merge::Error;
 use Carp;
 use strict;
-use vars qw($suffix);
+use vars qw(%cookies $suffix @objects @matrices @say);
 
+@objects = qw(user group subsite instance realm template say);
+
+@matrices = qw(user_group user_realm group_realm
+        realm_template template_subsite realm_subsite);
+
+@say = qw(group join:part realm been_grant:been_revoke
+        _realm protect:release subsite attach:detach);
+
+sub Order (\$\$);
+ 
+###############################################################################
 sub AddSuffix {
 	$suffix .= shift;
 }
 
+###############################################################################
 sub DumpSuffix {
 	my ($template, $line_num) = @$HTML::Merge::context;
 	eval '
@@ -16,23 +28,40 @@ sub DumpSuffix {
 			print $suffix;
 		}
 	';
+	&DumpCookies;
 }
-
+###############################################################################
+sub DumpCookies {
+	while (my ($name, $val) = each %cookies) {
+		print "<META HTTP-EQUIV=\"Set-Cookie\" CONTENT=\"$name=$val\">\n";
+	}
+}
+###############################################################################
 sub new {
 	my ($class) = @_;
 	my $self = {'dbh' => undef, 'sth' => undef};
 	bless $self, $class;
 }
-
+###############################################################################
+sub CreateObject {
+	my $class = shift;
+	my %array;
+	tie %array, $class;
+	$array{""};
+}
+###############################################################################
 sub TIEHASH {
 	my ($class) = @_;
 	my $this = {'storage' => {}};
+	%cookies = ();
+	$suffix = '';
 	bless $this, $class;
 }
 
+###############################################################################
 sub FETCH {
 	my ($self, $key) = @_;
-	$key ||= '0';
+	$key ||= 0;
 	my $class = ref($self);
 	my $storage = $self->{'storage'};
 	if (exists $storage->{$key} && &UNIVERSAL::isa($storage->{$key},
@@ -44,7 +73,43 @@ sub FETCH {
 	$storage->{$key}->Preconnect;
 	return $storage->{$key};
 }				
+###############################################################################
+sub DELETE {
+	my ($self, $key) = @_;
+	my $storage = $self->{'storage'};
+	delete $storage->{$key};
+}
+###############################################################################
+sub DESTROY {
+	my $self = shift;
 
+	# Are we an item?
+	my $sth = $self->{'sth'};
+	if ($sth) {
+		eval { $sth->finish; };
+		delete $self->{'sth'};
+	}
+
+	my $dbh = $self->{'dbh'};
+	if ($dbh) {
+		$dbh->disconnect;
+		delete $self->{'dbh'};
+	}
+
+	# Are we the tied hash?
+
+	my $storage = $self->{'storage'};
+	if ($storage) {
+		%$storage = ();
+		delete $self->{'storage'};
+	}
+}
+###############################################################################
+sub CLEAR {
+	my $self = shift;
+	$self->{'storage'} = {};
+}
+###############################################################################
 sub Preconnect {
 	my ($self, $dbtype, $db, $dbhost, $user, $password) = @_;
 	$dbtype ||= $HTML::Merge::Ini::DB_TYPE;
@@ -60,53 +125,66 @@ sub Preconnect {
 	$self->{'sth'} = undef;
 }
 
+###############################################################################
 sub DoConnect {
 	my $self = shift;
 	return if $self->{'dbh'};
 	require DBI;
-	my $dsn = join(":", @{$self->{'dsn'}});
+	my $dsn = join(":", grep /./, @{$self->{'dsn'}});
 	my ($user, $password) = @{$self->{'cred'}};
 	my $dbh = DBI->connect($dsn, $user, $password, {'AutoCommit' =>
- 		$HTML::Merge::Ini::AUTO_COMMIT}) || die $DBI::errstr;
+ 		$HTML::Merge::Ini::AUTO_COMMIT}) || 
+		HTML::Merge::Error::HandleError('ERROR', $DBI::errstr);
 	$self->{'dbh'} = $dbh;
 	$self->{'sth'} = undef;
 }
-
+###############################################################################
 sub Statement {
 	my ($self, $sql) = @_;
-	$self->DoConnect;
 	HTML::Merge::Error::HandleError('INFO', $sql, 'SQL');
-	$self->{'dbh'}->do($sql) ||
+	my $dbh = $self->DBH;
+	$dbh->do($sql) ||
 		return HTML::Merge::Error::HandleError('ERROR', $DBI::errstr);
 }
 
+###############################################################################
 sub Query {
 	my ($self, $sql) = @_;
-	$self->DoConnect;
 	HTML::Merge::Error::HandleError('INFO', $sql, 'SQL');
 	$self->{'sth'} = undef;
 	$self->{'fields'} = {};
-	my $sth = $self->{'dbh'}->prepare($sql) ||
+	my $dbh = $self->DBH;
+	my $sth = $dbh->prepare($sql) ||
 		return HTML::Merge::Error::HandleError('ERROR', $DBI::errstr);
 	$sth->execute ||
 		return HTML::Merge::Error::HandleError('ERROR', $DBI::errstr);
 	$self->{'sth'} = $sth;
 	$self->{'fields'} = $sth->fetchrow_hashref;
 	$self->{'fields'} ||= {};
+	$self->{'empty'} = !%{$self->{'fields'}};
 	$self->{'buffer'} = [$self->{'fields'}];
 	$self->{'index'} = 0;
 }
 
+###############################################################################
 sub HasQuery {
 	my $self = shift;
 	$self->{'sth'} ? 1 : 0;
 }
-
-sub Fetch {
+###############################################################################
+sub Empty {
 	my $self = shift;
+	$self->{'empty'};
+}
+###############################################################################
+sub Fetch {
+	my ($self, $explicit) = @_;
 	my $sth = $self->{'sth'};
 	return HTML::Merge::Error::HandleError('WARN', 'ILLEGAL_FETCH') unless ($sth);
 	$self->{'index'}++;
+	if ($explicit) {
+		$self->{'buffer'} = undef;
+	}
 	my $candidate = $self->{'buffer'};
 	if ($candidate) {
 		$self->{'buffer'} = undef;
@@ -124,31 +202,51 @@ sub Fetch {
 	1;
 }
 
+###############################################################################
+sub ReRun {
+	my $self = shift;
+	my $sth = $self->{'sth'};
+	return HTML::Merge::Error::HandleError('WARN', 'ILLEGAL_FETCH') unless ($sth);
+	$sth->execute;
+	$self->{'fields'} = $sth->fetchrow_hashref;
+	$self->{'fields'} ||= {};
+	$self->{'buffer'} = [$self->{'fields'}];
+	$self->{'index'} = 0;
+}
+###############################################################################
 sub Var {
 	my ($self, $key) = @_;
 	return HTML::Merge::Error::HandleError('WARN', 'ILLEGAL_FETCH') && '' unless ($self->{'fields'});
 	return HTML::Merge::Error::HandleError('WARN', 'NO_SQL_MATCH') && '' unless (exists $self->{'fields'}->{$key});
 	$self->{'fields'}->{$key};
 }
-
+###############################################################################
+sub Columns {
+	my $self = shift;
+	return HTML::Merge::Error::HandleError('WARN', 'ILLEGAL_FETCH') && '' unless ($self->{'sth'});
+	@{$self->{'sth'}->{'NAME'}};
+}
+###############################################################################
 sub Index {
 	my $self = shift;
 	$self->{'index'};
 }
 
+###############################################################################
 sub GetPersistent
 {
 	my ($self, $var) = @_;
 	my ($sql, $val);
 	my $id;
-	my $table = $HTML::Merge::Ini::SESSION_TABLE;
+	my $table = "$HTML::Merge::Ini::SESSION_DB.sessions";
+	my $dbh = $self->DBH;
 	$self->ValidatePersistent;
 	$id = $self->{session_id};
 	$sql = "SELECT vardata
                 FROM $table
                 WHERE session_id = '$id'
                 AND varname = '$var'";
-	($val) = $self->{dbh}->selectrow_array($sql);
+	($val) = $dbh->selectrow_array($sql);
 	
 	return (defined($val)) ? $val : ''; 
 }
@@ -162,41 +260,48 @@ sub SetPersistent
 	"";
 }
 ###############################################################################
+sub ErasePersistent
+{
+	my $self = shift;
+	$self->ValidatePersistent;
+	my $table = "$HTML::Merge::Ini::SESSION_DB.sessions";
+	my $id = $self->{session_id};
+	my $sql = "DELETE FROM $table
+                   WHERE session_id = '$id'";
+	my $dbh = $self->DBH;
+	$dbh->do($sql) || HTML::Merge::Error::HandleError('ERROR', $DBI::errstr);
+}
+
+###############################################################################
 sub ValidatePersistent
 {
 	my $self = shift;
 	my ($id, $sql);
 	my $now = time;
-	my $table = $HTML::Merge::Ini::SESSION_TABLE;
+	my $table = "$HTML::Merge::Ini::SESSION_DB.sessions";
 	my ($sql, $sth, @other, $other);
 	my $expire = YMD(time - 60 * $HTML::Merge::Ini::SESSION_TIMEOUT);
-	$self->DoConnect;
 	$self->CheckSessionTable;
 	$self->GetSessionID;
 	$id = $self->{session_id};
 	$self->SetField("", YMD(time));
+
 	$sql = "SELECT session_id
                 FROM $table
                 WHERE varname = ''
                 AND vardata < '$expire'";
-	$sth = $self->{dbh}->prepare($sql) || 
-		return HTML::Merge::Error::HandleError('ERROR', $DBI::errstr);
-	$sth->execute ||
-		return HTML::Merge::Error::HandleError('ERROR', $DBI::errstr);
-	while (($other) = $sth->fetchrow_array) 
-	{
-		push(@other, "'$other'");
-	}
+	my @other = $self->LoadArray($sql);
 	return unless @other;
 	$sql = "DELETE FROM $table WHERE session_id IN (" .
 		join(",", @other) . ")";
-	$self->{dbh}->do($sql);
+	my $dbh = $self->DBH;
+	$dbh->do($sql);
 }
 ###############################################################################
 sub CreateSessionTable
 {
 	my $self = shift;
-	my $table = $HTML::Merge::Ini::SESSION_TABLE;
+	my $table = "$HTML::Merge::Ini::SESSION_DB.sessions";
 	my $ddl = "CREATE TABLE $table (
 			session_id VARCHAR(20) NOT NULL,
 			varname VARCHAR(30) NOT NULL,
@@ -206,75 +311,116 @@ sub CreateSessionTable
 	if ($db eq 'mysql') {
 		$ddl .= " TYPE=Heap";
 	}
-	$self->{dbh}->do($ddl) || croak $DBI::errstr;	
+	my $dbh = $self->DBH;
+	$dbh->do($ddl) || croak $DBI::errstr;	
 	$ddl = "CREATE UNIQUE INDEX ux_var 
                 ON $table (session_id, varname)";
-	eval { $self->{dbh}->do($ddl); };
+	eval { $dbh->do($ddl); };
 }
 ###############################################################################
 sub CheckSessionTable
 {
 	my $self = shift;
-	my $table = $HTML::Merge::Ini::SESSION_TABLE;
+	my $table = "$HTML::Merge::Ini::SESSION_DB.sessions";
 	my $sql = "SELECT Count(*) FROM $table";
 	my $sth;
 	return if ($self->{checked_session_table}++ > 1);
 	$@ = undef;
+	my $dbh = $self->DBH;
 	eval {
-		$sth = $self->{dbh}->prepare($sql) || 
-			return HTML::Merge::Error::HandleError('ERROR', $DBI::errstr);
+		$sth = $dbh->prepare($sql) || 
+			die $DBI::errstr; # Do NOT call HandleError
 		$sth->execute ||
-			return HTML::Merge::Error::HandleError('ERROR', $DBI::errstr);
+			die $DBI::errstr; # Do NOT call HandleError
 	};
 	$self->CreateSessionTable if $@;
 }
 ###############################################################################
-sub GetSessionID 
-{
+sub GenerateSessionID {
 	my $self = shift;
-	my ($cookie, $key, $val);
-	my %cookies;
-	my $sql;
-	return if $self->{session_id};
-	my $table = $HTML::Merge::Ini::SESSION_TABLE;
-
-	unless ($HTML::Merge::Ini::SESSION_COOKIE) {
-		$self->{session_id} = $ENV{'REMOTE_ADDR'};
-		return;
-	} 
-	$cookie = $ENV{HTTP_COOKIE};
-	foreach (split(/;\s*/, $cookie)) {
-		($key, $val) = split(/=/, $_);
-		$cookies{$key} = $val;
-	}
-	$self->{session_id} = $cookies{$HTML::Merge::Ini::SESSION_COOKIE};
-	unless ($self->{session_id}) {
-		$self->{session_id} = substr($ENV{'REMOTE_ADDR'}, -8) . $$ . time % (3600 * 24);
+	$self->{session_id} = substr($ENV{'REMOTE_ADDR'}, -8) . $$ . time % (3600 * 24);
 	$self->{session_id} =~ tr/0-9//cd;
-		AddSuffix("<META HTTP-EQUIV=\"Set-Cookie\" CONTENT=\"$HTML::Merge::Ini::SESSION_COOKIE=" . $self->{session_id} . "\">\n");
-		return;
-	}
+}
+
+###############################################################################
+sub GetSessionID {
+	my $self = shift;
+	my $created = $self->MakeSessionID;
+	return if $created;
 	my $id = $self->{session_id};
-	$sql = "SELECT Count(*) 
+	my $table = "$HTML::Merge::Ini::SESSION_DB.sessions";
+	my $sql = "SELECT Count(*) 
 		FROM $table
                 WHERE session_id = '$id'
                 AND varname = ''";
-	my ($valid) = $self->{dbh}->selectrow_array($sql);
-	&HTML::Merge::Error::TimeOut unless $valid;
+	my $dbh = $self->DBH;
+	my ($valid) = $dbh->selectrow_array($sql);
+	return if $valid;
+	my $fh = select;
+	select $fh->{'out'} if (tied($fh));
+	$self->SetField("", YMD(time));
+	&HTML::Merge::Error::TimeOut;
+}
+
+###############################################################################
+sub MakeSessionID 
+{
+	my $self = shift;
+	my ($key, $val);
+	my $sql;
+	my $table = "$HTML::Merge::Ini::SESSION_DB.sessions";
+
+	return 0 if $self->{session_id};
+	my $method = $HTML::Merge::Ini::SESSION_METHOD || 'C';
+	if ($method eq 'I') {
+		$self->{session_id} = $ENV{'REMOTE_ADDR'};
+		return 0;
+	} 
+	if ($method eq 'U') {
+		$self->{session_id} = $ENV{'PATH_INFO'};
+		$self->{session_id} =~ s|/||g;
+		return 0 if $self->{session_id};
+		return 0 if $self->{'KLUDGE_NO_NEW_ID'};
+		$self->GenerateSessionID;
+		return 1;
+	}
+	if ($method eq 'C') {
+		$HTML::Merge::Ini::SESSION_COOKIE ||= 'RZCKMRGSSN';
+
+		$self->{session_id} = 
+		   $self->GetCookie($HTML::Merge::Ini::SESSION_COOKIE);
+		return 0 if $self->{session_id};
+		return 0 if $self->{'KLUDGE_NO_NEW_ID'};
+		$self->GenerateSessionID;
+		my $extra;
+		if ($HTML::Merge::Ini::COOKIE_LIFETIME) {
+			my $expire = time + 
+			  $HTML::Merge::Ini::COOKIE_LIFETIME * 60;
+			require HTTP::Date;
+			$extra = "; expires=" . 
+				HTTP::Date::time2str($expire) .";";
+		}
+		SetCookie($HTML::Merge::Ini::SESSION_COOKIE, 
+			$self->{session_id},
+			$HTML::Merge::Ini::COOKIE_LIFETIME || "*");
+		return 1;
+	}
+	die "Session method incorrect";
 }
 ###############################################################################
 sub SetField
 {
 	my ($self, $key, $val) = @_;
 	my ($sql, $count, $sth);
-	my $table = $HTML::Merge::Ini::SESSION_TABLE;
+	my $table = "$HTML::Merge::Ini::SESSION_DB.sessions";
 	my $id = $self->{session_id};
 	
 	$sql = "SELECT Count(*)
                 FROM $table
                 WHERE session_id = '$id'
 		AND varname = '$key'";
-	($count) = $self->{dbh}->selectrow_array($sql);
+	my $dbh = $self->DBH;
+	($count) = $dbh->selectrow_array($sql);
 	
 	if ($count) 
 	{
@@ -289,7 +435,7 @@ sub SetField
 			VALUES ('$id', '$key', ?)";
 	}
 	
-	$sth = $self->{dbh}->prepare($sql) ||
+	$sth = $dbh->prepare($sql) ||
 		return HTML::Merge::Error::HandleError('ERROR', $DBI::errstr);
 	
 	#$val ||= '';
@@ -311,6 +457,35 @@ sub YMD {
 	my @t = localtime(shift());
 	sprintf("%04d" . "%02d" x 5, $t[5] + 1900, $t[4] + 1, 
 		$t[3], $t[2], $t[1], $t[0]);
+}
+###############################################################################
+sub GetCookie {
+	shift if (UNIVERSAL::isa($_[0], __PACKAGE__));
+	my $name = shift;
+	my $cookie = $ENV{HTTP_COOKIE};
+	foreach (split(/;\s*/, $cookie)) {
+		my ($key, $val) = split(/=/, $_);
+		return $val if ($key eq $name);
+	}
+}
+###############################################################################
+sub SetCookie {
+	shift if (UNIVERSAL::isa($_[0], __PACKAGE__));
+	my ($name, $value, $expire) = @_;
+	$cookies{$name} = "$value";
+	my $extra;
+	unless ($expire) {
+		$cookies{$name} .= "; expires=Tue, 19 Jan 2038 03:14:07 GMT;";
+	} else {
+		if ($expire =~ /^\d+$/) {
+			require HTTP::Date;
+			my $t = time + $expire * 60;
+			$cookies{$name} .= "; expires=" . 
+				HTTP::Date::time2str($t) . ";";
+		}
+	}
+	$ENV{'HTTP_COOKIE'} .= ';' if $ENV{'HTTP_COOKIE'};
+	$ENV{'HTTP_COOKIE'} .= "$name=$value";
 }
 ###############################################################################
 sub ReadConfig {
@@ -335,14 +510,16 @@ sub ReadConfig {
 	        }
 	}
 	$self =~ s/\.\w+$/.ext/;
-	if (-f $self) {
-		package HTML::Merge::Ext;
-		eval 'require $self;';
-		if ($@) {
-			print "Status: 501 Server error\n";
-			print "Content-type: text/plain\n\n";
-			print "$self caused error: $@";
-			exit;
+	foreach my $ext (($self, "/etc/merge.ext")) {
+		if (-f $self) {
+			package HTML::Merge::Ext;
+			eval 'require $self;';
+			if ($@) {
+				print "Status: 501 Server error\n";
+				print "Content-type: text/plain\n\n";
+				print "$self caused error: $@";
+				exit;
+			}
 		}
 	}
 }
@@ -355,6 +532,8 @@ sub GetHome {
 }
 
 sub import {
+	my (@param) = @_;
+	return if ($param[1] eq ':unconfig');
 	&ReadConfig;
 }
 
@@ -369,5 +548,665 @@ sub Convert {
 	$db_pass;
 }
 
-1;
+sub DBH {
+	my $self = shift;
+	$self->DoConnect;
+	$self->{'dbh'};
+}
+
+sub AddUser {
+	my ($self, $user, $password, $realname, $tag) = @_;
+	croak "Invalid username: $user" unless ($user =~ /^\S{3,15}$/);
+	croak "Invalid password: $password" unless ($password =~ /^\S{3,15}$/);
+	unless ($HTML::Merge::Ini::ALLOW_EASY_PASSWORDS) {
+		require Data::Password;
+		my $reason = Data::Password::IsBadPassword($password);
+		croak "Bad password $password: $reason";
+	}
+
+	croak "Can't change user $user"
+		if ($user eq $HTML::Merge::Ini::ROOT_USER);
+
+	my $table = "$HTML::Merge::Ini::SESSION_DB.users_t";
+
+	my $salt = pack("CC", rand(26) + 65 ,rand(26) + 65);
+	my $cp = crypt($password, $salt);
+	my $dbh = $self->DBH;
+	my $sql = "SELECT Count(*) FROM $table WHERE username = '$user'";
+	my ($exists) = $dbh->selectrow_array($sql);
+	unless  ($exists) {
+		foreach (1 .. 10) { # Lame concurrency handling
+			my $id = $self->GetNext($table);
+			my $sql = "INSERT INTO $table (epitaph, id, username) VALUES (0, $id, '$user')";
+			eval { $dbh->do($sql); };
+			last unless $@;
+			sleep 1;
+		}
+	}
+	$sql = "UPDATE $table SET password = ?, epitaph = 0 
+		WHERE username = '$user'";
+	my $sth = $dbh->prepare($sql);
+	$sth->execute($cp);
+	if (defined($realname)) { # May be an empty string
+		my $sql = "UPDATE $table SET realname = ? WHERE username = '$user'";
+		my $sth = $dbh->prepare($sql);
+		$sth->execute($realname);
+	}
+	if (defined($tag)) { # May be an empty string
+                my $sql = "UPDATE $table SET tag = ? WHERE username = '$user'";
+                my $sth = $dbh->prepare($sql);
+                $sth->execute($tag);
+        }
+}
+
+sub DelUser {
+	my ($self, $user) = @_;
+	$self->Destruct('user' => $user);
+}
+
+sub SetUser {
+	my ($self, $user) = @_;
+	$self->SetPersistent("__user", $user);
+}
+
+sub GetUser {
+	my $self = shift;
+#	$self->{'KLUDGE_NO_NEW_ID'} = 1;
+	$self->ValidatePersistent;
+#	delete $self->{'KLUDGE_NO_NEW_ID'};
+	return undef unless $self->{'session_id'};
+	$self->GetPersistent("__user");
+}
+
+
+sub Login {
+	my ($self, $user, $pass) = @_;
+	my $dbh = $self->DBH;
+	my $table = "$HTML::Merge::Ini::SESSION_DB.users_t";
+	my $sql = "SELECT password FROM $table WHERE username = '$user'";
+	my ($cp) = $dbh->selectrow_array($sql);
+	$cp = $HTML::Merge::Ini::ROOT_PASSWORD if ($user eq $HTML::Merge::Ini::ROOT_USER);
+	return 0 unless defined($cp); # May be an empty password!
+	my $candidate = crypt($pass, $cp);
+	if ($candidate eq $cp) {
+		$self->SetUser($user);
+		return 1;
+	}
+	$self->SetUser('');
+	return 0;
+}
+
+sub ChangePassword {
+	my ($self, $pass) = @_;
+	my $user = $self->GetUser;
+	HTML::Merge::Error::HandleError('ERROR',
+		"Not logged in") unless $user;
+	HTML::Merge::Error::HandleError('ERROR', "Can't change user $user")
+		if ($user eq $HTML::Merge::Ini::ROOT_USER);
+	$self->AddUser($user, $pass);
+}
+
+sub HasKey {
+	my ($self, $realm, $user) = @_;
+	$user ||= $self->GetUser;
+	return 0 unless $user;
+	return 1 if ($user eq $HTML::Merge::Ini::ROOT_USER);
+	my $make_sure_user_exists = $self->GetUserID($user);
+	my %keys;
+	my @keys = $self->Links('user' => $user, 'realm', $realm);
+	return 1 if @keys;
+	my @groups = $self->Links('user' => $user, 'group');
+	@keys = $self->Links('group' => \@groups, 'realm', $realm);
+	return 1 if @keys;
+	undef;
+}
+
+sub CanEnter {
+	my ($self, $template, $user) = @_;
+	unless ($template) {
+		$template = $HTML::Merge::context->[0];
+		$template =~ s/^$HTML::Merge::Ini::TEMPLATE_PATH//;
+	}
+
+	my $d = $HTML::Merge::Ini::SESSION_DB;
+
+	my $default = 1;
+	foreach ($self->Links('template' => $template, 'realm')) {
+		$user ||= $self->GetUser;
+		return undef unless $user;
+		return 1 if $self->HasKey($_, $user);
+		$default = 0; # Some keys were requested - return 0 if none matched
+	}
+	my @subsites = $self->Links('template' => $template, 'subsite');
+	foreach ($self->Links('subsite' => \@subsites, 'realm')) {
+		$user ||= $self->GetUser;
+		return undef unless $user;
+		return 1 if $self->HasKey($_, $user);
+		$default = 0; # Some keys were requested - return 0 if none matched
+	}
+	return $default;
+}
+
+sub GetNext {
+	my ($self, $table) = @_;
+
+	my $dbh = $self->DBH;
+	my $sql = "SELECT Max(id) FROM $table";
+	my ($max) = $dbh->selectrow_array($sql);
+	$max + 1;
+}
+
+sub Required {
+	my ($self, $template) = @_;
+	my $tid = $self->GetTemplateID($template);
+	my $dbh = $self->DBH;
+	my $db = $HTML::Merge::Ini::SESSION_DB;
+	my $sql = "SELECT B.realmname 
+			FROM $db.realm_template_matrix A,
+				$db.realms_t B
+			WHERE A.template_id = $tid
+				AND B.id = A.realm_id";
+	$self->LoadArray($sql);
+}
+sub Require {
+	my ($self, $template, $realms) = @_;
+	my @realms = split(/,\s*/, $realms);
+	my $tid = $self->GetTemplateID($template);
+	my $table = "$HTML::Merge::Ini::SESSION_DB.realm_template_matrix";
+	my $iid = $self->GetInstance;
+	
+	my $dbh = $self->DBH;
+	my $sql = "DELETE FROM $table WHERE template_id = $tid";
+	$dbh->do($sql);
+
+	foreach (@realms) {
+		$self->Request($_, $template);
+	}
+}
 ################################################################################
+
+sub InitDatabase {
+	my $self = shift;
+	$self ||= __PACKAGE__->CreateObject;
+	$self->CreateMeta;
+	foreach (@objects) {
+		$self->CreateTable($_);
+	}
+	foreach (@matrices) {
+		$self->CreateMatrix($_);
+	}
+}
+
+sub CreateTable {
+	my ($self, $table) = @_;
+	print "Creating $table table...";
+	my $db = $HTML::Merge::Ini::SESSION_DB;
+	my $dbh = $self->DBH;
+	my $ddl = <<DDL;
+CREATE TABLE $db.${table}s_t (
+        id INT PRIMARY KEY NOT NULL,
+        ${table}name VARCHAR(150),
+        description VARCHAR(80),
+        tag VARCHAR(255),
+	epitaph INT NOT NULL
+)
+DDL
+	if ($table eq 'template') {
+		$ddl =~ s/\)\n*$/, instance_id INT NOT NULL)/;
+	}
+	if ($table eq 'user') {
+	        $ddl =~ s/\)\n*$/, password VARCHAR(15))/;
+	}
+	$dbh->do($ddl);
+	$ddl = "CREATE UNIQUE INDEX x_$table ON $db.${table}s_t (${table}name)";
+	if ($table eq 'template') {
+		$ddl =~ s/\)$/, instance_id)/;
+	}
+	$dbh->do($ddl);
+	print "\n";
+}
+
+sub GetSay {
+	shift if UNIVERSAL::isa($_[0], __PACKAGE__);
+	my ($child, $parent, $how) = @_;
+	Order($child, $parent);
+	# Must search for first occurence@
+	my ($str) = grep {$_ eq $parent || $_ eq "_$child"} @say;
+	return unless $str;
+	my %say = @say;
+	my ($add, $del) = split(/:/, $say{$str});
+	return ($add, $del) unless $how;
+	$how = ucfirst(lc($how));
+	my $proc = UNIVERSAL::can(__PACKAGE__, "Translate$how");
+	return map {&$proc;} ($add, $del) if $proc;
+	return ($add, $del);
+}
+
+sub TranslateImperative {
+	my @tokens = split(/_/, $_);
+	$_ = ucfirst(lc($tokens[-1]));
+}
+
+sub TranslatePast {
+	s/_/ /;
+	s/e$//;
+	$_ .= 'ed';
+}
+
+sub CreateMatrix {
+	my ($self, $matrix) = @_;
+	my ($child, $parent) = split(/_/, $matrix);
+	print "Creating $child/$parent table...";
+	my $db = $HTML::Merge::Ini::SESSION_DB;
+	my $table = "$db.${matrix}_matrix";
+	my ($add, $del) = GetSay($child, $parent);
+	my $dbh = $self->DBH;
+
+	my $ddl = <<DDL;
+CREATE TABLE $table (
+	id INT PRIMARY KEY NOT NULL,
+	${child}_id INT NOT NULL,
+	${parent}_id INT NOT NULL
+)
+DDL
+	$dbh->do($ddl);
+	foreach (($child, $parent)) {
+		$ddl = "CREATE INDEX x_$_ ON $table (${_}_id)";
+		$dbh->do($ddl);
+	}
+	$ddl = "CREATE UNIQUE INDEX ux_$matrix ON $table (${child}_id, ${parent}_id)";
+	$dbh->do($ddl);
+
+	my $sql = "INSERT INTO $db.metadata (child, parent, stradd, strdel, tbl)
+		VALUES ('$child', '$parent', '$add', '$del', '${matrix}_matrix')";
+	$dbh->do($sql);
+	print "\n";
+}
+
+sub CreateMeta {
+	my $self = shift;
+	my $dbh = $self->DBH;
+	my $db = $HTML::Merge::Ini::SESSION_DB;
+	$dbh->do("CREATE DATABASE $db");
+	my $object = "VARCHAR(25) NOT NULL";
+	my $ddl = <<DDL;
+CREATE TABLE $db.metadata (
+        child $object,
+        parent $object,
+        stradd $object,
+        strdel $object,
+        tbl VARCHAR(50) NOT NULL
+)
+DDL
+
+	$dbh->do($ddl);
+	$ddl = "CREATE UNIQUE INDEX metadata_ux 
+		ON $db.metadata (child, parent)";
+	$dbh->do($ddl);
+
+	my $sql = "DELETE FROM metadata";
+	$dbh->do($sql);
+}
+
+sub IsMatrix {
+	shift if UNIVERSAL::isa($_[0], __PACKAGE__);
+	my ($child, $parent) = @_;
+	my $cache = undef if undef;
+	unless ($cache) {
+		my %cache;
+		@cache{@matrices} = (1) x scalar(@matrices);
+		$cache = \%cache;
+	}
+	$cache->{"${child}_$parent"};
+}
+
+sub Order (\$\$) {
+	my ($a, $b) = @_;
+	return if IsMatrix($$a, $$b);
+	($$a, $$b) = ($$b, $$a);
+}
+
+sub Assert {
+	my ($self, $child, $childval, $parent, $parentval, $del) = @_;
+	unless (IsMatrix($child, $parent)) {
+		($child, $childval, $parent, $parentval) =
+			($parent, $parentval, $child, $childval);
+	}
+	my $db = $HTML::Merge::Ini::SESSION_DB;
+	my $dbh = $self->DBH;
+	my $matrix = "$db.${child}_${parent}_matrix";
+	my $child_id = $self->GetIndex($child, $childval);
+	my $parent_id = $self->GetIndex($parent, $parentval);
+	my $where = "WHERE ${child}_id = $child_id 
+		AND ${parent}_id = $parent_id";
+	if ($del) {
+		my $sql = "DELETE FROM $matrix $where";
+		$dbh->do($sql);
+		return;
+	}
+	my $sql = "SELECT Count(*) FROM $matrix $where";
+	my $already = $dbh->selectrow_array($sql);
+	return if $already;
+	my $id = $self->GetNext($matrix);
+	$sql = "INSERT INTO $matrix (id, ${child}_id, ${parent}_id)
+		VALUES ($id, $child_id, $parent_id)";
+	$dbh->do($sql);
+}
+
+sub GetIndex {
+	my ($self, $tbl, $val) = @_;
+	my $db = $HTML::Merge::Ini::SESSION_DB;
+	my $dbh = $self->DBH;
+	my $where = "WHERE ${tbl}name = '$val'";
+	my $fun = ucfirst($tbl);
+	my $proc = UNIVERSAL::can($self, "Where$fun");
+	$where .= ' AND ' . &$proc($self, $val) if $proc;
+	my $table = "$db.${tbl}s_t";
+	my $sql = "SELECT id, epitaph FROM $table $where";
+	my ($id, $epitaph) = $dbh->selectrow_array($sql);
+	if ($epitaph) {
+		my $sql = "UPDATE $table SET epitaph = 0
+			WHERE id = $id";
+		$dbh->do($sql);
+	}
+	return $id if $id;
+	$proc = UNIVERSAL::can($self, "Bail$fun");
+	return if ($proc && &$proc($self, $val));
+	$id = $self->GetNext($table);
+	$proc = UNIVERSAL::can($self, "Insert$fun");
+	my $fields = "(epitaph, id, ${tbl}name)";
+	my $values = "(0, $id, '$val')";
+	&$proc($self, \$fields, \$values, $val) if $proc;
+	$sql = "INSERT INTO $table $fields VALUES $values";
+	$dbh->do($sql);
+	$id;
+}
+
+sub GetDetails {
+	my ($self, $tbl, $val) = @_;
+	my $db = $HTML::Merge::Ini::SESSION_DB;
+	my $dbh = $self->DBH;
+	my $where = "WHERE ${tbl}name = '$val'";
+	my $fun = ucfirst($tbl);
+	my $proc = UNIVERSAL::can($self, "Where$fun");
+	$where .= ' AND ' . &$proc($self, $val) if $proc;
+	my $table = "$db.${tbl}s_t";
+	my $sql = "SELECT description, tag FROM $table $where";
+	my ($name, $tag) = $dbh->selectrow_array($sql);
+	return undef unless defined($name) || defined($tag);
+	wantarray ? ($name, $tag) : $name;
+}
+
+sub SetDBField {
+	my ($self, $tbl, $val, $field, $col) = @_;
+	my $db = $HTML::Merge::Ini::SESSION_DB;
+	my $dbh = $self->DBH;
+	my $where = "WHERE ${tbl}name = '$val'";
+	my $fun = ucfirst($tbl);
+	my $proc = UNIVERSAL::can($self, "Where$fun");
+	$where .= ' AND ' . &$proc($self, $val) if $proc;
+	my $table = "$db.${tbl}s_t";
+	my $sql = "UPDATE $table SET $field = '$col' $where";
+	$dbh->do($sql);
+}
+
+
+sub GetInstance {
+	my $self = shift;
+	$self->GetInstanceID($HTML::Merge::config);
+}
+
+sub WhereTemplate {
+	my $self = shift;
+	my $instance = $self->GetInstance;
+	"instance_id = $instance";
+}
+
+sub InsertTemplate {
+	my $self = shift;
+	my $instance = $self->GetInstance;
+	${$_[0]} =~ s/\)/, instance_id)/;
+	${$_[1]} =~ s/\)/, $instance)/;
+}
+
+sub BailUser {
+	my ($self, $user) = @_;
+	croak "No user '$user'";
+	1;
+}
+
+sub Destruct {
+	my ($self, $tbl, $val) = @_;
+	my $id = $self->GetIndex($tbl, $val);
+	return unless $id;
+	my $dbh = $self->DBH;
+	my $db = $HTML::Merge::Ini::SESSION_DB;
+	my $sql = "DELETE FROM $db.${tbl}s_t WHERE id = $id";
+	$dbh->do($sql);
+	my @mats = Dependencies($tbl);
+	foreach (@mats) {
+		my $sql = "DELETE FROM $db.${_}_matrix
+			WHERE ${tbl}_id = $id";
+		$dbh->do($sql);
+	}
+}
+
+sub Dependencies {
+	shift if UNIVERSAL::isa($_[0], __PACKAGE__);
+	my $t = shift;
+	map {s/_$t$//; s/^${t}_//; $_; } grep {/^${t}_/ || /_$t$/} 
+		@{[@matrices]};
+}
+
+sub Children {
+	shift if UNIVERSAL::isa($_[0], __PACKAGE__);
+	my $t = shift;
+	map {s/_$t$//; $_;} grep /_$t$/, @{[@matrices]};
+}
+
+sub Parents {
+	shift if UNIVERSAL::isa($_[0], __PACKAGE__);
+	my $t = shift;
+	map {s/^${t}_//; $_; } grep /^${t}_/, @{[@matrices]};
+}
+
+
+
+sub LoadArray {
+	my ($self, $sql, @extra) = @_;
+	my $dbh = $self->DBH;
+	my $sth = $dbh->prepare($sql);
+	$sth->execute(@extra) || confess($sql);
+	my @vec;
+	while (my ($item) = $sth->fetchrow_array) {
+		push(@vec, $item);
+	}
+	wantarray ? @vec : \@vec;
+}
+
+sub GetVector {
+	my ($self, $tbl) = @_;
+	my $fun = "Weed" . ucfirst($tbl) . 's';
+	my $code = UNIVERSAL::can($self, $fun);
+	&$code($self) if $code;
+	my $db = $HTML::Merge::Ini::SESSION_DB;
+	my $table ="$db.${tbl}s_t";
+	my $sql = "SELECT ${tbl}name FROM $table 
+		WHERE epitaph = 0 ORDER BY ${tbl}name";
+	my $vec = $self->LoadArray($sql);
+	wantarray ? @$vec : $vec;
+}
+
+sub WeedTemplates {
+	my $self = shift;
+	my $db = $HTML::Merge::Ini::SESSION_DB;
+	my $table ="$db.templates_t";
+	my @weed;
+	my $sql = "SELECT templatename FROM $table";
+	my $vec = $self->LoadArray($sql);
+	@weed = grep { ! -f "$HTML::Merge::Ini::TEMPLATE_PATH/$_" 
+		|| -d "$HTML::Merge::Ini::TEMPLATE_PATH/$_" }
+		@$vec;
+	$sql = "UPDATE $table SET epitaph = 1 WHERE
+		templatename in (" .
+		join(", ", map {"'$_'"} @weed) . ")";
+	my $dbh = $self->DBH;
+	$dbh->do($sql);
+	my @files;
+	my $dir = $HTML::Merge::Ini::TEMPLATE_PATH;
+	for (;;) {
+		$dir .= "/*";
+		my @these = grep { ! -d $_ } glob($dir);
+		last unless @these;
+		push(@files, @these);
+	}
+	foreach (map {s|^$HTML::Merge::Ini::TEMPLATE_PATH/||; $_;}
+			@files) {
+		$self->GetTemplateID($_);
+	}
+}
+
+sub GetHash {
+	my ($self, $tbl) = @_;
+	my $vec = $self->GetVector($tbl);
+	my %hash;
+	@hash{@$vec} = @$vec;
+	wantarray ? %hash : \%hash;
+}
+
+#@matrices = qw(user_group user_realm group_realm
+#        realm_template template_subsite realm_subsite);
+my %mnemonics = qw(user_group JoinGroup:PartGroup
+	user_realm GrantUser:RevokeUser 
+	group_realm GrantGroup:RevokeGroup
+	realm_template Request:Waive
+	template_subsite Attach:Detach
+	realm_subsite GrandRequest:GrandWaive);
+
+foreach my $mat (keys %mnemonics) {
+	my ($assert, $retract) = split(/:/, $mnemonics{$mat});
+	my ($child, $parent) = split(/_/, $mat);
+	my $code = <<CODE;
+sub $assert {
+	my (\$self, \$$child, \$$parent) = \@_;
+	\$self->Assert('$child' => \$$child, '$parent' => \$$parent);
+}
+
+sub $retract {
+	my (\$self, \$$child, \$$parent) = \@_;
+	\$self->Assert('$child' => \$$child, '$parent' => \$$parent, 1);
+}
+CODE
+	eval $code;
+	die $@ if $@;
+}
+
+foreach (@objects) {
+	my $tok = ucfirst($_);
+	my $code = <<CODE;
+sub Get${tok}ID {
+	my (\$self, \$$tok) = \@_;
+	\$self->GetIndex('$_', \$$tok);
+}
+
+sub GetAll${tok}s {
+	my \$self = shift;
+	\$self->GetHash('$_');
+}
+
+sub Get${tok}s {
+	my \$self = shift;
+	\$self->GetVector('$_');
+}
+
+sub Get${tok}Name {
+	my (\$self, \$$tok) = \@_;
+	\$$tok ||= \$self->Get$tok;
+	\$self->GetDetails('$_' => \$$tok);
+}
+CODE
+	eval $code;
+	die $@ if $@;
+}
+
+sub GetOneDrill {
+	shift if UNIVERSAL::isa($_[0], __PACKAGE__);
+	my ($from, $to) = @_;
+	my $hash = {};
+	foreach (@matrices) {
+		my ($child, $parent) = split(/_/);
+		$hash->{$child} ||= {};
+		$hash->{$child}->{$parent} = "${child}_${parent}";
+	}
+	my $ary = [];
+	&Recur($from, $to, $ary, 0, $hash);
+	&Recur($to, $from, $ary, 1, $hash);
+	$ary;
+}
+
+sub Recur {
+	shift if UNIVERSAL::isa($_[0], __PACKAGE__);
+	my ($from, $to, $ary, $opp, $hash, @way) = @_;
+	if ($from eq $to) {
+		@way = reverse @way if $opp;
+		push(@$ary, \@way);
+		return;
+	}
+	my $node = $hash->{$from};
+	foreach (keys %$node) {
+		&Recur($_, $to, $ary, $opp, $hash, @way, $node->{$_});
+	}
+}
+
+sub GetDrill {
+	shift if UNIVERSAL::isa($_[0], __PACKAGE__);
+	my ($from, $to) = @_;
+	my $cache = undef if undef;
+	$cache ||= {};
+	return $cache->{$from, $to} if exists $cache->{$from, $to};
+	my $ref = GetOneDrill($from, $to);
+	return $cache->{$from, $to} = $ref;	
+}
+
+sub Links {
+	my ($self, $child, $this, $parent, $only) = @_;
+	my $sql;
+	my ($check, $read) = ($child, $parent);
+	Order($child, $parent);
+	my $comp;
+	unless (UNIVERSAL::isa($this, 'ARRAY')) {
+		$comp = "= '$this'";
+	} else {
+		return () unless $#$this >= 0;
+		$comp = "IN (" . join(", ", map {"'$_'";} @$this) . ")";
+	}
+	my $extra;
+	if ($only) {
+		$extra = " AND B.${read}name = '$only'";
+	}
+       	$sql = "SELECT B.${read}name
+               	FROM $HTML::Merge::Ini::SESSION_DB.${child}_${parent}_matrix A,
+                $HTML::Merge::Ini::SESSION_DB.${read}s_t B,
+       	        $HTML::Merge::Ini::SESSION_DB.${check}s_t C
+               	WHERE C.${check}name $comp
+                        AND C.id = A.${check}_id
+	                AND B.id = A.${read}_id $extra
+                ORDER BY B.${read}name";
+	$self->LoadArray($sql);
+}
+
+sub Linkers {
+	my ($self, $child, $parent) = @_;
+	my $sql;
+	my ($check, $read) = ($parent, $child);
+	Order($child, $parent);
+       	$sql = "SELECT DISTINCT B.${read}name
+               	FROM $HTML::Merge::Ini::SESSION_DB.${child}_${parent}_matrix A,
+                $HTML::Merge::Ini::SESSION_DB.${read}s_t B
+               	WHERE B.id = A.${read}_id
+                ORDER BY B.${read}name";
+	$self->LoadArray($sql);
+}
+
+
+1;
