@@ -27,7 +27,7 @@ if (exists $ENV{'GATEWAY_INTERFACE'}
 }
 
 
-print "Content-type: text/html\n\n";
+print "Content-type: text/html\n\n" if $ENV{'REQUEST_METHOD'};
 
 if (param('__default__')) {
 	my $sub = param("sub");
@@ -216,7 +216,11 @@ if ($@ && $@ !~ /STOP_ON_ERROR/) {
 }
 
 foreach (@HTML::Merge::cleanups) {
-	eval '&$_';
+	if (UNIVERSAL::isa($_, 'CODE')) {
+		eval '&$_';
+	} else {
+		eval $_;
+	}
 }
 
 if ($HTML::Merge::Ini::DEVELOPMENT && !$candidate) {

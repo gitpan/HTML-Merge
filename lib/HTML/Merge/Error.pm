@@ -84,6 +84,7 @@ sub DoInfo
 		    'MAIL', "Mail message",
 		    'IF', "If statement",
 		    'TIME_OUT', "Session timeout",
+		    'INCLUDE', "Including file",
 		    'TRACE', "Trace at");
 
 

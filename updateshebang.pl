@@ -1,7 +1,9 @@
 use Config;
 
+my ($dir) = @ARGV;
 my $tmp = "tmp-$$";
-foreach (glob("private/perl/*.pl")) {
+
+foreach (glob("$dir/*.pl")) {
 	print "Updating shebang for $_\n";
 	open(I, "+<$_") || die $!;
 	open(O, "+>$tmp") || die $!;

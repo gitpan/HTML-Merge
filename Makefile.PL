@@ -7,11 +7,15 @@ sub MY::install {
 	$inherited . <<'MAKE';
 DATA = $(PREFIX)/share
 
-install :: install-private install-docs install-samples
+install :: install-private install-public install-docs install-samples
 
 install-private ::
-	$(PERL) updateshebang.pl
+	$(PERL) updateshebang.pl private/perl
 	$(MOD_INSTALL) private $(DATA)/merge/private
+
+install-public :: 
+	$(PERL) updateshebang.pl public/perl
+	$(MOD_INSTALL) public $(DATA)/merge/public
 
 install-docs :: docs README
 	$(MOD_INSTALL) docs $(DATA)/merge/docs

@@ -5,7 +5,7 @@ use vars qw($open %enders %printers %tokenizers $VERSION $DEBUG);
 use Carp;
 use Config;
 
-$VERSION = '3.33';
+$VERSION = '3.34';
 
 BEGIN {
 	eval 'use HTML::Merge::Ext;';
@@ -253,13 +253,16 @@ sub EatOne {
 	if ($self->{'source'} =~ s/^(.*?)\<(\/?)$open(\[\w+?\]\.)?(\w+)//si) {
 		my ($head, $close, $engine, $tag, $param) = ($1, $2, $3, uc($4));
 		$engine =~ s/^\[(.*)\]\./$1/;
-		$self->PrePrint($head);
 		my $code = $self->WantTag($tag, $close);
 		$param = $self->EatParam($tag);
 		$self->Die("Closing tags may not have parameters") if (($close || $enders{$tag}) && ($param && !ref($param) || ref($param) && $#$param >= 0));
 		$self->Mark;
 		if ($printers{$tag}) {
+			$self->PrePrint($head);
 			$self->{'buffer'} .= "print (";
+		} else {
+			$head =~ s/\s+$//s;
+			$self->PrePrint($head);
 		}
 		$self->{'buffer'} .= &$code($self, $engine, $param);
 		if ($printers{$tag}) {
@@ -568,16 +571,14 @@ sub DoELSIF {
 		$self->Syntax;
 	}
 	$self->Expect($engine, 'if');
+	$self->Push('if', $engine);
 	my $text = <<EOM;
 	\$__exit = 0;
-} else {
-	HTML::Merge::Error::HandleError('INFO', "$2", 'IF');
-	\$__exit = eval("$2");
-	HTML::Merge::Error::HandleError('ERROR', \$@) if (\$@);
-}
-if (\$__exit) {
+} elsif (((HTML::Merge::Error::HandleError('INFO', "$2", 'IF'),
+	\$__exit = eval("$2"),
+	\$@ && HTML::Merge::Error::HandleError('ERROR', \$@),
+	\$__exit))[-1]) {
 EOM
-	$self->Push('if', $engine);
 	$text;
 }
 
@@ -603,7 +604,7 @@ sub DoWHILE {
 	}
 	my $cond = quotemeta($2);
 	my $text = <<EOM;
-HTML::Merge::Error::HandleError('INFO', "$2", 'WHILE');
+HTML::Merge::Error::HandleError('INFO', "while $2", 'WHILE');
 for (;;) {
 	my \$__test = eval("$2");
 	HTML::Merge::Error::HandleError('ERROR', \$@) if (\$@);
@@ -792,8 +793,8 @@ sub DoINCLUDE {
 	my $name = $self->{'name'};
 	my $text = <<EOM;
 	my \$__input = "\$HTML::Merge::Ini::TEMPLATE_PATH/$inc";
-	my \$__script = "\$HTML::Merge::Ini::CACHE_PATH/$inc.pl";
-	my \$__candidate = "\$HTML::Merge::Ini::PRECOMPILED_PATH/$inc.pl";
+	my \$__script = "\$HTML::Merge::Ini::CACHE_PATH/$inc.pli";
+	my \$__candidate = "\$HTML::Merge::Ini::PRECOMPILED_PATH/$inc.pli";
 	unless (-e \$__candidate) {
 		HTML::Merge::Error::HandleError('ERROR',
 			"No template '$inc' found") unless -e \$__input;
@@ -809,7 +810,9 @@ sub DoINCLUDE {
 	} else {
 		\$__script = \$__candidate;
 	}
+	HTML::Merge::Error::HandleError('INFO',"$inc",'INCLUDE');
 	do \$__script;
+	HTML::Merge::Error::HandleError('ERROR', \$@) if \$@;
 EOM
 	$text;
 }
@@ -1693,9 +1696,13 @@ sub CompileFile {
 	sub dbh () {
 		$engines{""}->{'dbh'};
 	}
+	sub register ($) {
+		push(@HTML::Merge::cleanups, shift);
+	}
 
 	if (tied(%engines)) {
 		undef %engines;
+		untie %engines;
 	}
 
 	tie %engines, HTML::Merge::Engine;
@@ -1705,8 +1712,10 @@ sub CompileFile {
 	foreach (@keys) {
 		$vars{$_} = param($_);
 	}
+	unless ($HTML::Merge::Ini::TEMPLATE_CACHE) {
 	
 EOM
+		print "\t\trequire '$HTML::Merge::config';\n\t}\n";
 	}
 
 	eval {	
