@@ -12,6 +12,7 @@ die "Not in web mode" if (length($log_dir) < 6);
 
 use File::Path;
 rmtree $log_dir;
+mkdir $log_dir, 0755;
 
 print <<HTML;
 Content-type: text/html

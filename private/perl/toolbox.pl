@@ -104,6 +104,21 @@ function ChangePass()
 	var myWin = open("chpass.pl?$extra&dt=" + dt, "backend","screenY=100,top=100,screenX=90,left=90,width=500,height=300$winstuff");
 	myWin.focus();
 }
+//////////////////////////////////////////////////////////////////////
+function Freeze()
+{
+	var dt = new Date() - 1;
+	var myWin = open("freeze.pl?$extra&dt=" + dt, "backend","screenY=100,top=100,screenX=90,left=90,width=50,height=30$winstuff");
+	myWin.focus();
+}
+//////////////////////////////////////////////////////////////////////
+function Defreeze()
+{
+	var dt = new Date() - 1;
+	var myWin = open("defreeze.pl?$extra&dt=" + dt, "backend","screenY=100,top=100,screenX=90,left=90,width=50,height=30$winstuff");
+	myWin.focus();
+}
+
 
 //-->
 </SCRIPT>
@@ -137,6 +152,8 @@ Help()|Online Help|Documentation about Merge tags.
 EraseLogs()|Erase Logs|Erase the log files.
 EraseCache()|Erase Cache|Erase the cached precompiled pages.
 ChangePass()|Change Password|Chaneg the toolbox password
+Freeze()|Freeze Compiled Templates|Compile all templates and freeze the compiled version
+Defreeze()|Defreeze Compiled Templates|Remove all templates from the precompiled directory
 DATA
 
 foreach (split(/\n/, $data)) {

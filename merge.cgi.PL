@@ -95,6 +95,11 @@ if ($template) {
 
 	$input = "$HTML::Merge::Ini::TEMPLATE_PATH/$template";
 	$output = "$HTML::Merge::Ini::CACHE_PATH/$template.pl";
+	my $candidate = "$HTML::Merge::Ini::PRECOMPILED_PATH/$template.pl";
+	if (-e $candidate) {
+		$output = $candidate;
+		$input = [];
+	}
 }
 
 my $candidate;
@@ -137,42 +142,45 @@ foreach (split/\//, $template) {
 	}
 }
 
-&HTML::Merge::Compile::safecreate($output);
+&HTML::Merge::Compile::safecreate($output) unless -e $output;
+
+# Force parameters to be extracted
 
 my @keys = param;
 foreach (@keys) {
 	my $dummy = param($_);
 }
 
-unless (-f $input || !$input) {
-	HTML::Merge::Error::ForceError("$template not found");
-	exit; # Under mod_perl calls Apache::exit
-	print "Status: 404 File not found\n";
-	print "Content-type: text/plain\n\n";
-	print "$template not found\n";
-	exit;
-}
-
-my $source = &date($input);
-my $dest = &date($output);
-
-$HTML::Merge::context = [$template, 0];
-
-if ($source > $dest || $HTML::Merge::Ini::ALWAYS_COMPILE) {
-	eval {
-		&HTML::Merge::Compile::CompileFile($input, $output);
-	} if $input;
-	if ($@) {
-		unlink $output;
-		HTML::Merge::Error::ForceError("$template: $@");
+unless (ref($input)) {
+	unless (-f $input || !$input) {
+		HTML::Merge::Error::ForceError("$template not found");
 		exit; # Under mod_perl calls Apache::exit
-		print "Status: 501 Merge errors\n";
+		print "Status: 404 File not found\n";
 		print "Content-type: text/plain\n\n";
-		print $@;
+		print "$template not found\n";
 		exit;
 	}
-}
 
+	my $source = &date($input);
+	my $dest = &date($output);
+
+	$HTML::Merge::context = [$template, 0];
+
+	if ($source > $dest || $HTML::Merge::Ini::ALWAYS_COMPILE) {
+		eval {
+			&HTML::Merge::Compile::CompileFile($input, $output);
+		} if $input;
+		if ($@) {
+			unlink $output;
+			HTML::Merge::Error::ForceError("$template: $@");
+			exit; # Under mod_perl calls Apache::exit
+			print "Status: 501 Merge errors\n";
+			print "Content-type: text/plain\n\n";
+			print $@;
+			exit;
+		}
+	}
+}
 
 if ($HTML::Merge::Ini::DEVELOPMENT && !$candidate && $input) {
 	HTML::Merge::Error::OpenMergeErrorLog();

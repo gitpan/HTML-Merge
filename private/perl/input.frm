@@ -1,6 +1,7 @@
 Direcotries||S||
 Template path|TEMPLATE_PATH|D||@CGI_BIN@/template
 Cache path|CACHE_PATH|D||@CGI_BIN@/cache
+Precompiled template path|PRECOMPILED_PATH|D||@CGI_BIN@/pl
 Default template|DEF_TEMPLATE|T||@DEFAULT@
 Merge path|MERGE_PATH|T||@URL@
 Merge absolute path|MERGE_ABSOLUTE_PATH|D|W|@CGI_BIN@

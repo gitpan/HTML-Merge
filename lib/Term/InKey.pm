@@ -96,6 +96,7 @@ sub ReadKey {
 
 	my $ch;
 
+	open(I, "/dev/tty");
 	if ($flush) {
 		for (;;) {
 			my $rin;
@@ -104,10 +105,9 @@ sub ReadKey {
 			getc;
 		}
 	} else {
-		open(I, "/dev/tty");
-		$ch = getc(I);
-		close(I);
+		sysread(I, $ch, 1);
 	}
+	close(I);
 
 	$save->setattr(0);
 

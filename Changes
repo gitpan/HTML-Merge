@@ -12,3 +12,6 @@ Revision history for Perl extension HTML::Merge.
 3.30  Tue Mar 19 15:58:31 2002
         - Syntax error reporting works now
 
+3.31  Thu Mar 21 14:19:44 2002
+        - Freezing option for all templates in an instance
+

@@ -71,9 +71,10 @@ while (-f "$cgi_bin/merge.conf") {
 	last;
 }
 
-mkdir "$cgi_bin/template", 0755;
-mkdir "$cgi_bin/cache", 0755;
-mkdir "$cgi_bin/logs", 0755;
+foreach (qw(template cache logs pl)) {
+	mkdir "$cgi_bin/$_", 0755;
+	chown $uid, $gid, "$cgi_bin/$_";
+}
 
 print "\n";
 

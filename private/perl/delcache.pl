@@ -11,6 +11,7 @@ die "Not in web mode" if (length($HTML::Merge::Ini::CACHE_PATH) < 6);
 use File::Path;
 
 rmtree $HTML::Merge::Ini::CACHE_PATH;
+mkdir $HTML::Merge::Ini::CACHE_PATH, 0755;
 
 print <<HTML;
 Content-type: text/html

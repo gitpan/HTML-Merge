@@ -607,7 +607,8 @@ sub DelUser {
 
 sub SetUser {
 	my ($self, $user) = @_;
-	$self->SetPersistent("__user", $user);
+	$self->SetPersistent("__user", join(":", $user, 
+		$self->GetInstance));
 }
 
 sub GetUser {
@@ -616,7 +617,8 @@ sub GetUser {
 	$self->ValidatePersistent;
 #	delete $self->{'KLUDGE_NO_NEW_ID'};
 	return undef unless $self->{'session_id'};
-	$self->GetPersistent("__user");
+	my ($u, $i) = split(/:/, $self->GetPersistent("__user"));
+	$i == $self->GetInstance ? $u : undef;
 }
 
 

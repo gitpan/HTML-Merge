@@ -5,7 +5,7 @@ use vars qw($open %enders %printers %tokenizers $VERSION $DEBUG);
 use Carp;
 use Config;
 
-$VERSION = '3.30';
+$VERSION = '3.31';
 
 BEGIN {
 	eval 'use HTML::Merge::Ext;';
@@ -793,13 +793,21 @@ sub DoINCLUDE {
 	my $text = <<EOM;
 	my \$__input = "\$HTML::Merge::Ini::TEMPLATE_PATH/$inc";
 	my \$__script = "\$HTML::Merge::Ini::CACHE_PATH/$inc.pl";
-	my \$__source = (stat(\$__input))[9];
-	my \$__output = (stat(\$__script))[9];
-	if (\$__source > \$__output) {
-		require HTML::Merge::Compile;
-		HTML::Merge::Compile::safecreate(\$__script);
-		eval '	HTML::Merge::Compile::CompileFile(\$__input, \$__script, 1); ';
-		HTML::Merge::Error::HandleError('ERROR', \$@) if \$@;
+	my \$__candidate = "\$HTML::Merge::Ini::PRECOMPILED_PATH/$inc.pl";
+	unless (-e \$__candidate) {
+		HTML::Merge::Error::HandleError('ERROR',
+			"No template '$inc' found") unless -e \$__input;
+		my \$__source = (stat(\$__input))[9];
+		my \$__output = (stat(\$__script))[9];
+		if (\$__source > \$__output) {
+			require HTML::Merge::Compile;
+			HTML::Merge::Compile::safecreate(\$__script)
+				unless -e \$__script;
+			eval '	HTML::Merge::Compile::CompileFile(\$__input, \$__script, 1); ';
+			HTML::Merge::Error::HandleError('ERROR', \$@) if \$@;
+		}
+	} else {
+		\$__script = \$__candidate;
 	}
 	do \$__script;
 EOM

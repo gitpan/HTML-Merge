@@ -50,6 +50,7 @@ private/perl/one.pl
 private/perl/printsource.pl
 private/perl/subsites.pl
 private/perl/chpass.pl
+private/perl/freeze.pl
 docs/Ext.html
 docs/Ext.txt
 docs/Merge.html
