@@ -33,7 +33,9 @@ sub WinReadKey {
 
 sub BadReadKey {
 	system "stty raw -echo";
-	my $ch = getc;
+	open(I, "/dev/tty");
+	my $ch = getc(I);
+	close(I);
 	system "stty -raw echo";
 	$ch;
 }
@@ -90,7 +92,9 @@ sub ReadKey {
 			getc;
 		}
 	} else {
-		$ch = getc;
+		open(I, "/dev/tty");
+		$ch = getc(I);
+		close(I);
 	}
 
 	$save->setattr(0);

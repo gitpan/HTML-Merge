@@ -5,7 +5,7 @@ use vars qw($open %enders %printers %tokenizers $VERSION $DEBUG);
 use Carp;
 use Config;
 
-$VERSION = '3.28';
+$VERSION = '3.29';
 
 BEGIN {
 	eval 'use HTML::Merge::Ext;';
@@ -16,7 +16,8 @@ $open = '\$R';
 #@non_flow{@non_flow} = @non_flow;
 my @printers = qw(VAR SQL GET PGET PVAR INDEX PIC STATE CFG INI LOGIN 
 	AUTH DECIDE EMPTY DATE DAY MONTH YEAR DATEDIFF LASTDAY ADDDATE
-	USER MERGE TEMPLATE TRANSFER DUMP NAME TAG COOKIE);
+	USER MERGE TEMPLATE TRANSFER DUMP NAME TAG COOKIE
+	DATE2UTC UTC2DATE);
 @printers{@printers} = @printers;
 #my @stringers = qw(IF SET PSET SETCFG);
 #@stringers{@stringers} = @stringers;
@@ -422,7 +423,9 @@ sub DoLOOP {
 	my $text;
 	unless ($limit) {
 		$text = <<EOM;
+local (\$_);
 for (;;) {
+	\$_++;
 EOM
 	} else {
 		$text = <<EOM;
@@ -431,7 +434,8 @@ EOM
 	}
 	$text .= <<EOM;
 	last unless (\$engines{"$engine"}->HasQuery);
-	last unless (\$engines{"$engine"}->Fetch);
+	last unless (\$engines{"$engine"}->Fetch(1, \$_));
+	local (\$_);
 EOM
 	$self->Push('loop', $engine);
 	$text;
@@ -480,7 +484,7 @@ sub DoUnLOOP {
 sub DoFETCH {
 	my ($self, $engine, $param) = @_;
 	$self->Syntax if ($param);
-	"\$engines{\"$engine\"}->Fetch(1);";
+	"\$engines{\"$engine\"}->Fetch(1, 2);";
 }
 
 sub DoCFG {
@@ -922,7 +926,7 @@ sub DoUnCOUNT {
 
 sub DoPIC {
         my ($self, $engine, $param) = @_;
-	unless ($param =~ s/^\\\.([FRN])(.*)$//is) {
+	unless ($param =~ s/^\\\.([FRNA])(.*)$//is) {
 		$self->Syntax;
 	}
 	my ($type, $param) = (uc($1), $2);
@@ -990,13 +994,45 @@ sub PictureN {
 	}
 	my $text = $2;
 	<<EOM;
-"" . (\$__s = "$text" || !"$opts{'Z'}" ? sprintf("\%${format}f", "$text") : "&nbsp;",
+"" . (\$__s = "$text" || !"$opts{'Z'}" ? sprintf("%${format}f", "$text") : "&nbsp;",
 	"$opts{'F'}" ? (\$__s =~ 
 	s!(\\d+)!scalar(reverse join(\$HTML::Merge::Ini::THOUSAND_SEPARATOR || ",", (reverse \$1) =~ /(\\d{1,3})/g))!e) : undef, 
 	\$__s =~ s/\\./\$HTML::Merge::Ini::DECIMAL_SEPARATOR || '.'/e,
 	\$__s)[-1]
 EOM
 }
+
+sub PictureA {
+	my ($self, $param) = @_;
+	my %opts;
+	while ($param =~ s/^([LRCSPW])//) {
+		$opts{$1}++;
+	}
+	my $count;
+	foreach (qw(S C P)) {
+		$self->Die("Illegal flag combinations") 
+			if ($opts{$_} && $count++);
+	}
+	unless ($param =~ s/^\\\((.*?)\\\)//s) {
+		$self->Syntax;
+	}
+	my $format = $1;
+	unless ($param =~ s/^\\\.\\(["'])(.*?)\\\1$//s) {
+		$self->Syntax;
+	}
+	my $text = $2;
+	<<EOM;
+"" . (\$__s = "$text",
+	"$opts{'C'}" && \$__s =~ tr/a-z/A-Z/,
+	"$opts{'S'}" && \$__s =~ tr/A-Z/a-z/,
+	"$opts{'P'}" && \$__s =~ s/\\b([a-z]\\S+)/ucfirst(lc(\$1))/egi,
+	"$opts{'L'}" && \$__s =~ s/^\\s+//,
+	"$opts{'R'}" && \$__s =~ s/\\s+\$//,
+	"$opts{'W'}" && \$__s =~ s/\\s{2,}/ /g,
+	sprintf("%${format}s", \$__s))[-1]
+EOM
+}
+
 
 sub DoINC {
         my ($self, $engine, $param) = @_;
@@ -1341,6 +1377,30 @@ sub DoDATEDIFF {
 \$__conv = sub { (shift() =~ /^(\\d{4})(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})/); 
 	Time::Local::timelocal(\$6, \$5, \$4, \$3, \$2 - 1, \$1 - 1900); },
 int((&\$__conv("$now") - &\$__conv("$before")) / $div))[-1]
+EOM
+}
+
+sub DoDATE2UTC {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.\\(['"])(.*)\\\1$/s) {
+		$self->Syntax;
+	}
+	<<EOM;
+(require Time::Local, 
+("$2") =~ /^(\\d{4})(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})\$/,
+	Time::Local::timelocal(\$6, \$5, \$4, \$3, \$2 - 1, \$1 - 1900))[-1]
+EOM
+}
+
+sub DoUTC2DATE {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.\\(['"])(.*)\\\1$/) {
+		$self->Syntax if $param;
+	}
+	<<EOM;
+(\@__t = localtime("$2"), 
+	sprintf("%04d" . ("%02d" x 5), \$__t[5] + 1900, \$__t[4] + 1,
+		\@__t[reverse (0 .. 3)]))[-1]
 EOM
 }
 

@@ -178,12 +178,13 @@ sub Empty {
 }
 ###############################################################################
 sub Fetch {
-	my ($self, $explicit) = @_;
+	my ($self, $explicit, $atrow) = @_;
 	my $sth = $self->{'sth'};
 	return HTML::Merge::Error::HandleError('WARN', 'ILLEGAL_FETCH') unless ($sth);
 	$self->{'index'}++;
 	if ($explicit) {
 		$self->{'buffer'} = undef;
+		return !$self->{'empty'} if ($atrow == 1);
 	}
 	my $candidate = $self->{'buffer'};
 	if ($candidate) {
@@ -542,6 +543,7 @@ sub Convert {
 
         my $from = pack("C*", map {hex($_)} ($HTML::Merge::Ini::S_FROM =~ /(..)/g));
         my $to = pack("C*", map {hex($_)} ($HTML::Merge::Ini::S_TO =~ /(..)/g));        $from =~ s/-/\\-/;
+print STDERR "cv\n$from\n$to\n";
         $to =~ s/-/\\-/;
 	($from, $to) = ($to, $from) if $rev;
         eval "\$db_pass =~ tr/$to/$from/;";

@@ -203,6 +203,44 @@ E<lt>$RPIC.NF(<format>).'B<number>'E<gt>
 
 After formatting the number, add commas.
 
+Z and F may be combined.
+
+E<lt>$RPIC.A(<width>).'B<alphanumeric string>'E<gt>
+
+Left space pad the number to achieve a width. (Right justify)
+
+E<lt>$RPIC.A(-<width>).'B<alphanumeric string>'E<gt>
+
+Right space pad the number to achieve a width. (Left justify)
+
+E<lt>$RPIC.AC(<format>).'B<alphanumeric string>'E<gt>
+
+Capitalize string.
+
+E<lt>$RPIC.AS(<format>).'B<alphanumeric string>'E<gt>
+
+Convert string to lower case. (Mnemonic: Small)
+
+E<lt>$RPIC.AS(<format>).'B<alphanumeric string>'E<gt>
+
+Convert string to 'proper' case, ie, first and only first letter 
+of each word capitalized.
+
+E<lt>$RPIC.AW(<format>).'B<alphanumeric string>'E<gt>
+
+Trim redundant spaces, ie, convert bulk spaces to one space.
+
+E<lt>$RPIC.AR(<format>).'B<alphanumeric string>'E<gt>
+
+Trim right spaces.
+
+E<lt>$RPIC.AL(<format>).'B<alphanumeric string>'E<gt>
+
+Trim left spaces.
+
+L, R and W may be combined, and all combinations may be combined with either
+C, S or P.
+
 =item *
 
 E<lt>$RDECIDE.'B<perl code>'?'B<string>':'B<string>'E<gt>
@@ -508,13 +546,25 @@ E<lt>$RDATEDIFF.S.'B<earlier date>','B<later date>'E<gt>
 
 Return the difference between dates, in days, hours, minutes and seconds, correspondingly.
 
+=item *
+
 E<lt>$RLASTDAY.'B<date>'E<gt>
 
 Give the last day of month related to the specific date.
 
+=item *
+
 E<lt>$RADDDATE.'B<date>','B<day>','B<month>','B<year>'E<gt>
 
 Add the gievn number of days, then the given number of months and years to the date. Returns a new date.
+
+=item *
+
+E<lt>$RDATE2UTC.'B<date>'E<gt>
+
+E<lt>$RUTC2DATE.'B<UNIX epoch time>'E<gt>
+
+Convert between a date string and a universal UNIX time.
 
 =back
 
