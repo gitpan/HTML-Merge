@@ -16,6 +16,7 @@ foreach (glob("private/perl/*.pl")) {
 	truncate(I, tell(I)) || die $!;
 	close(O);
 	close(I);
+	chmod 0755, $_;
 }
 
 unlink $tmp;

@@ -49,6 +49,7 @@ private/perl/many.pl
 private/perl/one.pl
 private/perl/printsource.pl
 private/perl/subsites.pl
+private/perl/chpass.pl
 docs/Ext.html
 docs/Ext.txt
 docs/Merge.html

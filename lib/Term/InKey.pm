@@ -71,9 +71,21 @@ sub ReadKey {
 	$flags{'i'} &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP
                                    |INLCR|IGNCR|ICRNL|IXON);
 
+	&setit($x, \%flags);
+
+	$x->setattr(0);
+
 	$flags{'o'} &= ~OPOST;
 
+	&setit($x, \%flags);
+
+	$x->setattr(0);
+
 	$flags{'l'} &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
+
+	&setit($x, \%flags);
+
+	$x->setattr(0);
 
 	$flags{'c'} &= ~(CSIZE|PARENB);
 	$flags{'c'} |= CS8;
@@ -203,7 +215,7 @@ sub ReadPassword {
 	my $save = $|;
 	$| = 1;
 	my $pass = '';
-	&Flush;
+#	&Flush;
 	for (;;) {
 		my $ch = &ReadKey;
 		if ($ch eq "\3") {

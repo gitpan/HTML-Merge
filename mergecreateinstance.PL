@@ -89,10 +89,14 @@ for that cgi-bin directory", 'URL', $default, sub {
 });
 
 
+my $root = `httpd -V | grep HTTPD_ROOT`;
+$root =~ s/^\s*-D\s+HTTPD_ROOT=\"(.*)\"\s*$/$1/;
+
 $default = `httpd -V | grep SERVER_CONFIG_FILE`;
 $default =~ s/^\s*-D\s+SERVER_CONFIG_FILE=\"(.*)\"\s*$/$1/;
 
-unless ($default) {
+$default = "$root/$default" if (-f "$root/$default");
+unless ($default && -e $default) {
 	foreach (@apache) {
 		if (-f "$_/conf/httpd.conf") {
 			$default = "$_/conf/httpd.conf";

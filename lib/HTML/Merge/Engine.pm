@@ -543,7 +543,6 @@ sub Convert {
 
         my $from = pack("C*", map {hex($_)} ($HTML::Merge::Ini::S_FROM =~ /(..)/g));
         my $to = pack("C*", map {hex($_)} ($HTML::Merge::Ini::S_TO =~ /(..)/g));        $from =~ s/-/\\-/;
-print STDERR "cv\n$from\n$to\n";
         $to =~ s/-/\\-/;
 	($from, $to) = ($to, $from) if $rev;
         eval "\$db_pass =~ tr/$to/$from/;";
@@ -1210,5 +1209,35 @@ sub Linkers {
 	$self->LoadArray($sql);
 }
 
+sub time2str ($$) {
+	my ($fmt, $time) = @_;
+	my $s;
+	eval { require POSIX; 
+		$s = POSIX::strftime($fmt, localtime($time));
+	};
+	return $s if $s;
+	eval { require Date::Format; 
+		$s = Date::Format::time2str($time);
+	};
+	$s;
+}
+
+sub Force ($$) {
+	my ($value, $flags) = @_;
+	return unless $HTML::Merge::Ini::VALUE_CHECKING;
+	if ($flags =~ /n/i) {
+		HTML::Merge::Error::HandleError('ERROR', "'$value' is not an integer")
+			unless ($value eq ($value * 1));
+	}
+	if ($flags =~ /i/i) {
+		HTML::Merge::Error::HandleError('ERROR', "'$value' is not an integer")
+			unless ($value eq ($value * 1) 
+				&& $value == int($value));
+	}
+	if ($flags =~ /u/i) {
+		HTML::Merge::Error::HandleError('ERROR', "'$value' is negative")
+			if $value < 0;
+	}
+}
 
 1;

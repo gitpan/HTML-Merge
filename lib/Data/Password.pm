@@ -26,7 +26,8 @@ $MAXLEN = 8;
 
 sub OpenDictionary {
 	my $sym = gensym;
-	foreach (qw(/usr/dict/web2 /usr/dict/words)) {
+	foreach (qw(/usr/dict/web2 /usr/dict/words /usr/share/dict/words
+			/usr/share/dict/linux.words)) {
 		return $sym if (open($sym, $_));
 	}
 	undef;

@@ -97,6 +97,14 @@ function Help()
 	var myWin = open("help.pl?$extra", "help", "screenY=100,top=100,screenX=90,left=90,width=600,height=480$winstuff");
 	myWin.focus();
 }
+//////////////////////////////////////////////////////////////////////
+function ChangePass()
+{
+	var dt = new Date() - 1;
+	var myWin = open("chpass.pl?$extra&dt=" + dt, "backend","screenY=100,top=100,screenX=90,left=90,width=500,height=300$winstuff");
+	myWin.focus();
+}
+
 //-->
 </SCRIPT>
 
@@ -128,6 +136,7 @@ WebToWeb()|Web Development|This feature is under construction.
 Help()|Online Help|Documentation about Merge tags.
 EraseLogs()|Erase Logs|Erase the log files.
 EraseCache()|Erase Cache|Erase the cached precompiled pages.
+ChangePass()|Change Password|Chaneg the toolbox password
 DATA
 
 foreach (split(/\n/, $data)) {

@@ -9,3 +9,6 @@ Revision history for Perl extension HTML::Merge.
 3.27  Thu Feb  7 19:30:45 2002
         - Samples. Cookies.
 
+3.30  Tue Mar 19 15:58:31 2002
+        - Syntax error reporting works now
+

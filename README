@@ -234,7 +234,7 @@ FUNCTIONAL TAGS
 
         Convert string to lower case. (Mnemonic: Small)
 
-        <$RPIC.AS(<format>).'alphanumeric string'>
+        <$RPIC.AP(<format>).'alphanumeric string'>
 
         Convert string to 'proper' case, ie, first and only first letter of
         each word capitalized.
@@ -253,6 +253,14 @@ FUNCTIONAL TAGS
 
         L, R and W may be combined, and all combinations may be combined
         with either C, S or P.
+
+        <$RPIC.D(format).'date'>
+
+        Format a POSIX time string, requires Date::Format.
+
+        <$RPIC.X(number).'string'>
+
+        Repeats a string the required number of times.
 
     *   <$RDECIDE.'perl code'?'string':'string'>
 
@@ -278,6 +286,10 @@ FUNCTIONAL TAGS
         <$RPERL.C>
 
         Documentation soon.
+
+    *   <$REVAL.'perl code'>
+
+        Evaluates the code.
 
 SOURCE TAGS
     *   <$REM.'string'>
@@ -307,7 +319,7 @@ SOURCE TAGS
 VARIABLE TAGS
     *   <$RVAR.variable>
 
-        Dereferences a local variable, or a CGi variable. (Precedence to the
+        Dereferences a local variable, or a CGI variable. (Precedence to the
         former).
 
     *   <$RSET.variable='perl code'>
@@ -366,6 +378,14 @@ VARIABLE TAGS
         Set a cookie using a HTTP-EQUIV <META> HTML tag. The notations are
         used for setting a permanent cookie, a cookie with an expire date,
         and a temporary cookie that will disappear when the browser exits.
+
+    *   <$RENV.variable>
+
+        Get an environment variable.
+
+    *   <$RENVSET.variable='perl code'>
+
+        Set an environment variable.
 
 SECURITY TAGS
     These tags are impleneted only if the merge database exists.

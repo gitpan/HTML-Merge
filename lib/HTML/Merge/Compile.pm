@@ -5,7 +5,7 @@ use vars qw($open %enders %printers %tokenizers $VERSION $DEBUG);
 use Carp;
 use Config;
 
-$VERSION = '3.29';
+$VERSION = '3.30';
 
 BEGIN {
 	eval 'use HTML::Merge::Ext;';
@@ -17,7 +17,7 @@ $open = '\$R';
 my @printers = qw(VAR SQL GET PGET PVAR INDEX PIC STATE CFG INI LOGIN 
 	AUTH DECIDE EMPTY DATE DAY MONTH YEAR DATEDIFF LASTDAY ADDDATE
 	USER MERGE TEMPLATE TRANSFER DUMP NAME TAG COOKIE
-	DATE2UTC UTC2DATE);
+	DATE2UTC UTC2DATE ENV DATEF EVAL);
 @printers{@printers} = @printers;
 #my @stringers = qw(IF SET PSET SETCFG);
 #@stringers{@stringers} = @stringers;
@@ -189,7 +189,9 @@ EOM
 		$class .= "::$in";
 	}
 	bless $self, $class;
-	$self->{'save'} = $self->{'source'} = shift;
+	$self->{'source'} = shift;
+	$self->{'source'} =~ s/\r\n/\n/g;
+	$self->{'save'} = $self->{'source'};
 	$self->{'name'} = shift;
 	$self->{'template'} = $self->{'name'};
 	$self->{'template'} =~ s|^$HTML::Merge::Ini::TEMPLATE_PATH/||;
@@ -417,9 +419,10 @@ sub Push {
 sub DoLOOP {
 	my ($self, $engine, $param) = @_;
 	my $limit = undef;
-	if ($param =~ /^\\\.LIMIT\\=((?:\\['"])?)(.*)\1$/s) { #'
+	if ($param =~ s/^\\\.LIMIT\\=((?:\\['"])?)(.+)\1$//s) { #'
 		$limit = $2;
 	}
+	$self->Syntax if $param;
 	my $text;
 	unless ($limit) {
 		$text = <<EOM;
@@ -429,6 +432,7 @@ for (;;) {
 EOM
 	} else {
 		$text = <<EOM;
+HTML::Merge::Engine::Force("$limit", 'iu');
 foreach (1 .. "$limit") {
 EOM
 	}
@@ -446,12 +450,13 @@ EOM
 
 sub DoITERATION {
 	my ($self, $engine, $param) = @_;
-	unless ($param =~ /^\\\.LIMIT\\=((?:\\['"])?)(.*)\1$/s) { #'
+	unless ($param =~ /^\\\.LIMIT\\=((?:\\['"])?)(.+)\1$/s) { #'
 		$self->Syntax;
 	}
 	my $limit = $2;
 	$self->Push('iteration', $engine);
 <<EOM;
+HTML::Merge::Engine::Force("$limit", 'ui');
 foreach (1 .. "$limit") {
 EOM
 }
@@ -487,9 +492,27 @@ sub DoFETCH {
 	"\$engines{\"$engine\"}->Fetch(1, 2);";
 }
 
+*DoENVGET = \&DoENV;
+
+sub DoENV {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ s/^\\\.(.+)$//s) {
+		$self->Syntax;
+	}
+	return "\$ENV{\"$1\"}";
+}
+
+sub DoENVSET {
+        my ($self, $engine, $param) = @_;
+	unless ($param =~ s/^\\\.(.+?)\\=\\(['"])(.*?)\\\2$//s) {
+		$self->Syntax;
+	}
+	"\$ENV{\"$1\"} = eval(\"$3\");\n";
+}
+
 sub DoCFG {
 	my ($self, $engine, $param) = @_;
-	unless ($param =~ s/^\\\.(.*)$//s) {
+	unless ($param =~ s/^\\\.(.+)$//s) {
 		$self->Syntax;
 	}
 	"\${\"HTML::Merge::Ini::\"  . \"$1\"}";
@@ -500,7 +523,7 @@ sub DoCFG {
 
 sub DoCFGSET {
         my ($self, $engine, $param) = @_;
-	unless ($param =~ s/^\\\.(.*?)\\=\\(['"])(.*?)\\\2$//s) {
+	unless ($param =~ s/^\\\.(.+?)\\=\\(['"])(.*)\\\2$//s) {
 		$self->Syntax;
 	}
 	"\${\"HTML::Merge::Ini::\"  . \"$1\"} = eval(\"$3\");\n";
@@ -510,7 +533,7 @@ sub DoCFGSET {
 
 sub DoVAR {
 	my ($self, $engine, $param) = @_;
-	unless ($param =~ s/^\\\.(.*)$//s) {
+	unless ($param =~ s/^\\\.(.+)$//s) {
 		$self->Syntax;
 	}
 	return "\$vars{\"$1\"}";
@@ -518,7 +541,7 @@ sub DoVAR {
 
 sub DoSQL {
 	my ($self, $engine, $param) = @_;
-	unless ($param =~ s/^\\\.(.*)$//s) {
+	unless ($param =~ s/^\\\.(.+)$//s) {
 		$self->Syntax;
 	}
 	"\$engines{\"$engine\"}->Var(\"$1\")";
@@ -612,6 +635,15 @@ sub DoS {
         "\$engines{\"$engine\"}->Statement(\"$2\");\n";
 }
 
+sub DoEVAL {
+        my ($self, $engine, $param) = @_;
+        unless ($param =~ s/^\\[\.=]\\(['"])(.*)\\\1$//s) {
+                $self->Syntax;
+        }
+        "eval(\"$2\")";
+}
+
+
 sub DoPERL {
         my ($self, $engine, $param) = @_;
 	my $type;
@@ -673,7 +705,7 @@ EOM
 
 sub DoSET {
         my ($self, $engine, $param) = @_;
-	unless ($param =~ s/^\\\.(.*?)\\=\\(['"])(.*?)\\\2$//s) {
+	unless ($param =~ s/^\\\.(.+?)\\=\\(['"])(.*?)\\\2$//s) {
 		$self->Syntax;
 	}
 	"\$vars{\"$1\"} = eval(\"$3\");\n";
@@ -687,7 +719,7 @@ sub DoPCLEAR {
 
 sub DoPSET {
         my ($self, $engine, $param) = @_;
-	unless ($param =~ s/^\\\.(.*?)\\=\\(['"])(.*?)\\\2$//s) {
+	unless ($param =~ s/^\\\.(.+?)\\=\\(['"])(.*?)\\\2$//s) {
 		$self->Syntax;
 	}
 	"\$engines{\"$engine\"}->SetPersistent(\"$1\", eval(\"$3\"));\n";
@@ -695,7 +727,7 @@ sub DoPSET {
 
 sub DoPGET {
 	my ($self, $engine, $param) = @_;
-	unless ($param =~ s/^\\\.(.*)$//s) {
+	unless ($param =~ s/^\\\.(.+)$//s) {
 		$self->Syntax;
 	}
 	return "\$engines{\"$engine\"}->GetPersistent(\"$1\")";
@@ -706,7 +738,7 @@ sub DoPGET {
 
 sub DoPIMPORT {
 	my ($self, $engine, $param) = @_;
-	unless ($param =~ s/^\\\.(.*)$//s) {
+	unless ($param =~ s/^\\\.(.+)$//s) {
 		$self->Syntax;
 	}
 	return "\$hash{\"$1\"} = \$engines{\"$engine\"}->GetPersistent(\"$1\");";
@@ -714,7 +746,7 @@ sub DoPIMPORT {
 
 sub DoPEXPORT {
 	my ($self, $engine, $param) = @_;
-	unless ($param =~ s/^\\\.(.*)$//s) {
+	unless ($param =~ s/^\\\.(.+)$//s) {
 		$self->Syntax;
 	}
 	return "\$engines{\"$engine\"}->SetPersistent(\"$1\", \$hash{\"$1\"});";
@@ -743,6 +775,7 @@ sub DoINCLUDE {
 	my $inc = $2;
 	$inc =~ s/\\(.)/$1/g;
 
+##################################################################
 #	require Cwd;
 #	my $curr = &Cwd::cwd;
 #	my @tokens = split(/\//, $self->{'name'});
@@ -754,6 +787,8 @@ sub DoINCLUDE {
 #	close(I);
 #	chdir $curr;
 #	$self->{'source'} = $text . $self->{'source'};
+##################################################################
+
 	my $name = $self->{'name'};
 	my $text = <<EOM;
 	my \$__input = "\$HTML::Merge::Ini::TEMPLATE_PATH/$inc";
@@ -816,7 +851,7 @@ sub DoERUN {
 
 sub DoENUMREQ {
 	my ($self, $engine, $param) = @_;
-	$self->Syntax unless ($param =~ /^\\\.(\w+?)\\\=(\w+)$/s);
+	$self->Syntax unless ($param =~ /^\\\.(.+?)\\\=(.+)$/s);
 	my ($iterator, $getter) = ($1, $2);
 	$self->Push('enumreq', $engine);
 	qq!foreach (param()) {
@@ -833,7 +868,7 @@ sub DoUnENUMREQ {
 
 sub DoENUMQUERY {
 	my ($self, $engine, $param) = @_;
-	$self->Syntax unless ($param =~ /^\\\.(\w+?)\\\=(\w+)$/s);
+	$self->Syntax unless ($param =~ /^\\\.(.+?)\\\=(.+)$/s);
 	my ($iterator, $getter) = ($1, $2);
 	$self->Push('enumquery', $engine);
 	qq!foreach (\$engines{"$engine"}->Columns) {
@@ -849,7 +884,7 @@ sub DoUnENUMQUERY {
 
 sub DoMULTI {
 	my ($self, $engine, $param) = @_;
-	$self->Syntax unless ($param =~ /^\\\.(\w+?)\\\=(\w+)$/s);
+	$self->Syntax unless ($param =~ /^\\\.(.+?)\\\=(.+)$/s);
 	my ($iterator, $getter) = ($1, $2);
 	$self->Push('multi', $engine);
 	qq!foreach (param("$getter")) {
@@ -864,7 +899,7 @@ sub DoUnMULTI {
 
 sub DoGLOB {
 	my ($self, $engine, $param) = @_;
-	unless ($param =~ /^\\\.([DF])\\\.(.*?)\\=\\(['"])(.*?)\\\3$/is) {
+	unless ($param =~ /^\\\.([DF])\\\.(.+?)\\=\\(['"])(.*)\\\3$/is) {
 		$self->Syntax;
 	}
 	my ($how, $iterator, $mask) = (uc($1), $2, $4);
@@ -886,7 +921,7 @@ sub DoUnGLOB {
 
 sub DoFTS {
 	my ($self, $engine, $param) = @_;
-	unless ($param =~ /^\\\.(.*?)\\=\\(['"])(.*?)\\\2$/is) {
+	unless ($param =~ /^\\\.(.+?)\\=\\(['"])(.*)\\\2$/is) {
 		$self->Syntax;
 	}
 	my ($iterator, $base) = ($1, $3);
@@ -908,14 +943,19 @@ sub DoUnFTS {
 
 sub DoCOUNT {
 	my ($self, $engine, $param) = @_;
-	$self->Syntax unless ($param =~ /^\\\.(\w+?)\\\=(.*?)\\\:(.*?)(\\,.*)?$/s);
+	$self->Syntax unless ($param =~ /^\\\.(.+?)\\\=(.*?)\\\:(.*?)(\\,.*)?$/s);
 	my ($var, $from, $to, $step) = ($1, $2, $3, $4);
 	$step ||= "\\,1";
 	$step =~ s/^\\,//;
 
 	my $i = "\$vars{\"$var\"}";
 	$self->Push('count', $engine);
-	qq!for ($i = "$from"; $i <= "$to"; $i += "$step") {\n!;
+	<<EOM;
+	HTML::Merge::Engine::Force("$from", "n");
+	HTML::Merge::Engine::Force("$to", "n");
+	HTML::Merge::Engine::Force("$step", "n");
+	for ($i = "$from"; $i <= "$to"; $i += "$step") {
+EOM
 }
 
 sub DoUnCOUNT {
@@ -926,7 +966,7 @@ sub DoUnCOUNT {
 
 sub DoPIC {
         my ($self, $engine, $param) = @_;
-	unless ($param =~ s/^\\\.([FRNA])(.*)$//is) {
+	unless ($param =~ s/^\\\.([FRNADX])(.*)$//is) {
 		$self->Syntax;
 	}
 	my ($type, $param) = (uc($1), $2);
@@ -1033,6 +1073,41 @@ sub PictureA {
 EOM
 }
 
+sub PictureD {
+	my ($self, $param) = @_;
+	unless ($param =~ s/^\\\((.*?)\\\)//s) {
+		$self->Syntax;
+	}
+	my $format = $1;
+	unless ($param =~ s/^\\\.\\(["'])(.*?)\\\1$//s) {
+		$self->Syntax;
+	}
+	my $date = $2;
+
+	<<EOM;
+(require Time::Local, 
+("$date") =~ /^(\\d{4})(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})\$/,
+	\$__t = Time::Local::timelocal(\$6, \$5, \$4, \$3, \$2 - 1, \$1 - 1900),
+	HTML::Merge::Engine::time2str("$format", \$__t))[-1]
+	
+EOM
+}
+
+sub PictureX {
+	my ($self, $param) = @_;
+	unless ($param =~ s/^\\\((.*?)\\\)//s) {
+		$self->Syntax;
+	}
+	my $times = $1;
+	unless ($param =~ s/^\\\.\\(["'])(.*?)\\\1$//s) {
+		$self->Syntax;
+	}
+	my $text = $2;
+	<<EOM;
+(HTML::Merge::Engine::Force("$times", 'ui'),
+	"$text" x "$times")[-1]
+EOM
+}
 
 sub DoINC {
         my ($self, $engine, $param) = @_;
@@ -1041,6 +1116,8 @@ sub DoINC {
 	}
 	my ($var, $step) = ($1, defined($2) ? $2 : 1);
 	<<EOM;
+HTML::Merge::Engine::Force("$step", "n");
+HTML::Merge::Engine::Force(\$vars{"$var"}, "n");
 \$vars{"$var"} += "$step";
 EOM
 }
@@ -1286,7 +1363,7 @@ sub DoTEMPLATE {
 sub DoTRANSFER {
 	my ($self, $engine, $param) = @_;
 	my $validate;
-	unless ($param =~ s/^\\\.(.*)$//s) {
+	unless ($param =~ s/^\\\.(.+)$//s) {
 		$self->Syntax;
 	}
 	qq!qq/<INPUT NAME="$1" TYPE=HIDDEN VALUE="\$vars{"$1"}">/!;
@@ -1334,7 +1411,8 @@ sub DoDATE {
 	}
 	$self->Syntax if $param;
 	<<EOM;
-(\@__t = localtime(time + "$delta" * 3600 * 24), 
+(HTML::Merge::Engine::Force("$delta", 'i'),
+	\@__t = localtime(time + "$delta" * 3600 * 24), 
 	sprintf("%04d" . ("%02d" x 5), \$__t[5] + 1900, \$__t[4] + 1,
 		\@__t[reverse (0 .. 3)]))[-1]
 EOM
@@ -1398,7 +1476,8 @@ sub DoUTC2DATE {
 		$self->Syntax if $param;
 	}
 	<<EOM;
-(\@__t = localtime("$2"), 
+(HTML::Merge::Engine::Force("$2", 'ui'),
+	\@__t = localtime("$2"), 
 	sprintf("%04d" . ("%02d" x 5), \$__t[5] + 1900, \$__t[4] + 1,
 		\@__t[reverse (0 .. 3)]))[-1]
 EOM
@@ -1631,7 +1710,7 @@ sub Syntax {
 		$step++;
 		my @c = caller($step);
 		$sub = $c[3];
-	} until ($sub =~ s/^${pkg}\::Do//);
+	} until ($sub =~ s/^${pkg}\::Do// || $sub =~ s/^HTML::Merge::Compile\::Do//);
 	$self->Die("Syntax error on $sub: $DB::args[2]");
 }
 

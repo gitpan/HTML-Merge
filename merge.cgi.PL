@@ -216,7 +216,9 @@ foreach (@HTML::Merge::cleanups) {
 if ($HTML::Merge::Ini::DEVELOPMENT && !$candidate) {
 	HTML::Merge::Error::CloseMergeErrorLog() if $input;
 	unless (param('__MERGE_DEV_LIVE__') || $candidate || $error) {
-		if ($template =~ /\.$HTML::Merge::Ini::DEV_EXTENSION$/
+		my $re = $HTML::Merge::Ini::DEV_EXTENSION;
+		$re =~ s/,\s*/|/g;
+		if ($template =~ /\.($re)$/
 				|| !$input) {
 			require HTML::Merge::Development;
 			HTML::Merge::Development::OpenToolBox();

@@ -26,7 +26,7 @@ sub OpenToolBox
 	print <<EOM;
 <SCRIPT LANGUAGE="JavaScript">
 <!--
-open("$url&__MERGE_DEV_LIVE__=1","MergeToolBoxTarget","screenY=20,top=20,screenX=20,left=20,width=180,height=265,status=no,scrollbars=auto,toolbar=no,menubar=no,copyhistory=no,resizable=no");
+open("$url&__MERGE_DEV_LIVE__=1","MergeToolBoxTarget","screenY=20,top=20,screenX=20,left=20,width=180,height=265,status=no,scrollbars=yes,toolbar=no,menubar=no,copyhistory=no,resizable=no");
 // --->
 </SCRIPT>
 EOM

@@ -221,7 +221,7 @@ E<lt>$RPIC.AS(<format>).'B<alphanumeric string>'E<gt>
 
 Convert string to lower case. (Mnemonic: Small)
 
-E<lt>$RPIC.AS(<format>).'B<alphanumeric string>'E<gt>
+E<lt>$RPIC.AP(<format>).'B<alphanumeric string>'E<gt>
 
 Convert string to 'proper' case, ie, first and only first letter 
 of each word capitalized.
@@ -240,6 +240,14 @@ Trim left spaces.
 
 L, R and W may be combined, and all combinations may be combined with either
 C, S or P.
+
+E<lt>$RPIC.D(B<format>).'B<date>'E<gt>
+
+Format a POSIX time string, requires Date::Format.
+
+E<lt>$RPIC.X(B<number>).'B<string>'E<gt>
+
+Repeats a string the required number of times.
 
 =item *
 
@@ -272,6 +280,12 @@ Embed perl code. print() may be used.
 E<lt>$RPERL.CE<gt>
 
 Documentation soon.
+
+=item *
+
+<$REVAL.'B<perl code>'>
+
+Evaluates the code.
 
 =back
 
@@ -323,7 +337,7 @@ the source for this templateE<lt>/$RSOURCEE<gt>
 
 E<lt>$RVAR.B<variable>E<gt>
 
-Dereferences a local variable, or a CGi variable. (Precedence to the former).
+Dereferences a local variable, or a CGI variable. (Precedence to the former).
 
 =item *
 
@@ -402,6 +416,18 @@ Set a cookie using a HTTP-EQUIV E<lt>METAE<gt> HTML tag.
 The notations are used for setting a permanent cookie,
 a cookie with an expire date, and a temporary cookie
 that will disappear when the browser exits.
+
+=item *
+
+E<lt>$RENV.B<variable>E<gt>
+
+Get an environment variable.
+
+=item *
+
+E<lt>$RENVSET.B<variable>='B<perl code>'E<gt>
+
+Set an environment variable.
 
 =back
 

@@ -168,7 +168,7 @@ yield Batata and so on.</P>
 <P>Capitalize string.</P>
 <P>&lt;$RPIC.AS(&lt;format&gt;).'<STRONG>alphanumeric string</STRONG>'&gt;</P>
 <P>Convert string to lower case. (Mnemonic: Small)</P>
-<P>&lt;$RPIC.AS(&lt;format&gt;).'<STRONG>alphanumeric string</STRONG>'&gt;</P>
+<P>&lt;$RPIC.AP(&lt;format&gt;).'<STRONG>alphanumeric string</STRONG>'&gt;</P>
 <P>Convert string to 'proper' case, ie, first and only first letter 
 of each word capitalized.</P>
 <P>&lt;$RPIC.AW(&lt;format&gt;).'<STRONG>alphanumeric string</STRONG>'&gt;</P>
@@ -179,6 +179,10 @@ of each word capitalized.</P>
 <P>Trim left spaces.</P>
 <P>L, R and W may be combined, and all combinations may be combined with either
 C, S or P.</P>
+<P>&lt;$RPIC.D(<STRONG>format</STRONG>).'<STRONG>date</STRONG>'&gt;</P>
+<P>Format a POSIX time string, requires Date::Format.</P>
+<P>&lt;$RPIC.X(<STRONG>number</STRONG>).'<STRONG>string</STRONG>'&gt;</P>
+<P>Repeats a string the required number of times.</P>
 <P></P>
 <LI>
 &lt;$RDECIDE.'<STRONG>perl code</STRONG>'?'<STRONG>string</STRONG>':'<STRONG>string</STRONG>'&gt;
@@ -199,6 +203,10 @@ C, S or P.</P>
 <P>&lt;$RPERL.B&gt;</P>
 <P>&lt;$RPERL.C&gt;</P>
 <P>Documentation soon.</P>
+<P></P>
+<LI>
+&lt;$REVAL.'<STRONG>perl code</STRONG>'&gt;
+<P>Evaluates the code.</P>
 <P></P></UL>
 <P>
 <HR>
@@ -233,7 +241,7 @@ the source for this template&lt;/$RSOURCE&gt;</P>
 <UL>
 <LI>
 &lt;$RVAR.<STRONG>variable</STRONG>&gt;
-<P>Dereferences a local variable, or a CGi variable. (Precedence to the former).</P>
+<P>Dereferences a local variable, or a CGI variable. (Precedence to the former).</P>
 <P></P>
 <LI>
 &lt;$RSET.<STRONG>variable</STRONG>='<STRONG>perl code</STRONG>'&gt;
@@ -287,6 +295,14 @@ Memory variables work much faster than session variables.</P>
 The notations are used for setting a permanent cookie,
 a cookie with an expire date, and a temporary cookie
 that will disappear when the browser exits.</P>
+<P></P>
+<LI>
+&lt;$RENV.<STRONG>variable</STRONG>&gt;
+<P>Get an environment variable.</P>
+<P></P>
+<LI>
+&lt;$RENVSET.<STRONG>variable</STRONG>='<STRONG>perl code</STRONG>'&gt;
+<P>Set an environment variable.</P>
 <P></P></UL>
 <P>
 <HR>
