@@ -63,12 +63,16 @@
                                         AND d.langug_code='<$RVAR.langug_code>'
 	LEFT JOIN tbl e ON e.code=a.fldsts_code 
 					AND e.tbl='FLDSTS'
+                                        AND e.langug_code=''
 	LEFT JOIN tbl f ON f.code=b.fldsts_code 
 					AND f.tbl='FLDSTS'
+                                        AND f.langug_code=''
 	LEFT JOIN tbl g ON g.code=a.fldtyp_code 
 					AND g.tbl='FLDTYP'
+                                        AND g.langug_code=''
 	LEFT JOIN tbl h ON h.code=b.fldtyp_code 
 					AND h.tbl='FLDTYP'
+                                        AND h.langug_code=''
 	INNER JOIN templates_t i ON i.id=a.template_id
 	INNER JOIN instances_t j ON j.id=i.instance_id
 	WHERE i.templatename='<$RVAR.repository_template>' 

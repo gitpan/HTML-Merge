@@ -7,90 +7,88 @@
 function Grid(grid_init)
 {
 	// gui vars
-	this.background=grid_init.background?grid_init.background:'silver';
-	this.width=grid_init.width;
-	this.width_str=!grid_init.veriable_width*1?'width='+this.width:'';
-	this.tbl_header='<table border="1" cellspacing="0" cellpadding="1" bgcolor="white" '+this.width_str+' class="gridRepText__" id="oTbl_'+ grid_init.name +'" style="border-color: Black; border: thin;" name="oTbl_'+ grid_init.name +'">';
-	this.tbl_header_row='<tr bordercolor="black" bgcolor="'+this.background+'">'; //#0D9CF2
-	this.tbl_row='<tr>';
-	this.tbl_index=0;
-	this.len=grid_init.size?grid_init.size:5;
-	this.toolbar_width=13;
-	this.toolbar_height;
-	this.td_size=25;
-	this.js_class=grid_init.js_class?grid_init.js_class:'gridCntrlText__';
+	this.background = grid_init.background?grid_init.background:'silver';
+	this.width = !(grid_init.veriable_width*1)?grid_init.width:'';
+	this.width_str = this.width?'width='+this.width:'';
+	this.height = grid_init.height;
+	this.title_header = '<table border="0" cellspacing="0" cellpadding="1" '+this.width_str+' class="gridRepText__" style="border: 1px outset; border-bottom: 2px outset" id="oTtl_'+ grid_init.name +'" name="oTtl_'+ grid_init.name +'" onselectstart="return false">';
+	this.title_header_row = '<tr bgcolor="'+this.background+'">'; 
+	this.tbl_header = '<table border="0" cellspacing="0" cellpadding="1" bgcolor="white" '+this.width_str+' class="gridRepText__" id="oTbl_'+ grid_init.name +'" style="border: none;" name="oTbl_'+ grid_init.name +'" onselectstart="return false">';
+	this.len = grid_init.size?grid_init.size:5;
+	this.td_height = 15;
+	this.js_class = grid_init.js_class?grid_init.js_class:'gridCntrlText__';
 	this.sort_item = new Object();
 	
 	// init vars
-	this.name=grid_init.name;
-	this.bnd_src=grid_init.bnd_src;
-	this.mode=grid_init.mode;
-	this.note=grid_init.note;
-	this.span=grid_init.span;
-	this.dir=grid_init.dir?grid_init.dir:'LTR';
-	this.charset=grid_init.charset?grid_init.charset:'ISO-8859-1';
-	this.step=grid_init.step?grid_init.step:20;
-	this.start=grid_init.start?grid_init.start:1;
-	this.uid=grid_init.uid?grid_init.uid:'rid';
-	this.langug_code=grid_init.langug_code;
-	this.merge=grid_init.merge;
-	this.image_path=grid_init.image_path;
+	this.name = grid_init.name;
+	this.bnd_src = grid_init.bnd_src;
+	this.mode = grid_init.mode;
+	this.note = grid_init.note;
+	this.div = grid_init.div;
+	this.dir = grid_init.dir?grid_init.dir:'ltr';
+	this.charset = grid_init.charset?grid_init.charset:'ISO-8859-1';
+	this.step = grid_init.step?grid_init.step:20;
+	this.start = grid_init.start?grid_init.start:1;
+	this.uid = grid_init.uid?grid_init.uid:'rid';
+	this.langug_code = grid_init.langug_code;
+	this.merge = grid_init.merge;
+	this.image_path = grid_init.image_path;
 	this.table;
-	this.quote_data=(grid_init.quote_data)?true:false;
+	this.quote_data = (grid_init.quote_data)?true:false;
 	
 	// event func
 	this.dbl_click_func = grid_init.dbl_click_func;
-	this.on_change_func = grid_init.on_change_func;
+	this.click_func = grid_init.click_func;
+	this.change_func = grid_init.change_func;
 
 	// cursor defines
 	this.clr_cursor="#cccccc";
-	this.clr_cursor_zoom="#ffff99";
+	this.clr_cursor_zoom="#00007f";
 	this.clr_cursor_mark="#aaaaaa";
-	this.clr_cursor_base="";
+	this.clr_cursor_base="#ffffff";
+	this.clr_title_cursor_over="#000000";
 	
 	// cursor data structs
-	this.marked_obj = "";
+	this.zoomed_row = '';
 	this.marked = new Array();
-	this.grayed = new Array();
 	
 	// data vars
 	this.obj = new Object();
 	this.str_obj = new Object;
 	this.grid_arr = new Array();
-	this.tbl_index = 0;
-	this.db_from = 1;
-	this.db_to = this.len;
+	this.grid_width = new Object();
 	this.order_by='';
 	this.order_by_dir='';
 	this.dir_gif='';
 	
-	// scroolbar handlers
-	this.vbar;
-	this.current_step = this.step;
-	
 	// grid captions
 	this.cap_record = grid_init.cap_record;
+	this.cap_end_record = grid_init.cap_end_record;
 	this.cap_sort = grid_init.cap_sort;
 }
 {var p=Grid.prototype
 	p.Draw = GridDraw
-	p.DoGridEvents = GridDoGridEvents
+	p.DrawCell = GridDrawCell
+	p.DoEvents = GridDoEvents
+	p.DoTitleEvents = GridDoTitleEvents
 	p.DoUp = GridDoUp
 	p.DoDown = GridDoDown
-	p.AddRecord = GridAddRecord
-	p.RemoveRecord = GridRemoveRecord
-	p.DoChk = GridDoChk
 	p.DoDelMark = GridDoDelMark
 	p.DoMark = GridDoMark
-	p.MarkChkRow = GridMarkChkRow
 	p.DoLineChk = GridDoLineChk
+	p.DoTitleClick = GridDoTitleClick
+	p.DoTitleMouseOver = GridDoTitleMouseOver 
+	p.DoTitleMouseOut = GridDoTitleMouseOut 
 	p.DoDblClick = GridDoDblClick
+	p.DoChange = GridDoChange
 	p.DoOnContextMenu = GridDoOnContextMenu
-	p.DoMouseMove = GridDoMouseMove 
+	p.DoMouseOver = GridDoMouseOver 
 	p.DoMouseOut = GridDoMouseOut 
 	p.Refresh = GridRefresh
 	p.Rebuild = GridRebuild
 	p.SetData = GridSetData
+	p.SetHeight = GridSetHeight
+	p.SetWidth = GridSetWidth
 	p.OrderTable = GridOrderTable
 	p.DoSortArrow = GridDoSortArrow
 	p.ClearImg = GridClearImg
@@ -106,10 +104,7 @@ function Grid(grid_init)
 	p.GetHeaderCaptionByFieldName = GridGetHeaderCaptionByID
 	p.GetFieldByRowAndCol = GridGetFieldByRowAndCol
 	p.GetTable = GridGetTable
-	p.RunGrid = GridRunGrid
-	p.SyncScrollBar = GridSyncScrollBar
-	p.InitNavStr = GridInitNavStr
-	p.InitNavVars = GridInitNavVars
+	p.GetTitle = GridGetTitle
 	p.UnMarkRow = GridUnMarkRow
 	p.DelCoulmnByID = GridDelCoulmnByID
 	p.DelCoulmnByFieldName = GridDelCoulmnByID
@@ -118,487 +113,356 @@ function Grid(grid_init)
 	p.SetZoomColor = GridSetZoomColor
 	p.GetCursorColor = GridGetCursorColor
 	p.SetCursorColor = GridSetCursorColor
+	p.CalcWidth = GridCalcWidth
+	p.GetRowFromSrcEevent = GridGetRowFromSrcEevent
+	p.GetCellFromSrcEevent = GridGetCellFromSrcEevent
+	p.PaintRow = GridPaintRow
+	p.GetRowidFromRow = GridGetRowidFromRow
+	p.GetUidFromRow = GridGetUidFromRow
+	p.GetInstanceFromRow = GridGetInstanceFromRow
+	p.GetIsMarkedFromRow = GridGetIsMarkedFromRow
+	p.SetIsMarkedByRow = GridSetIsMarkedByRow
+	p.InitNavStr = GridInitNavStr
+	p.CreateUrlStrFromObj = GridCreateUrlStrFromObj
+	p.BuildFormHiddenFieldsFromObj = GridBuildFormHiddenFieldsFromObj
+	p.AddRecord = GridAddRecord
+	p.RemoveRecord = GridRemoveRecord
+	p.Scroll = GridScroll
+	p.GetLength = GridGetLength
 }
 /////////////////////////////
 function GridDoUp()
 {
 	var obj = new Object();
-	var tmp;
 	
-	// if the gris is less then the grid size disable all
-	if(this.grid_arr.length-2 < this.len && event.srcElement.name != this.name+'_up')
+	if(this.grid_arr.length-1 < this.step)
 		return;
-	
-	// if no more data fetch new from the db
-	if(!this.tbl_index && this.start > 1)
-	{
-		tmp=this.start-this.step-2;		
-		obj.start=(tmp>=0)?tmp:0;
-		obj.step=(!obj.start)?this.step:this.step+this.len-1;
 
-		this.Rebuild('',obj,true,obj.step-this.len);
-		
-		this.current_step=obj.step;
-		this.start-=this.step;
-		
-		// init the scrollbar
-		this.vbar.boxlyr.moveTo(0,this.toolbar_height-this.vbar.boxH);
-		
-		// init the navegation string
-		this.InitNavStr('UP');
-		
-		return;
-	}
+	this.start += this.step;
 
-	if(!this.grid_arr[this.tbl_index+1] ||
-		this.tbl_index <= 0)
-			return;
-				
-	this.AddRecord('first');
-	this.RemoveRecord('last');
-		
-	this.tbl_index--;
-
-	// sync scrollbar
-	if(event.srcElement.name == this.name+'_up')
-		this.SyncScrollBar(false);
-		
-	// init the navegation string
-	this.InitNavStr('UP');
+	this.Rebuild('',obj,true);
 }
 /////////////////////////////
 function GridDoDown()
 {
-	var tmp = this.tbl_index+this.len+2;
 	var obj = new Object();
 	
-	// if the gris is less then the grid size disable all
-	if(this.grid_arr.length-2 < this.len)
+	if(this.start <= 1)
 		return;
-	
-	// if no more data fetch new from the db
-	if(!this.grid_arr[tmp] && event.srcElement.name == this.name+'_down')
-	{
-		// if no more data in query
-		if(this.grid_arr.length-2 < this.current_step)
-			return;
 
-		obj.start=this.step+this.start-this.len+1;
-		obj.step=this.step+this.len-1;
+	this.start-=this.step;
 
-		this.Rebuild('',obj,true);
-		
-		this.current_step=obj.step;
-		this.start+=this.step;
-		
-		// init the scrollbar
-		this.vbar.boxlyr.moveTo(0,0);
-		
-		// init the navegation string
-		this.InitNavStr('DOWN');
-		
-		return;
-	}
-			
-	this.tbl_index++;
-
-	this.AddRecord('last');
-	this.RemoveRecord('first');
-	
-	// sync scrollbar
-	if(event.srcElement.name == this.name+'_down')
-		this.SyncScrollBar(true);
-		
-	// init the navegation string
-	this.InitNavStr('DOWN');
+	this.Rebuild('',obj,true);
 }
 /////////////////////////////
-function GridSyncScrollBar(dir)
+function GridDoTitleEvents(obj)
 {
-	var add=dir?this.vbar.boxH:0;
-	var new_pos=this.tbl_index*1/(this.grid_arr.length-2-this.len)*this.toolbar_height-add;
-	
-	new_pos=(new_pos<0)?0:new_pos; // lower rim
-	
-	if(new_pos > this.toolbar_height-this.vbar.boxH) // outer rim
-		new_pos=this.toolbar_height-this.vbar.boxH;
-	
-	this.vbar.boxlyr.moveTo(0,new_pos);
+	obj.onclick = this.DoTitleClick;
+	obj.onmouseover = this.DoTitleMouseOver;
+	obj.onmouseout = this.DoTitleMouseOut;
+	obj.oncontextmenu = new Function("return false");
 }
 /////////////////////////////
-function GridAddRecord(pos)
+function GridDoEvents(obj)
 {
-	var table = this.GetTable();
-	var row = document.createElement("TR");
-	var td = new Array();
-	var element;
-	var i=0;
-	var index=(pos == 'last')?this.len+this.tbl_index+1:this.tbl_index+1;
-	var tmp;
-	
-	td[i]=document.createElement("TD");
-	row.appendChild(td[i++]);
-	
-	for(element in this.grid_arr[0])
-	{	
-		td[i]=document.createElement("TD");
-		td[i].height=this.td_size;
-		td[i].grid_element=element;
-		td[i].grid_index=index;
-			
-		row.appendChild(td[i]);
-		
-		if(this.str_obj[element]*1)
-			tmp=this.grid_arr[index][element].substr(0,this.str_obj[element]);
-		else
-			tmp=this.grid_arr[index][element];
-		
-		if (i < 2 && i >0)
-		{
-			td[i++].innerHTML=tmp;
-		}
-		else
-		{
-			td[i++].appendChild(document.createTextNode(tmp+' '));
-		}
-	}
-
-	if(pos == 'last')
-	{
-		table.appendChild(row);
-		table.rows[this.len+2].cells[0].width=this.toolbar_width-3;
-		this.DoGridEvents(table.rows[this.len+2]);
-	}
-	else
-	{
-		table.insertBefore(row,table.rows[2]);
-		table.rows[2].cells[0].width=this.toolbar_width-3;
-		this.DoGridEvents(table.rows[2]);
-	}
-	
-	// if the line is zoomed
-	if(this.GetZoomRowid()==index-1)
-		row.bgColor=this.clr_cursor_zoom;
-	// if the line was marked add the coloring
-	else if(this.marked[index-1])
-		this.DoMark(row,index-1);
+	obj.onmouseover = this.DoMouseOver;
+	obj.onmouseout = this.DoMouseOut;
+	obj.ondblclick = this.DoDblClick;
+	obj.onclick = this.DoChange;
+	obj.oncontextmenu = this.DoOnContextMenu;
+	obj.onselectstart =  new Function("return false");
 }
 /////////////////////////////
-function GridRemoveRecord(pos)
-{
-	var table=document.getElementById('oTbl_'+this.name).getElementsByTagName("TBODY")[0];
-	var row_num=0;
-	var i=0;
-	
-	if(pos == 'last')
-	{
-		row_num=this.len+2;
-	}
-	else
-	{
-		row_num=2;
-	}
-	table.removeChild(table.rows[row_num]);
-}
-/////////////////////////////
-function GridDoGridEvents(obj)
-{
-	obj.onmousemove=this.DoMouseMove;
-	obj.onmouseout=this.DoMouseOut;
-	obj.ondblclick=this.DoDblClick;
-	obj.oncontextmenu=this.DoOnContextMenu;
-}
-/////////////////////////////
-function GridDoMouseMove() 
+function GridDoTitleMouseOver() 
 { 
-	var obj=event.srcElement.parentNode;
-	var instance=(event.srcElement.name) ? eval('c'+obj.parentNode.parentNode.parentNode.name.substring(4)) : eval('c'+obj.parentNode.parentNode.name.substring(4));
-		
-	if(obj.nodeName != 'TR')
-		obj=obj.parentNode;
-		
-	if(!obj.childNodes[1].childNodes[0])
+	var row = GridGetRowFromSrcEevent(event.srcElement); if(!row) return;
+	var cell = GridGetCellFromSrcEevent(event.srcElement); if(!cell) return;
+	var instance = GridGetInstanceFromRow(row);
+	var grid_element = cell.grid_element;
+
+	if(grid_element == 'grid_mark')
 		return;
-	
-	if(obj.bgColor == instance.clr_cursor_base)
+
+	cell.childNodes[0].childNodes[3].style.textDecoration='underline';
+	//cell.childNodes[0].style.textDecoration='underline';
+}
+/////////////////////////////
+function GridDoTitleMouseOut() 
+{ 
+	var row = GridGetRowFromSrcEevent(event.srcElement); if(!row) return;
+	var cell = GridGetCellFromSrcEevent(event.srcElement); if(!cell) return;
+	var instance = GridGetInstanceFromRow(row);
+	var grid_element = cell.grid_element;
+
+	if(grid_element == 'grid_mark')
+		return;
+
+	cell.childNodes[0].childNodes[3].style.textDecoration='none';
+}
+/////////////////////////////
+function GridDoTitleClick() 
+{
+	var row = GridGetRowFromSrcEevent(event.srcElement); if(!row) return;
+	var cell = GridGetCellFromSrcEevent(event.srcElement); if(!cell) return;
+	var instance = GridGetInstanceFromRow(row);
+	var grid_element = cell.grid_element;
+	var param = new Object;
+	var is_marked = instance.GetIsMarkedFromRow(row);
+			
+	if(grid_element != 'grid_mark')
 	{
-		obj.bgColor = instance.clr_cursor;
+		instance.OrderTable(grid_element);
+		return;
 	}
+
+	// if in zoom mod return 
+	if(instance.zoomed_row)
+		return false;
+	
+	if(!is_marked)
+	{
+		instance.SetIsMarkedByRow(row,true);
+		instance.DoLineChk(true);
+	}
+	else
+	{
+		instance.SetIsMarkedByRow(row,false);
+		instance.DoLineChk(false);
+	}
+	
+	// handle the user event
+	if(this.on_click_func)
+	{
+		// create the param line for the func obj
+		param.uid = instance.GetMarkedUidAsStr(instance.quote_data);
+		param.rowid = instance.GetMarkedRowidAsStr(instance.quote_data);
+		param.flag = is_marked;
+	
+		eval(this.on_click_func+'(param)');
+	}
+}
+/////////////////////////////
+function GridDoMouseOver() 
+{ 
+	var row = GridGetRowFromSrcEevent(event.srcElement);
+	var instance = GridGetInstanceFromRow(row);
+
+	if(row.childNodes[1].style.backgroundColor == instance.clr_cursor_base)
+		instance.PaintRow(row,instance.clr_cursor);
 }
 /////////////////////////////
 function GridDoMouseOut() 
 { 
-	var obj=event.srcElement.parentNode;
-	var instance=(event.srcElement.name) ? eval('c'+obj.parentNode.parentNode.parentNode.name.substring(4)) : eval('c'+obj.parentNode.parentNode.name.substring(4));
+	var row = GridGetRowFromSrcEevent(event.srcElement);
+	var instance = GridGetInstanceFromRow(row);
 	
-	if(obj.nodeName != 'TR')
-		obj=obj.parentNode;
-	
-	if(obj.bgColor == instance.clr_cursor)
-				obj.bgColor = instance.clr_cursor_base;
+	if(row.childNodes[1].style.backgroundColor == instance.clr_cursor)
+		instance.PaintRow(row,instance.clr_cursor_base);
 }
 /////////////////////////////
-function GridDoDblClick() 
-{ 
-	var obj=event.srcElement.parentNode;
-	var child;
-	var index;
-	var param = new Object(); 	// all param to be send to user func
-	var instance=(event.srcElement.name) ? eval('c'+obj.parentNode.parentNode.parentNode.name.substring(4)) : eval('c'+obj.parentNode.parentNode.name.substring(4));
-	
-	// if checkbox
-	if(event.srcElement.name)
-		return; 		
-	
-	// no checkbox line is invalid
-	if(!obj.childNodes[1].childNodes[0])
+function GridDoChange() 
+{
+	var row = GridGetRowFromSrcEevent(event.srcElement); if(!row) return;
+	var cell = GridGetCellFromSrcEevent(event.srcElement); if(!cell) return;
+	var instance = GridGetInstanceFromRow(row);
+	var grid_element = cell.grid_element;
+	var query_index = instance.GetUidFromRow(row);
+	var index = instance.GetRowidFromRow(row);
+	var param = new Object;
+	var is_marked;
+
+	if(grid_element != 'grid_mark')
 		return;
-			
-	child=obj.childNodes[1].childNodes[0].name;
-		
-	index=child.substring(10)*1;
+
+	// if in zoom mod return 
+	if(instance.zoomed_row)
+		return;
 	
-	if(instance.marked_obj == obj)
-	{	
-		obj.bgColor=instance.clr_cursor_base;
-		instance.marked_obj="";
+	// mark the checked chekboxes
+	if(row.childNodes[1].style.backgroundColor == instance.clr_cursor_mark)
+	{
+		instance.DoDelMark(row,query_index);
+		is_marked = false;
 	}
 	else
 	{
-		// clear all checkboxes
+		instance.DoMark(row,query_index);
+		is_marked = true;
+	}
+	
+	// handle the user event
+	if(instance.change_func)
+	{
+		// create the param line for the func obj
+		param.uid = query_index;
+		param.rowid = index;
+		param.flag = is_marked;
+	
+		eval(instance.change_func+'(param)');
+	}
+
+}
+/////////////////////////////
+function GridDoDblClick(selected_row,selected_cell) 
+{ 
+	var row = selected_row ? selected_row : GridGetRowFromSrcEevent(event.srcElement);
+	var cell = selected_cell ? selected_cell : GridGetCellFromSrcEevent(event.srcElement);
+	var instance = GridGetInstanceFromRow(row);
+	var grid_element = cell.grid_element;
+	var index = instance.GetRowidFromRow(row);
+	var param = new Object(); // all param to be send to user func
+
+	if(grid_element == 'grid_mark')
+		return;
+
+	if(instance.zoomed_row == row)
+	{	
+		instance.PaintRow(row,instance.clr_cursor_base,'#000000');
+		instance.zoomed_row = '';
+	}
+	else
+	{
+		// clear all Marked
 		instance.DoLineChk(false);
 		
-		obj.bgColor=instance.clr_cursor_zoom;
+		// clear all zoom
+		if(instance.zoomed_row)
+			instance.PaintRow(instance.zoomed_row,instance.clr_cursor_base,'#000000');
 		
-		if(instance.marked_obj)
-			instance.marked_obj.bgColor=instance.clr_cursor_base;
 			
-		instance.marked_obj=obj;
+		instance.PaintRow(row,instance.clr_cursor_zoom,'#ffffff');
+		
+		instance.zoomed_row = row;
 	}
 	
 	// handle the user event
 	if(instance.dbl_click_func)
 	{
 		// create the param line for the func obj
-		param.uid=instance.grid_arr[index+1][instance.uid];
-		param.rowid=index;
-		param.flag=(instance.marked_obj)?true:false;
-	
+		param.uid = instance.grid_arr[index] ? instance.grid_arr[index][instance.uid] : '';
+		param.rowid = index;
+		param.flag = (instance.zoomed_row)?true:false;
+
 		eval(instance.dbl_click_func+'(param)');
 	}
 }
 /////////////////////////////
 function GridDoOnContextMenu()
 {
-	var obj=event.srcElement.parentNode;
-	var instance=(event.srcElement.name) ? eval('c'+obj.parentNode.parentNode.parentNode.name.substring(4)) : eval('c'+obj.parentNode.parentNode.name.substring(4));
-	var grid_element=event.srcElement.grid_element;
-	var row;
+	var row = GridGetRowFromSrcEevent(event.srcElement);
+	var cell = GridGetCellFromSrcEevent(event.srcElement);
+	var instance = GridGetInstanceFromRow(row);
+	var grid_element = cell.grid_element;
+	var row_id = instance.GetRowidFromRow(row);
 
-	if(!obj.childNodes[1].childNodes[0])
+	if(grid_element == 'grid_mark')
 		return false;
-	
-	row=obj.childNodes[1].childNodes[0].name.substring(10);
 
-	alert(instance.grid_arr[row*1+1][grid_element]);
-	
+	alert(instance.grid_arr[row_id][grid_element]);
+
 	return false;
 }
 /////////////////////////////
-function mouseDown(e) 
+function GridGetRowFromSrcEevent(element)
 {
-	var tmp=event.srcElement.id;
-	var instance='c_'+tmp.substring(10,tmp.length-1);
-	
-	if(!window[instance])
-		return;
-	
-	if (is.ns && e.target!=document) routeEvent(e)
-	
-	// other mouseDown code
-	
-	return true
-}
-/////////////////////////////
-function mouseMove(e) 
-{
-	var tmp=event.srcElement.id;
-	var instance='c_'+tmp.substring(10,tmp.length-1);
-	
-	if(!window[instance])
-		return;
-	
-	if (is.ns && e.target!=document) routeEvent(e)
+	var row;
 
-	// other mouseMove code
-	window[instance].RunGrid();
+	switch(element.nodeName) 
+	{
+		case 'SPAN':
+			row = element.parentNode.parentNode.parentNode;
+			break;
+                case 'DIV':
+			row = element.parentNode.parentNode;
+			break;
+                case 'TD':
+			row = element.parentNode;
+			break;
+			
+	}
+	
+	return row;
+}
+/////////////////////////////
+function GridGetCellFromSrcEevent(element)
+{
+	var cell;
 
-	return true
-}
-/////////////////////////////
-function mouseUp(e) 
-{
-	var tmp=event.srcElement.id;
-	var instance='c_'+tmp.substring(10,tmp.length-1);
-	//alert(event.srcElement.id+'|'+instance);
-	
-	if(!window[instance])
-		return;
-	
-	if (is.ns && e.target!=document) routeEvent(e);
-	
-	// other mouseUp code
-	window[instance].RunGrid();
-	
-	return true
-}
-/////////////////////////////
-function GridRunGrid()
-{
-	var current_index=this.vbar.getYfactor()*(this.grid_arr.length-2-this.len);
-	var delta=current_index-this.tbl_index;
-	
-	if(delta<0)
+	switch (element.nodeName) 
 	{
-		for(i=0;i<Math.floor(Math.abs(delta));i++)
-		{
-			this.DoUp();
-		}
+		case 'SPAN':
+			cell = element.parentNode.parentNode;
+			break;
+                case 'DIV':
+			cell = element.parentNode;
+			break;
+                case 'TD':
+			cell = element;
+			break;
+			
 	}
-	else if(delta>0)
-	{
-		for(i=0;i<Math.floor(Math.abs(delta));i++)
-		{
-			this.DoDown();
-		}
-	}
+	
+	return cell;
 }
 /////////////////////////////
 // run over the line checkboxes and change their values
 function GridDoLineChk(flag)
 {
-	var i=2;
-	var table=document.getElementById('oTbl_'+this.name).getElementsByTagName("TBODY")[0];
+	var i = 1;
+	var table = this.GetTable();
 	
 	if(!table)
 		return;
 		
 	// init all marked objects
 	this.marked = new Array();
+	this.marked[0] = '';
 	
 	if(flag)
 	{
-		// mark all elements 
-		for(i=2;i<this.grid_arr.length;i++)
-		{
-			this.marked[i-1]=this.grid_arr[i][this.uid];
-		}
-		
-		// reset the i element
-		i=2;
-		
 		// run the length of the grid
-		while(table.rows[i])
+		while(this.grid_arr[i])
 		{	
-			if(!table.rows[i].childNodes[1].childNodes[0])
+			if(!table.rows[i-1])
 				break;
 
-			this.DoMark(table.rows[i],i-1+this.tbl_index);
+			// mark the checked elements
+			this.DoMark(table.rows[i-1],this.grid_arr[i][this.uid]);
+
 			i++;
 		}
 	}
 	else
 	{
-		while(table.rows[i])
+		while(this.grid_arr[i])
 		{	
-			if(!table.rows[i].childNodes[1].childNodes[0])
+			if(!table.rows[i-1])
 				break;
-				
-			this.DoDelMark(table.rows[i]);
+
+			this.DoDelMark(table.rows[i-1],this.grid_arr[i][this.uid]);
 			i++;
 		}
-	}
-}
-/////////////////////////////
-function GridDoChk(obj,query_index)
-{
-	var row;
-	var param = new Object;
-			
-	// if in update mod return 
-	if(this.marked_obj)
-	{
-		obj.checked = false;
-		return;
-	}
-	
-	row=obj.parentNode.parentNode;
-	
-	// mark the checked chekboxes
-	if(!obj.checked)
-	{
-		this.DoDelMark(row,query_index);
-	}
-	else
-	{
-		this.DoMark(row,query_index);
-	}
-	
-	// handle the user event
-	if(this.on_change_func)
-	{
-		// create the param line for the func obj
-		param.uid=obj.value;
-		param.rowid=query_index;
-		param.flag=(obj.checked)?true:false;
-	
-		eval(this.on_change_func+'(param)');
-	}
-}
-/////////////////////////////
-function GridMarkChkRow(obj)
-{
-	var param = new Object();
-			
-	// if in update mod return 
-	if(this.marked_obj)
-	{
-		obj.checked = false;
-		return false;
-	}
-	
-	if(obj.checked == true)
-		this.DoLineChk(true);
-	else
-		this.DoLineChk(false);
-	
-	// handle the user event
-	if(this.on_change_func)
-	{
-		// create the param line for the func obj
-		param.uid=this.GetMarkedUidAsStr(this.quote_data);
-		param.rowid=this.GetMarkedRowidAsStr(this.quote_data);
-		param.flag=(obj.checked)?true:false;
-	
-		eval(this.on_change_func+'(param)');
 	}
 }
 /////////////////////////////
 function GridOrderTable(element)
 {
-	var src = document.images[element].src;
+	var img_name = 'c_'+this.name+'_'+element;
+	var src = document.images[img_name].src;
 	var path = this.image_path;
 
-	if(this.marked_obj)
+	if(this.zoomed_row)
 		return;
 	
 	src=src.substring(src.lastIndexOf('/')+1);
 	
 	// change the image source
-	switch (src) {			
+	switch (src) 
+	{			
 		case 'space.gif':
 			src = 'up.gif';
 			this.order_by_dir='ASC';
+		
 			break;
 			
 		case 'up.gif':
@@ -613,57 +477,59 @@ function GridOrderTable(element)
 	}
 
 	if(this.order_by_dir)	
-		this.order_by=element.substring(('c_'+this.name).length+1);
+		this.order_by = element;
 		
 	this.dir_gif=path+'/'+src;
 
 	// init the start vars 
-	this.start=1;
-	this.current_step = this.step;
-	
-	// init the scrollbar
-	this.vbar.boxlyr.moveTo(0,0);
+	this.start = 1;
 	
 	this.Rebuild('','',true);
 }
 /////////////////////////////
 function GridDoSortArrow(image,element)
 {
-	var grid_img=document.images[element];
+	var grid_img = document.images[element];
 	
-	//this.ClearImg();
-	
-	grid_img.src=image;
+	this.ClearImg();
+
+	if(!image || !element || !grid_img)
+		return;
+
+	grid_img.src = image;
 	
 	if(grid_img.src.indexOf('space.gif') >= 0)
 	{
-		grid_img.width=0;
-		grid_img.height=0;
+		grid_img.width = 0;
+		grid_img.height = 0;
 	}
 	else
 	{
-		grid_img.width=12;
-		grid_img.height=12;
+		grid_img.width = 12;
+		grid_img.height = 11;
 	}
 	
 	// mark the sort itemes
-	this.sort_item.element=element;
-	this.sort_item.image=image;
+	this.sort_item.element = element;
+	this.sort_item.image = image;
 }
 /////////////////////////////
 function GridClearImg()
 {
-	// function need to be checked
-	return;
-
-	var i=0;
+	var img_name;
+	var element;
 	
-	while(document.images[i])
-	{
-		document.images[i].src=this.image_path+'/space.gif';
-		document.images[i].width=1;
-		document.images[i].height=1;
-		i++;
+	for(element in this.grid_arr[0])
+        {
+
+		img_name = 'c_'+this.name+'_'+element;
+		
+		if(document.images[img_name])
+		{
+			document.images[img_name].src = this.image_path+'/space.gif';
+			document.images[img_name].width = 0;
+			document.images[img_name].height = 0;
+		}
 	}
 }
 /////////////////////////////
@@ -671,237 +537,264 @@ function GridDraw()
 {
 	var i;
 	var element;
-	var vbar;
-	var bar_obj;
-	var x,y;
-	var table,tbl_size,row_size;
-	var first=1;
-	var buf;
-	var span_width=eval(this.span+".style.width");
-	var counter=0;
+	var first = true;
 	var table;
 	var str_maxlength;
 	var tmp;
-	
-	eval(this.span+".style.dir='"+this.dir+"'");
-	
-	// clean the px and make numberix
-	span_width=span_width.substr(0,span_width.indexOf('px'))*1;
-	
-	// do the align
-	document.writeln("<div dir='"+this.dir+"'>");
-	document.writeln(this.tbl_header);
-	document.writeln(this.tbl_header_row);
-	
-	table=this.GetTable();
-	
+	var css_class;
+	var background;
+	var width;
+	var grid_length = this.GetLength();
+	var height = this.height ? this.height : (this.td_height*1+3)*this.len;
+
 	// do the title line
+	document.writeln(this.title_header);
+	document.writeln('<tbody>');
+	document.writeln(this.title_header_row);
+
+	table = this.GetTitle();
+
 	for(element in this.grid_arr[0])
 	{
+		// first line
 		if(first)
 		{
-			buf="colspan=2";
-			first=false;
+			css_class = 'td_title_side__'; 
+			first = false;
 		}
-		
-		document.writeln("<td id='" + element + "' height='"+this.td_size+"' align='baseline' "+buf+" nowrap>"+this.grid_arr[0][element]+"&nbsp;</td>");
-		
+		else
+		{
+			css_class = 'td_title_'+this.dir+'__'; 
+		}
+
 		// build the str_obj element
-		str_maxlength=table.rows[0].cells[element].childNodes[0].col_maxlength;
-		
+		tmp = this.DrawCell(0,element);
+
+		document.writeln("<td id='" + element + "' grid_element='"+element+"' height='"+this.td_height+"' align='baseline' style='width:"+this.grid_width[element]+";height:"+this.td_height+";cursor: hand' nowrap><div class='"+css_class+"' style='overflow: hidden; width:"+this.grid_width[element]+"'>"+tmp+"</div></td>");
+
+		// build the coll maxlength
+		str_maxlength = table.rows[0].cells[element].childNodes[0].col_maxlength;
 		if(str_maxlength)
-				this.str_obj[element]=str_maxlength;
+			this.str_obj[element] = str_maxlength;
 			
-		// advance the counter
-		counter++;
-		
-		// init the buf
-		buf='';
+		// add title default events
+		this.DoTitleEvents(table.rows[0].cells[element]);
 	}
-	//<img src="' + this.image_path +'/space.gif" alt="" width="1" height="1" border="0">
-	document.writeln('</tr>\n<tr><td></td><td colspan=' + counter + '></td></tr>');
+	document.writeln('</tr></tbody></table>');
+
+	// calc the table width
+	this.CalcWidth();
 
 	// do the default grid body
-	for(i=2;i<=this.len+1;i++)
+	document.writeln("<div dir='"+this.dir+"' style='overflow-y: auto; overflow-x: hidden; height: "+height+"; width: "+this.width+"px;'>");
+	document.writeln(this.tbl_header);
+	document.writeln('<tbody>');
+	document.writeln("</tbody></table></div>\n");
+	
+	table = this.GetTable();
+
+	for(i=1;i <= grid_length;i++)
 	{  
-		document.writeln(this.tbl_row);
+		this.AddRecord('last',i);
 		
-		document.writeln("<td height='"+this.td_size+"' width="+(this.toolbar_width-3)+"></td>");
-		
-		for(element in this.grid_arr[0])
-		{
-			if(i < this.grid_arr.length)
-			{
-				if(this.str_obj[element]*1)
-					tmp=this.grid_arr[i][element].substr(0,this.str_obj[element]);
-				else
-					tmp=this.grid_arr[i][element];
-				
-				document.writeln("<td id='" + element + "' height='"+this.td_size+"' grid_element='"+element+"' nowrap>"+tmp+"&nbsp;</td>");
-			}
-			else
-			{
-				document.writeln("<td id='" + element + "' height='"+this.td_size+"'></td>");
-			}
-		}
-		
-		document.writeln("</tr>\n");
-		this.DoGridEvents(document.getElementById('oTbl_'+this.name).getElementsByTagName("TBODY")[0].rows[i]);
 	}
-	
-	document.writeln("</table>\n");
-	if(this.dir == 'RTL')
-	{
-		document.writeln('<input type="button" name="'+this.name+'_up" class="gridCntrlText__" value=">" onClick="c_'+this.name+'.DoUp()" dir=ltr>');
-		document.writeln('<input type="button" name="'+this.name+'_down" class="gridCntrlText__" value="<" onClick="c_'+this.name+'.DoDown()" dir=ltr>');
-	}
-	else
-	{
-		document.writeln('<input type="button" name="'+this.name+'_up" class="gridCntrlText__" value="<" style="height:20;width:15;FONT:16 Fixedsys;cursor: hand" onClick="c_'+this.name+'.DoUp()" dir=ltr>');
-		document.writeln('<input type="button" name="'+this.name+'_down" class="gridCntrlText__" value=">" style="height:20;width:15;FONT:16 Fixedsys;cursor: hand" onClick="c_'+this.name+'.DoDown()" dir=ltr>');
-	}
-	
+
+	document.writeln('<div dir="'+this.dir+'">');
+	document.writeln('<input type="button" name="'+this.name+'_up" class="grid_btn_navi__" style="background-color:'+this.background+'" value="<" onClick="c_'+this.name+'.DoDown()">');
+	document.writeln('<input type="button" name="'+this.name+'_down" class="grid_btn_navi__" style="background-color:'+this.background+'" value=">" onClick="c_'+this.name+'.DoUp()">');
 	document.writeln('<span class="gridCntrlText__" id="nav_str_'+this.name+'"></span>');
-	
+	document.writeln('</div>');
+
 	// Init the nav string
-	this.InitNavStr();
-	
-	// ScrollBar section	
-	table=document.getElementById('oTbl_'+this.name).getElementsByTagName("TBODY")[0];
-	
-	if(this.dir == 'RTL')
-	{
-		x=span_width-(this.toolbar_width+0);
-	}
-	else
-	{
-		x=0;
-	}
-
-	tbl_size=table.offsetHeight-2;
-	row_size=table.rows[0].offsetHeight;
-	delimeter_row_size=table.rows[1].offsetHeight;
-	this.toolbar_height=tbl_size-row_size;
-	
-	y=row_size+2;
-	this.vbar = new ScrollBar(x,y,this.toolbar_width,this.toolbar_height,15,15,this.name)
-
-	//vbar.bgColor = "#c0c0c0"
-	this.vbar.bgColor = "#d3d3d3"
-	this.vbar.boxColor = "#808080"
-	this.vbar.build();
-	writeCSS(this.vbar.css);
-	
-	// init the vbar
-	document.writeln(this.vbar.div);
-	this.vbar.activate()
-	
-	// initialize mouse events
-	bar_obj=window['scrollbar_'+this.name];
-	
-	bar_obj.onmousedown = mouseDown;
-	bar_obj.onmousemove = mouseMove;
-	bar_obj.onmouseup = mouseUp;
-	//bar_obj.onmouseout = mouseUp;
-	
-	if (is.ns) document.captureEvents(Event.MOUSEDOWN | Event.MOUSEMOVE | Event.MOUSEUP);
-	// end vbar initing
+        this.InitNavStr();
 }
 /////////////////////////////
+function GridAddRecord(pos,query_index)
+{
+        var table = this.GetTable();
+        var row = document.createElement("TR");
+        var td = new Array();
+        var element;
+        var i = 0;
+        var tmp;
+	var first = true;
+
+	// init first flag
+	first = true;
+
+	tmp = this.DrawCell(query_index,element);
+
+        for(element in this.grid_arr[0])
+        {
+        	td[i] = document.createElement("TD");
+
+		if(first)
+		{
+			td[i].className = 'td_tbl_side__'; 
+			td[i].style.backgroundColor = this.background;
+			td[i].style.width = this.grid_width[element];
+
+			first = false;
+		}
+		else
+		{
+			td[i].className = 'td_tbl_'+this.dir+'__'; 
+			td[i].style.backgroundColor = '#ffffff';
+			td[i].style.width = this.grid_width[element] - 1;
+		}
+
+                td[i].height = this.td_height;
+                td[i].grid_element = element;
+                td[i].id = element;
+		
+		tmp = this.DrawCell(query_index,element);
+
+		// add the data div
+                td[i].innerHTML = "<div style='overflow: hidden; width:"+td[i].style.width+"'>"+tmp+"</div>";
+
+        	row.appendChild(td[i]);
+
+		// advance the counter
+		i++;
+	}
+
+	this.DoEvents(row);
+		
+        if(pos == 'last')
+        {
+                table.appendChild(row);
+        }
+        else
+        {
+                table.insertBefore(row,table.rows[0]);
+        }
+}
+/////////////////////////////
+function GridRemoveRecord(pos)
+{
+	var table = this.GetTable();
+	var row_num = pos == 'last' ? table.rows.length - 1 : 0;
+	
+	if(table.rows[row_num])
+        	table.removeChild(table.rows[row_num]);
+	else
+		alert("can't remove row "+row_num+" out of range!");
+}
+/////////////////////////////
+function GridInitNavStr()
+{
+	var grid_length = this.GetLength();
+	var to = this.start + grid_length - 1;
+	var txt;
+	
+	if(to < this.start)
+	{
+		txt = this.cap_end_record;
+	}
+	else
+	{
+		txt = this.cap_record+' ['+this.start+' - '+to+']';
+	}
+
+        window['nav_str_'+this.name].innerText = txt;
+}
+///////////////////////////
 function GridGetTable()
 {
 	return document.getElementById('oTbl_'+this.name).getElementsByTagName("TBODY")[0];
 }
 /////////////////////////////
-function GridDoMark(obj,query_index)
+function GridGetTitle()
 {
-	this.marked[query_index]=obj.childNodes[1].childNodes[0].value;
-	obj.childNodes[1].childNodes[0].checked = true;
-	obj.bgColor=this.clr_cursor_mark;
+	return document.getElementById('oTtl_'+this.name).getElementsByTagName("TBODY")[0];
 }
 /////////////////////////////
-function GridDoDelMark(obj,query_index)
+function GridDoMark(row,query_index)
 {
-	this.marked[query_index]='';
-	obj.childNodes[1].childNodes[0].checked = false;
-	obj.bgColor=this.clr_cursor_base;
+	this.marked[query_index] = query_index;
+	this.PaintRow(row,this.clr_cursor_mark);
+}
+/////////////////////////////
+function GridDoDelMark(row,query_index)
+{
+	this.marked[query_index] = '';
+	this.PaintRow(row,this.clr_cursor_base);
 }
 //////////////////////////// 
 // refresh the grid data content 
 function GridRefresh(line_offset)
 {
-	var table = eval('oTbl_' + this.name);
-	var i=0;
-	var j=0;
-	var tmp=0;
+	var table = this.GetTable();
+	var i = 1;
 	var buf;
+	var grid_length = this.GetLength();
 	
 	// give default value
 	line_offset = line_offset?line_offset:0;
 	
 	// init all check boxes and marked objects
 	this.DoLineChk(false);
-	this.marked_obj.bgColor=this.clr_cursor_base;
-	
-	while(table.rows[i])
+
+	if(this.zoomed_row)
 	{
-		if(i==1)
+		this.DoDblClick(this.zoomed_row,this.zoomed_row.childNodes[1]);
+	}
+
+	for(i = line_offset;i < this.step;i++)
+	{
+		if(i < grid_length)
 		{
-			i++;
-			continue;
-		}
+			if(!table.rows[i])
+				this.AddRecord('last',i+1);
 
-		tmp=(i>1)?tmp=i+line_offset:i;
-
-		for(element in this.grid_arr[0])
-		{	
-			if(this.grid_arr[tmp])
-			{
-				// do the substr logic
-				if(this.str_obj[element]*1 && i >= 2)
-					buf=this.grid_arr[tmp][element].substr(0,this.str_obj[element]);
-				else
-					buf=this.grid_arr[tmp][element];
-					
-				table.rows[i].cells[j++].innerHTML=buf+'&nbsp;';
+			for(element in this.grid_arr[0])
+			{	
+				table.rows[i].cells[element].childNodes[0].innerHTML = this.DrawCell(i+1,element);
 			}
-			else
-				table.rows[i].cells[j++].innerHTML='';
 		}
-		j=1;
-		
-		i++;
+		else
+		{
+			if(table.rows[grid_length] && table.rows[table.rows.length-1])
+				this.RemoveRecord('last');
+		}
 	}	
 
 	// create the sort arrow
 	if(this.sort_item.element)
 		this.DoSortArrow(this.sort_item.image,this.sort_item.element);
+	else
+		this.ClearImg();
 	
 	// init the grid gui vars:
-	this.tbl_index=line_offset;
-	this.marked_obj = "";
+	this.zoomed_row = '';
 	this.marked = new Array();
-	this.grayed = new Array();
+
+	// init the nav str
+	this.InitNavStr();
 }
 //////////////////////////// 
 // rebuild the grid from the db
-function GridRebuild(extra,obj,suppress_header_rebuild,line_offset)
+function GridRebuild(extra,obj,suppress_header_rebuild,line_offset,form)
 {
-	var width=200;
-	var height=100;
-	var tmp='';
-	var buf='';
+	var buf = '';
+	var form_save = new Object();
 
 	// save the header 
 	if(suppress_header_rebuild)
-		tmp=this.grid_arr[0];
+		buf = this.grid_arr[0];
 		
+	// clear the sort_item indicator
+	this.sort_item = new Object();
+	
 	// init the grid array
 	this.grid_arr = new Array();
+
+	// save only the header if suppress_header_rebuild 
+	this.grid_arr[0] = buf;
 	
-	// save only the header 
-	this.grid_arr[0]=tmp;
-	
+	if(line_offset)
+		this.start = line_offset;
+
 	if(!obj)
 		var obj = new Object();
 	
@@ -912,42 +805,101 @@ function GridRebuild(extra,obj,suppress_header_rebuild,line_offset)
 	obj.step = obj.step?obj.step:this.step;
 	obj.extra = extra?extra:'';
 	obj.suppress_header_rebuild = suppress_header_rebuild?1:0;
-	obj.line_offset = line_offset?line_offset:0;
-	obj.order_by_dir=this.order_by_dir;
-	obj.order_by=this.order_by;
-	obj.dir_gif=this.dir_gif;
-	obj.charset=this.charset;
-	obj.__image_path__=this.image_path;
+	obj.start = this.start;
+	obj.order_by_dir = this.order_by_dir;
+	obj.order_by = this.order_by;
+	obj.dir_gif = this.dir_gif;
+	obj.charset = this.charset;
+	obj.template = 'Repository/Grid/grid_refresh.html';
+	obj.__image_path__ = this.image_path;
 
-	// create the var buffer 
-	for(element in obj)
+	if(form)
 	{
-		buf+='&'+element+'='+obj[element];
+		this.BuildFormHiddenFieldsFromObj(form,obj);
+	
+		// save the original settings
+		form_save.action = form.action;
+		form_save.method = form.method;
+		form_save.target = form.target;
+
+		form.action = this.merge;
+		form.method = 'post';
+		form.target = 'build_form_data_proc';
+
+		form.submit();
+
+		// restore form settings
+		form.action = form_save.action;
+                form.method = form_save.method;
+                form.target = form_save.target;
 	}
-	
-	var pt=GetCenterXY(width,height);
-	
-	// clear the sort_item indicator
-	this.sort_item = new Object();
-	
-	// init the nav vars
-	//this.InitNavVars();
-	
-	// rebuild the grid_arr from the database
-	tmp = open(this.merge+"?template=Repository/Grid/grid_refresh.html"+buf,this.name+"_GRID_MESSAGE","width="+width+",height="+height+",left="+pt.x+",scrrenX="+pt.x+",top="+pt.y+",screenY="+pt.y+",status=no,toolbar=no,menubar=no");	
-	tmp.focus();
+	else
+	{
+		// create the var buffer 
+		buf = this.CreateUrlStrFromObj(form,obj);
+		
+		// do the http request
+		build_form_data_proc.location.href = this.merge+"?template="+obj.template+buf;	
+	}
+}
+////////////////////////////
+function GridCreateUrlStrFromObj(form,obj)
+{
+	var buf = '';
+
+        for(element in obj)
+        {
+        	buf+='&'+element+'='+obj[element];
+        }
+
+	return buf;
+}
+////////////////////////////
+function GridBuildFormHiddenFieldsFromObj(form,obj)
+{
+	var input
+;
+	for(element in obj)
+        {
+		input = document.getElementById(element);
+		
+		if(input)
+		{
+			input.value = obj[element];
+
+			continue;
+		}
+		
+		input = document.createElement("INPUT");
+		input.type = 'hidden';
+		input.name = element;
+		input.id = element;
+		input.value = obj[element];
+		
+		form.appendChild(input);
+	}
 }
 ////////////////////////////
 function GridSetData(obj,rownum)
 {
-	DeepCopy(obj,this.obj);
-	
-	this.grid_arr[rownum]=this.obj;
-	this.obj=new Object;
+	this.grid_arr[rownum] = obj;
+}
+////////////////////////////
+function GridSetWidth(obj)
+{
+	this.grid_width = obj;	
+}
+////////////////////////////
+function GridSetHeight(height)
+{
+	if(height)
+		this.td_height = height;	
 }
 ////////////////////////////
 function DeepCopy(src,dest)
 {
+	alert('using deep copy');
+
 	for(element in src)
 	{
 		dest[element]=src[element];
@@ -958,7 +910,7 @@ function GridGetMarkedUid(){ return this.marked; }
 ////////////////////////////
 function GridGetMarkedUidAsStr(quoted)
 {
-	var i = 0;
+	var i;
 
 	var buf = '';
 	var sep = (quoted)?"','":",";
@@ -975,20 +927,20 @@ function GridGetMarkedUidAsStr(quoted)
 	buf = buf.substr(0,(buf.length-sep.length));
 	
 	if(!buf)
-		return;
+		return '';
 
 	return (quoted)?"'"+buf+"'":buf;
 }
 ////////////////////////////
 function GridGetMarkedRowid()
 {
-	var i=0
+	var i;
 	var arr = new Array();
 	
 	for(i in this.marked)
 	{
 		if(this.marked[i])
-			arr[arr.length]=i;
+			arr[arr.length] = i;
 	}
 
 	return arr; 
@@ -996,8 +948,8 @@ function GridGetMarkedRowid()
 ////////////////////////////
 function GridGetMarkedRowidAsStr(quoted)
 {
-	var arr=this.GetMarkedRowid();
-	var buf='';
+	var arr = this.GetMarkedRowid();
+	var buf = '';
 	var sep = (quoted)?"','":",";
 	
 	for(i in arr)
@@ -1017,9 +969,9 @@ function GridGetMarkedRowidAsStr(quoted)
 	return (quoted)?"'"+buf+"'":buf;
 }
 ////////////////////////////
-function GridGetZoomUid() { return this.marked_obj ? this.grid_arr[this.GetZoomRowid()*1+1][this.uid] : '' ; }
+function GridGetZoomUid() { return this.zoomed_row ? this.grid_arr[this.GetZoomRowid()*1][this.uid] : '' ; }
 ////////////////////////////
-function GridGetZoomRowid() { return this.marked_obj ? this.marked_obj.childNodes[1].childNodes[0].name.substring(10) : '' }
+function GridGetZoomRowid() { return this.zoomed_row ? this.GetRowidFromRow(this.zoomed_row) : '' }
 ////////////////////////////
 function GridSetHeaderCaptionByID(id,str) 
 { 
@@ -1041,31 +993,7 @@ function GridSetHeaderCaptionByID(id,str)
 ////////////////////////////
 function GridGetHeaderCaptionByID(id){var table = this.GetTable(); return table.rows[0].cells[id].innerText;}
 ////////////////////////////
-function GridGetFieldByRowAndCol(row,col){return (!this.grid_arr[row*1+1])?'':this.grid_arr[row*1+1][col];}
-////////////////////////////
-function GridInitNavStr(dir) 
-{ 
-	switch (dir) {			
-		case 'DOWN' :
-			this.db_from++;
-			this.db_to++;			
-			break;
-		case 'UP' :
-			this.db_from--;
-			this.db_to--;			
-			break;
-	}
-	
-	window['nav_str_'+this.name].innerText=this.cap_record+' ['+this.db_from+' - '+this.db_to+']';
-}
-////////////////////////////
-function GridInitNavVars() 
-{
-	this.db_from=1;
-	this.db_to=this.len;
-	
-	this.InitNavStr();
-}
+function GridGetFieldByRowAndCol(row,col){return (!this.grid_arr[row])?'':this.grid_arr[row][col];}
 ////////////////////////////
 function GridUnMarkRow(row)
 {
@@ -1123,6 +1051,16 @@ function GridDelCoulmnOnEmptyHeader()
 	}
 }
 ////////////////////////////
+function GridCalcWidth()
+{
+	var table = this.GetTitle();
+
+	if(!this.width)
+		this.width = table.offsetWidth + 2;
+	
+	return this.width;
+}
+////////////////////////////
 function GridGetZoomColor(){return this.clr_cursor_zoom;}
 ////////////////////////////
 function GridSetZoomColor(val){this.clr_cursor_zoom = val;}
@@ -1131,4 +1069,86 @@ function GridGetCursorColor(){return this.clr_cursor;}
 ////////////////////////////
 function GridSetCursorColor(val){this.clr_cursor = val;}
 ////////////////////////////
+function GridPaintRow(row,back_clr,clr)
+{
+	for(i=1;row.childNodes[i];i++)
+        {
+        	row.childNodes[i].style.backgroundColor = back_clr;
 
+		if(clr)
+			row.childNodes[i].style.color = clr;
+	
+        }
+}
+////////////////////////////
+function GridGetRowidFromRow(row)
+{
+	var child_str = row.childNodes[0].childNodes[0].childNodes[0].id;
+
+	return child_str.substring(11);
+}
+////////////////////////////
+function GridGetUidFromRow(row)
+{
+	return row.childNodes[0].childNodes[0].childNodes[0].uid;
+}
+////////////////////////////
+function GridGetIsMarkedFromRow(row)
+{
+	return row.childNodes[0].childNodes[0].childNodes[0].marked ? true : false;
+}
+////////////////////////////
+function GridSetIsMarkedByRow(row,flag)
+{
+	var val = (flag == true) ? 1 : 0; 
+
+	row.childNodes[0].childNodes[0].childNodes[0].marked = val;
+
+	return;
+}
+////////////////////////////
+function GridGetInstanceFromRow(row)
+{
+	return eval('c'+row.parentNode.parentNode.name.substring(4));
+}
+////////////////////////////
+function GridDrawCell(index,element)
+{
+	var buf = this.grid_arr[index][element];
+
+ 	if(this.str_obj[element]*1)
+        	buf  = buf.substr(0,this.str_obj[element]);
+
+	if(index == 0)
+	{
+		if(element != 'grid_mark')
+			buf = '&nbsp;'+buf;
+	}
+	else
+	{
+		if(element == 'grid_mark')
+			buf += '&nbsp';
+		else		
+			buf = '&nbsp;'+buf+'&nbsp;';
+	}
+
+	return buf;
+}
+////////////////////////////
+function GridScroll(x,y)
+{
+	table = this.GetTable();
+
+	// need to put scrolling code here	
+}
+////////////////////////////
+function GridGetLength()
+{
+	var data_length = this.grid_arr.length*1 - 1;
+
+	if(!this.grid_arr.length)
+		return 0;
+
+ 	return data_length < this.step ? data_length : this.step;
+}
+////////////////////////////

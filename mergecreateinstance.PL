@@ -7,6 +7,7 @@ use lib qw(private/perl);
 use strict qw(subs vars);
 use FileHandle;
 use Term::ReadLine;
+use Term::InKey;
 use Data::Dumper;
 use Config;
 
@@ -831,8 +832,8 @@ if($param{'DB'})
 {
 	print "Your $param{'MERGE_DB'} database will be created now.\n";
 	print "Please ignore any error messages.\n";
-	HTML::Merge::Engine::InitDatabase();
-	HTML::Merge::App::Repository::InitDatabase();
+	eval { HTML::Merge::Engine::InitDatabase();
+               HTML::Merge::App::Repository::InitDatabase(); };
   	print "\n\n\n\n\n\n\n\n\n";
 }
 

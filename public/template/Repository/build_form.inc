@@ -11,16 +11,20 @@
 </$RIF>
 
 <$REM - Do the page build>
-
 <$RINCLUDE.'Repository/repush.inc'>
 
 <$RINCLUDE.'Repository/repository_query.inc'>
 <$R[<$RVAR.repository_query_engine>].LOOP>
 	<$RPERL>
+		my $buf;
+
 		# written in merge internals for preformance reason
 		foreach ($engines{$vars{"repository_query_engine"}}->Columns) 
 		{
-			$vars{"__${_}__"}=(getfield($_, getvar('repository_query_engine')) ne '')?getfield($_, getvar('repository_query_engine')):getfield("parent_$_", getvar('repository_query_engine'));
+			next if /^parent/;
+
+			$buf = getfield($_, getvar('repository_query_engine'));
+			$vars{"__${_}__"}=($buf ne '')?$buf:getfield("parent_$_", getvar('repository_query_engine'));
 		}
 
 		$vars{__pos_x_fld__}=($vars{__isfield__} ne '')?($vars{__pos_x__}+$vars{__pos_delta__}):$vars{__pos_x__};

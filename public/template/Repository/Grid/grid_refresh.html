@@ -6,7 +6,7 @@
 
 	<meta http-equiv="Content-Type" content="text/html; charset=<$RVAR.charset>">
 	<$RSET.grid_class=' "c_<$RVAR.name>" '>
-	<$RSET.grid_ref=' "opener." '>
+	<$RSET.grid_ref=' "parent." '>
 	<$RSET.repository_template=' "<$RVAR.bnd_src>" '>
 	
 </head>
@@ -19,7 +19,7 @@
 	document.documentElement.childNodes[1].style.cursor='wait';
 
 	// makes explorer refetch all other images in page
-	// opener.document.documentElement.childNodes[1].style.cursor='wait';
+	<$RVAR.grid_ref>document.documentElement.childNodes[1].style.cursor='wait';
 //-->
 </script>
 <$R[cap_process].DB='SYSTEM'>
@@ -30,10 +30,10 @@
                       AND note='cap_process' '>
 
 <center>
-<span style="font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-style: normal; font-weight: bold;">
+<div style="font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-style: normal; font-weight: bold;">
 <br>
 <$R[cap_process].SQL.cap_process>
-</span>
+</div>
 </center>
 
 <$RIF.' "<$RVAR.extra>" '>
@@ -57,7 +57,7 @@
 	document.documentElement.childNodes[1].style.cursor='default';
 
 	// makes explorer refetch all other images in page
-	// opener.document.documentElement.childNodes[1].style.cursor='default';
+	<$RVAR.grid_ref>document.documentElement.childNodes[1].style.cursor='default';
 //-->
 </script>
 

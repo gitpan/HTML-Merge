@@ -81,8 +81,6 @@ public/template/Repository/Grid/grid_refresh.html
 public/template/Repository/get_user_realms.inc
 public/javascript/razglobal.js
 public/javascript/Repository/Grid/grid.js
-public/javascript/Repository/Grid/dynlayer.js
-public/javascript/Repository/Grid/scrollbar.js
 docs/Ext.txt
 docs/Merge.html
 docs/Merge.txt
