@@ -42,7 +42,7 @@ function Grid(grid_init)
 	this.dbl_click_func = grid_init.dbl_click_func;
 	this.on_change_func = grid_init.on_change_func;
 
-	// cursor defines 
+	// cursor defines
 	this.clr_cursor="#cccccc";
 	this.clr_cursor_zoom="#ffff99";
 	this.clr_cursor_mark="#aaaaaa";
@@ -111,6 +111,13 @@ function Grid(grid_init)
 	p.InitNavStr = GridInitNavStr
 	p.InitNavVars = GridInitNavVars
 	p.UnMarkRow = GridUnMarkRow
+	p.DelCoulmnByID = GridDelCoulmnByID
+	p.DelCoulmnByFieldName = GridDelCoulmnByID
+	p.DelCoulmnOnEmptyHeader = GridDelCoulmnOnEmptyHeader
+	p.GetZoomColor = GridGetZoomColor
+	p.SetZoomColor = GridSetZoomColor
+	p.GetCursorColor = GridGetCursorColor
+	p.SetCursorColor = GridSetCursorColor
 }
 /////////////////////////////
 function GridDoUp()
@@ -221,7 +228,7 @@ function GridSyncScrollBar(dir)
 /////////////////////////////
 function GridAddRecord(pos)
 {
-	var table = document.getElementById('oTbl_'+this.name).getElementsByTagName("TBODY")[0];
+	var table = this.GetTable();
 	var row = document.createElement("TR");
 	var td = new Array();
 	var element;
@@ -727,11 +734,11 @@ function GridDraw()
 				else
 					tmp=this.grid_arr[i][element];
 				
-				document.writeln("<td height='"+this.td_size+"' grid_element='"+element+"' nowrap>"+tmp+"&nbsp;</td>");
+				document.writeln("<td id='" + element + "' height='"+this.td_size+"' grid_element='"+element+"' nowrap>"+tmp+"&nbsp;</td>");
 			}
 			else
 			{
-				document.writeln("<td height='"+this.td_size+"'></td>");
+				document.writeln("<td id='" + element + "' height='"+this.td_size+"'></td>");
 			}
 		}
 		
@@ -1064,4 +1071,59 @@ function GridUnMarkRow(row)
 	obj.checked = false;
 	this.DoChk(obj,row*1+1);
 }
+////////////////////////////
+function GridDelCoulmnByID(id)
+{
+	var row;
+	var table = this.GetTable();
+	var i;
+
+	// let's delete the specific col from the grid_arr
+	for(row in this.grid_arr)
+	{
+		delete(this.grid_arr[row][id]);
+	}
+	
+	// now let's physicaly delete the column
+	for(i=0;i<table.rows.length;i++)
+	{
+		if(table.rows[i].cells[id])
+		{
+			table.rows[i].removeChild(table.rows[i].cells[id]);
+		}
+		else
+		{
+			table.rows[i].cells[1].colSpan--;
+		}
+		
+	}
+	
+}
+////////////////////////////
+function GridDelCoulmnOnEmptyHeader()
+{
+	var element;
+	var table = this.GetTable();
+	var i=1;
+
+	while(table.rows[0].cells[i])
+	{
+		if(table.rows[0].cells[i].innerText == ' ')
+		{
+			// now let's delete the column
+			this.DelCoulmnByFieldName(table.rows[0].cells[i].id);
+			continue;
+		}
+
+		i++;
+	}
+}
+////////////////////////////
+function GridGetZoomColor(){return this.clr_cursor_zoom;}
+////////////////////////////
+function GridSetZoomColor(val){this.clr_cursor_zoom = val;}
+////////////////////////////
+function GridGetCursorColor(){return this.clr_cursor;}
+////////////////////////////
+function GridSetCursorColor(val){this.clr_cursor = val;}
 ////////////////////////////

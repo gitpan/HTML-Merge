@@ -1,14 +1,25 @@
+##################################
+# merge.pl - merge main script 	 #
+# written by: Roi Illouz	 #
+# Updated: Ariel Brush		 #
+##################################
 use strict;
 my $code = <<'ENDOFPERLCODE';
-##################################
 # Modules ########################
 
+use lib qw(private/perl);
 use CGI qw/:standard/;
+use strict qw(subs vars);
+
+# My modules #####################
+
 use HTML::Merge::Compile;
 use HTML::Merge::Error;
 use HTML::Merge::Engine;
 use HTML::Merge::Development;
-use strict qw(subs vars);
+
+# Globals ########################
+
 use vars qw(%code $mod_perl);
 
 ##################################
@@ -18,14 +29,14 @@ BEGIN
 
 	unless (%$stash) 
 	{
-        	print "Status: 501 Config file not found or incorrect\n";
-        	print "Content-type: text/plain\n\n";
-        	print "Merge could not find the configuration file.\n";
-        	exit;
+		print "Status: 501 Config file not found or incorrect\n";
+		print "Content-type: text/plain\n\n";
+		print "Merge could not find the configuration file.\n";
+		exit;
 	}
 
 	if (exists $ENV{'GATEWAY_INTERFACE'} &&
-    		($ENV{'GATEWAY_INTERFACE'} =~ /^CGI-Perl\//)) 
+		($ENV{'GATEWAY_INTERFACE'} =~ /^CGI-Perl\//)) 
 	{
 		$mod_perl = 1;
 	}
@@ -35,8 +46,8 @@ BEGIN
 
 my $content_type_param=param('content_type') || $HTML::Merge::Ini::CONTENT_TYPE;
 my $content_type=$content_type_param ? $content_type_param : 'text/html';
-my $input;		# the input template
-my $output;		# the perl compiled output
+my $input;              # the input template
+my $output;             # the perl compiled output
 my $candidate;
 my $private;
 my $path;
@@ -52,8 +63,8 @@ if (param('__default__'))
 
 	if ($code) 
 	{
-        	&$code;
-	 	exit;
+		&$code;
+		exit;
 	}
 
 	HTML::Merge::Development::DefaultError("Improper use of Merge internal");
@@ -107,7 +118,7 @@ if ($template)
 				unless ($template) 
 				{
 					&HTML::Merge::Development::DefaultForbidden;
-					die $signal;			
+					die $signal;                    
 				}
 			}
 		};
@@ -201,7 +212,7 @@ unless (ref($input))
 		# Clear extensions in case we are under mod_perl
 
 		foreach (keys %HTML::Merge::Ext) {
-		        undef &{"HTML::Merge::Ext::$_"};
+			undef &{"HTML::Merge::Ext::$_"};
 		}
 
 		&HTML::Merge::Engine::ReadConfig;
@@ -297,8 +308,7 @@ if ($candidate && UNIVERSAL::isa($candidate, 'HTML::Merge::Filter'))
 	$candidate->Close;
 	untie *$fh;
 }
-
-############################################
+# Functions #################################
 sub date 
 {
 	my @s = stat(shift);
@@ -309,6 +319,7 @@ ENDOFPERLCODE
 
 use Config;
 my $shebang = $Config{'startperl'};
+$ARGV[0] = 'merge.cgi' unless $ARGV[0];
 open(O, ">$ARGV[0]") || die $!;
 print O "$shebang\n$code";
 close(O);

@@ -1,7 +1,11 @@
+########################################
+
 use ExtUtils::MakeMaker;
 use strict;
 
-sub MY::install {
+########################################
+sub MY::install 
+{
 	package MY;
 	my $inherited = shift->SUPER::install;
 	$inherited . <<'MAKE';
@@ -22,7 +26,7 @@ install-docs :: docs README
 
 install-samples :: docs README
 	$(PERL) createsamples.pl	
-	$(MOD_INSTALL) samples $(DATA)/merge/docs/samples
+	#$(MOD_INSTALL) samples $(DATA)/merge/docs/samples
 
 .SUFFIXES: .txt .pm .html
 
@@ -47,13 +51,15 @@ README :: docs $(DOCUMENTS_NEEDED) $(DOCUMENTS_NEEDED:.txt=.html)
 
 MAKE
 }
-
-sub MY::dist_dir {
+########################################
+sub MY::dist_dir 
+{
 	package MY;
 	my $inherited = shift->SUPER::dist_dir;
 	$inherited =~ s/^\s*distdir\s*\:/distdir : README/;
 	$inherited;
 }
+########################################
 
 eval { require Term::ReadLine; };
 

@@ -1,6 +1,5 @@
 #!/usr/bin/perl
-
-use strict;
+use lib qw(../..);
 
 my @array = qw(
 47 49 46 38 39 61 01 00 01 00 F7 00 00 00 00 00 00 00 55 00 00 AA 00 00 FF

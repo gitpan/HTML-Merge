@@ -3,7 +3,7 @@
 #
 use strict;
 
-open(O, ">samples/samples.html") || die $!;
+open(O, ">docs/samples/samples.html") || die $!;
 
 print O <<HTML;
 <HTML>
@@ -16,10 +16,10 @@ print O <<HTML;
 HTML
 
 my %hash;
-foreach (glob("samples/*.html")) {
+foreach (glob("docs/samples/*.html")) {
 	s|^samples/||;
 	next if ($_ eq 'samples.html');
-	open(I, "samples/$_") || die $!;
+	open(I, "$_") || die $!;
 	my $text = join("", <I>);
 	close(I);
 	my $title = "Sample: $_";

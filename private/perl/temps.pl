@@ -21,6 +21,21 @@ do "bk_lib.pl";
 &$code if $code;
 
 $dir = param('dir');
+print <<HTML;
+<script language="JavaScript">
+<!--
+////////////////////////////////
+function CheckAll(obj)
+{
+	for(i=0;document.forms[0].files[i] != null; i++)
+	{
+		document.forms[0].files[i].checked=obj.checked;
+	}
+}
+////////////////////////////////
+//-->
+</script>
+HTML
 print "<B>Now at <U>", $dir || "[Root]", "</U></B>:<BR><BR>\n";
 print "Subdirectories:\n<UL>\n";
 
@@ -53,6 +68,7 @@ HTML
 &openform('SUBSCRIBE', 'dir');
 print <<HTML;
 Files:
+<BR><INPUT NAME="check_all" TYPE=CHECKBOX onClick="CheckAll(this)"> Check all
 <UL>
 HTML
 

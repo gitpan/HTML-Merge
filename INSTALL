@@ -1,13 +1,22 @@
 HTML::Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.
 -----------------------------------------------------------------------
-Copyright (c) 1999, 2000, 2001, 2002 Raz Information Systems Ltd.
+Copyright (c) 1999 - 2003 Raz Information Systems Ltd.
 http://www.raz.co.il
 
 This package is distributed under the same terms as Perl itself, see the
 Artistic License on Perl's home page.
 -----------------------------------------------------------------------
-                        INSTALL
+                      
+                            INSTALL
+----------------------------------------------------------------------
+In this document you can find information on how to install HTML::Merge
+and create instances. Instances are the merge application.
+You will need to create an instance for every web directory (URL)
+that you want to use merge.
 
+
+1. LINUX and UNIX like systems:
+=====================================================================
 If you are on a system where you can run the Makefile.PL and use make,
 then the package can be installed using the normal MakeMaker process,
 that is
@@ -41,17 +50,43 @@ At this stage HTML::Merge modules are installed for system wide use.
 You can read the man pages for HTML::Merge and HTML::Merge:Tags for
 more information.
 
+In the next stage you will create your instances (Please 
+read chapter 3).
+
+2. WINDOWS like systems :
+==========================================================
+Open the tar file to an empty directory (e.g C:\MERGE).
+
+perl mergecreateinstance.PL
+perl merge.cgi.PL
+
+Now you will be able to create your instance by typing 
+perl mergecreateinstance. (Please read chapter 3).
+
+Windows user can create instances ONLY in the "local" mode, 
+from the directory where mergecreateinstance is. 
+
+3. After Install - Run merge-create instance
+==========================================================
 Now as you want to set you own application use the script mergecreateinstance.
 
 run:
   mergecreateinstance 
+(on Windows type "perl mergecreateinstance").
 
-For first time users we reccomand to install samples and to use NONE option
+For first time users we recommend to install samples and to use NONE option
 when mergecreateinstance prompt you for security.
 
 It is recommended for first time to give mergecreateinstance
 a simple httpd.conf so that it will work for you, and later try it on 
 a more complicated environment. 
 
-Note: mergecreateinstance works better if the module Term::ReadKey::Gnu
-is installed.
+4. Instance install for non Apache web-server users
+=========================================================
+If you are using non apache web server, do the following.
+1. Create a script web directory (like cgi-bin) from which you have 
+rights to run CGI application.
+2. create merge instance using merge-create instance to that directory.
+3. set rights to the directory.
+
+
