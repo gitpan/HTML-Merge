@@ -1,5 +1,5 @@
 #
-#HTML::Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.
+#HTML::Merge - Embedded HTML/SQL/Perl (c) Raz Information Systems.
 #
 use strict;
 

@@ -8,13 +8,12 @@ use strict qw(subs vars);
 use FileHandle;
 use Term::ReadLine;
 use Data::Dumper;
-use Data::Password qw(IsBadPassword);
 use Config;
-use Term::InKey;
 
 # My Modules ######################
 
 use HTML::Merge::Engine qw(:unconfig);
+use HTML::Merge::Compile;
 use HTML::Merge::App::Repository;
 
 # Def #############################
@@ -55,6 +54,13 @@ my @apache = qw(/home/httpd
 		/usr/local/etc/apache 
 		/usr/local/etc/httpd
 		/usr/local/etc/www);
+my $have_data_password;
+                                                                                
+# require Data password if installed
+$@ = undef;
+eval{ require Data::Password; };
+$have_data_password = 1 unless $@;
+
 
 foreach (qw(in32 vms os390 os2 dos amiga mac))
 {
@@ -80,20 +86,18 @@ M   M EEE   RRR  G  GG EEE
 M   M E     R  R G   G E
 M   M EEEEE R  R  GGG  EEEEE
 
-This script will create an instance for HTML::Merge. 
+This script will create an instance for HTML::Merge ver. $HTML::Merge::Compile::VERSION. 
 An instance is a definition of HTML::Merge application and URL. 
 Please consult the documentation about instances.
 
 Notes: 
 * In order to work with HTML::Merge you MUST create at least one instance.
 * To force blank input when a default is suggested, type: NONE
-* If Term::ReadLine::Gnu is installed, directory paths could be
-  easily navigated using the TAB key.
 
 For any information, please refer to http://rmerge.sourceforge.net
 or send mail to raz\@raz.co.il
 
-Hit [ENTER] to continue:
+Hit [ENTER] continue:
 EOM
 
 # wait for enter
@@ -602,9 +606,9 @@ to the instance applications and develpment toolbox\n";
 	}	
 	exit unless defined $p;
 
-	if ($p && $p !~ /^none$/i && ! $win32)
+	if ($p && $p !~ /^none$/i && ! $win32 && $have_data_password)
 	{
-		my $reason = IsBadPassword($p);
+		my $reason = Data::Password::IsBadPassword($p);
 		if ($reason) 
 		{
 			print "Bad password: It $reason\7\n";
@@ -649,7 +653,7 @@ print "\n\nYou must configure your webserver to alias $url
 as $cgi_bin and run .pl files over there 
 as CGI scripts\n";
 
-if ($conf & $is_root)
+if ($conf && $is_root)
 {
 	my $temp = "merge-httpd.$$";
         $temp = "/tmp/$$-merge-httpd" if $unix;
@@ -1043,7 +1047,7 @@ sub IsRoot
 	if ($euid)
 	{
 		# you are not root
-		$buf = "you are not running as root, some configuration options will be available !!!";
+		$buf = "you are not running as root, some configuration options will not be available !!!";
 		BoldPrint($buf);
 
 		return 0;
@@ -1094,7 +1098,7 @@ sub EditHttpdConf
 	my $conf = getone("Enter the location of your httpd.conf", 
 			'HTTP_CONFIG',
 			$default, 
-			sub { die "$_ not found" if $_ && ! -f; });
+			sub { s/^\s*(.*?)\s*$/$1/; die "$_ not found" if $_ && ! -f; });
 
 	$default = 'nobody';
 

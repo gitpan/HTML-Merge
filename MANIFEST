@@ -13,21 +13,29 @@ updateshebang.pl
 
 lib/HTML/Merge/App/Repository.pm
 lib/HTML/Merge/Compile.pm
-lib/HTML/Merge/Constants.pm
-lib/HTML/Merge/Development.pm
 lib/HTML/Merge/Engine.pm
 lib/HTML/Merge/Error.pm
+lib/HTML/Merge/Development.pm
+lib/HTML/Merge/Tags.pm
+lib/HTML/Merge/Mail.pm
 lib/HTML/Merge/Ext.pm
 lib/HTML/Merge/Filter.pm
-lib/HTML/Merge/Mail.pm
-lib/HTML/Merge/PageUtils.pm
-lib/HTML/Merge/Tags.pm
 lib/HTML/Merge.pm
-lib/Term/InKey.pm
-lib/Data/Password.pm
 
 private/gif/frmback.gif
 private/gif/space.gif
+
+private/perl/HTML/Merge/App/Repository.pm
+private/perl/HTML/Merge/Compile.pm
+private/perl/HTML/Merge/Engine.pm
+private/perl/HTML/Merge/Error.pm
+private/perl/HTML/Merge/Development.pm
+private/perl/HTML/Merge/Tags.pm
+private/perl/HTML/Merge/Mail.pm
+private/perl/HTML/Merge/Ext.pm
+private/perl/HTML/Merge/Filter.pm
+private/perl/HTML/Merge.pm
+
 private/perl/toolbox.pl
 private/perl/viewsource.pl
 private/perl/viewlog.pl

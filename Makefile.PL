@@ -9,6 +9,7 @@ sub MY::install
 	package MY;
 	my $inherited = shift->SUPER::install;
 	$inherited . <<'MAKE';
+# need to chech on perl-5.6.1
 DATA = $(PERLPREFIX)/share
 
 install :: install-private install-public install-docs install-samples
@@ -70,5 +71,6 @@ WriteMakefile(
     'dist' => {'COMPRESS' => 'gzip --best --force'},
     'PREREQ_PM'  => {'Term::ReadLine::Gnu' => 0,
 			'DBI' => 0,
-			'DBD::SQLite' => 0}
+			'DBD::SQLite' => 0,
+			'Data::Password' => 0}
 );

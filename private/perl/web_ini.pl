@@ -30,13 +30,18 @@ if ($ENV{'HTTP_REFERER'} =~ /chpass\.pl/) {
 		exit;
 	}
 	if ($new =~ /./) {
-		require Data::Password;
-		my $reason = Data::Password::IsBadPassword($new);
-		if ($reason) {
-			require URI::Escape;
-			my $p = URI::Escape::uri_escape("bad password - $reason");
-			print "Location: chpass.pl?$extra&r=$p\n\n";
-			exit;
+		$@ = undef;
+		eval{ require Data::Password; };
+
+		unless($@)
+		{
+			my $reason = Data::Password::IsBadPassword($new) ;
+			if ($reason) {
+				require URI::Escape;
+				my $p = URI::Escape::uri_escape("bad password - $reason");
+				print "Location: chpass.pl?$extra&r=$p\n\n";
+				exit;
+			}
 		}
 	}
 }
