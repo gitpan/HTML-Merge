@@ -80,5 +80,5 @@ COPYRIGHT
     Artistic License on Perl's home page.
 
 SEE ALSO
-    perl(1), the HTML::Merge::Tags manpage, the HTML::Merge::Ext manpage.
+    perl(1), HTML::Merge::Tags, HTML::Merge::Ext.
 

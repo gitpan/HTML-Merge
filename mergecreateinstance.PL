@@ -8,7 +8,6 @@ use strict qw(subs vars);
 use FileHandle;
 use Term::ReadLine;
 use Data::Dumper;
-use Data::Password qw(IsBadPassword);
 use Config;
 use Term::InKey;
 
@@ -55,6 +54,13 @@ my @apache = qw(/home/httpd
 		/usr/local/etc/apache 
 		/usr/local/etc/httpd
 		/usr/local/etc/www);
+my $have_data_password;
+                                                                                
+# require Data password if installed
+$@ = undef;
+eval{ require Data::Password; };
+$have_data_password = 1 unless $@;
+
 
 foreach (qw(in32 vms os390 os2 dos amiga mac))
 {
@@ -272,7 +278,7 @@ delete $param{'SUFFIX'};
 my $script = $ext ? "merge.$ext" : 'merge';
 $param{'SCRIPT'} = $script;
 
-foreach (qw(template cache logs pl)) 
+foreach (qw(template cache logs)) 
 {
 	mkdir "$cgi_bin/$_", 0755;
 	chown $uid, $gid, "$cgi_bin/$_";
@@ -602,13 +608,13 @@ to the instance applications and develpment toolbox\n";
 	}	
 	exit unless defined $p;
 
-	if ($p && $p !~ /^none$/i && ! $win32)
+	if ($p && $p !~ /^none$/i && ! $win32 && $have_data_password)
 	{
-		my $reason = IsBadPassword($p);
+		my $reason = Data::Password::IsBadPassword($p);
 		if ($reason) 
 		{
-			print "Bad password: $reason\7\n";
-			#next; # just warn don't take action
+			print "Bad password: It $reason\7\n";
+			next;
 		}
 
 		print "Reenter root password: ";
@@ -623,7 +629,7 @@ to the instance applications and develpment toolbox\n";
 
         $p ||= $default;
 	$p =~ s/^none$//i;
-	
+
 	unless ($p) 
 	{
 		$nextp = $param{'ROOT_PASSWORD'} = '';
@@ -649,7 +655,7 @@ print "\n\nYou must configure your webserver to alias $url
 as $cgi_bin and run .pl files over there 
 as CGI scripts\n";
 
-if ($conf && $is_root)
+if ($conf & $is_root)
 {
 	my $temp = "merge-httpd.$$";
         $temp = "/tmp/$$-merge-httpd" if $unix;
@@ -670,7 +676,7 @@ if ($conf && $is_root)
 		$flag = undef if (/^#\s*END MERGE $cgi_bin\b/);
 	}
 
-	print O "\n# BEGIN MERGE $cgi_bin\n";
+	print O "# BEGIN MERGE $cgi_bin\n";
 
 	if ($need) 
 	{
@@ -716,15 +722,22 @@ EOM
 	close(O);
 	close(I);
 
-	# there is a logical fault in this machanisim
-	# because the saved pass is never like the $param{'ROOT_PASSWORD'}
-        # only if their eq '' but it does the job	
 	if ($savep ne $param{'ROOT_PASSWORD'}) 
 	{
-		$nextp ||= $savep; # if no pass save the old one
+		open(O, ">>$pwd") || die "Cannot open $pwd: $!";
+		close(O);
+		my @save;
+
+		open(I, "$pwd") || die "Cannot open $pwd: $!";
+		while (<I>) 
+		{
+			push(@save, $_) unless (/^$param{'ROOT_USER'}:/);
+		}
+		close(I);
 
 		open(O, ">$pwd") || die "Cannot open $pwd: $!";
 		print O "$param{'ROOT_USER'}:$nextp\n";
+		print O join("", @save);
 		close(O);
 	}
 }

@@ -1,496 +1,509 @@
-<HTML>
-<HEAD>
-<TITLE>tags - Tag summary for Merge.
-HTML::Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.</TITLE>
-<LINK REV="made" HREF="mailto:bhcompile@daffy.perf.redhat.com">
-</HEAD>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>tags - Tag summary for Merge.
+HTML::Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.</title>
+<link rev="made" href="mailto:root@localhost" />
+</head>
 
-<BODY>
+<body style="background-color: white">
 
-<A NAME="__index__"></A>
+<p><a name="__index__"></a></p>
 <!-- INDEX BEGIN -->
 
-<UL>
+<ul>
 
-	<LI><A HREF="#name">NAME</A></LI>
-	<LI><A HREF="#database tags">DATABASE TAGS</A></LI>
-	<LI><A HREF="#flow tags">FLOW TAGS</A></LI>
-	<LI><A HREF="#functional tags">FUNCTIONAL TAGS</A></LI>
-	<LI><A HREF="#source tags">SOURCE TAGS</A></LI>
-	<LI><A HREF="#variable tags">VARIABLE TAGS</A></LI>
-	<LI><A HREF="#security tags">SECURITY TAGS</A></LI>
-	<LI><A HREF="#date tags">DATE TAGS</A></LI>
-	<LI><A HREF="#form and html enhancement tags">FORM AND HTML ENHANCEMENT TAGS</A></LI>
-	<LI><A HREF="#file tags">FILE TAGS</A></LI>
-	<LI><A HREF="#meta tags">META TAGS</A></LI>
-	<LI><A HREF="#copyright">COPYRIGHT</A></LI>
-</UL>
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#database_tags">DATABASE TAGS</a></li>
+	<li><a href="#flow_tags">FLOW TAGS</a></li>
+	<li><a href="#functional_tags">FUNCTIONAL TAGS</a></li>
+	<li><a href="#source_tags">SOURCE TAGS</a></li>
+	<li><a href="#variable_tags">VARIABLE TAGS</a></li>
+	<li><a href="#security_tags">SECURITY TAGS</a></li>
+	<li><a href="#date_tags">DATE TAGS</a></li>
+	<li><a href="#form_and_html_enhancement_tags">FORM AND HTML ENHANCEMENT TAGS</a></li>
+	<li><a href="#file_tags">FILE TAGS</a></li>
+	<li><a href="#meta_tags">META TAGS</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
 <!-- INDEX END -->
 
-<HR>
-<P>
-<H1><A NAME="name">NAME</A></H1>
-<P>Merge tags - Tag summary for Merge.
-HTML::Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.</P>
-<P>
-<HR>
-<H1><A NAME="database tags">DATABASE TAGS</A></H1>
-<UL>
-<LI>
-&lt;$RDB='[<STRONG>Database type</STRONG>:]<STRONG>Database name</STRONG>[:<STRONG>Host</STRONG>][,<STRONG>User</STRONG>[,<STRONG>Password</STRONG>]]'&gt;
-<P>Connect to alternative database. Defaults are taken from the configuration 
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Merge tags - Tag summary for Merge.
+HTML::Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.</p>
+<p>
+</p>
+<hr />
+<h1><a name="database_tags">DATABASE TAGS</a></h1>
+<ul>
+<li></li>
+&lt;$RDB='[<strong>Database type</strong>:]<strong>Database name</strong>[:<strong>Host</strong>][,<strong>User</strong>[,<strong>Password</strong>]]'&gt;
+<p>Connect to alternative database. Defaults are taken from the configuration 
 file. If two parameters are given in the first token, the database type takes
-precedence.</P>
-<P>Perdefined databases from merge.conf can be used like this:</P>
-<P>&lt;$RDB='SYSTEM'&gt; for system datatbase
+precedence.</p>
+<p>Perdefined databases from merge.conf can be used like this:</p>
+<p>&lt;$RDB='SYSTEM'&gt; for system datatbase
 If system database (SESSION_DB) is not defined in merge.conf a system wide 
-definition will apply.</P>
-<P>&lt;$RDB='DEFAULT'&gt; for application database</P>
-<P></P>
-<LI>
-&lt;$RS='<STRONG>SQL statement</STRONG>'&gt;
-<P>Perform a non query SQL statement.</P>
-<P></P>
-<LI>
-&lt;$RQ='SELECT <STRONG>SQL statement</STRONG>'&gt;
-<P>Perform a query. First row of result is immediately available.
-Query can be iterated with &lt;$RLOOP&gt; tags.</P>
-<P></P>
-<LI>
+definition will apply.</p>
+<p>&lt;$RDB='DEFAULT'&gt; for application database</p>
+<p></p>
+<li></li>
+&lt;$RS='<strong>SQL statement</strong>'&gt;
+<p>Perform a non query SQL statement.</p>
+<p></p>
+<li></li>
+&lt;$RQ='SELECT <strong>SQL statement</strong>'&gt;
+<p>Perform a query. First row of result is immediately available.
+Query can be iterated with &lt;$RLOOP&gt; tags.</p>
+<p></p>
+<li></li>
 &lt;$RERUN&gt;
-<P>Reperforms the query.</P>
-<P></P>
-<LI>
-&lt;$RLOOP[.LIMIT=<STRONG>number</STRONG>]&gt;
-<P>&lt;/$RLOOP&gt;</P>
-<P>&lt;$REND&gt;</P>
-<P>Performs a loop over fetched query elements. Last row remains valid after
+<p>Reperforms the query.</p>
+<p></p>
+<li></li>
+&lt;$RLOOP[.LIMIT=<strong>number</strong>]&gt;
+<p>&lt;/$RLOOP&gt;</p>
+<p>&lt;$REND&gt;</p>
+<p>Performs a loop over fetched query elements. Last row remains valid after
 iteration.
-Iteration number can be limited.</P>
-<P></P>
-<LI>
-&lt;$RSQL.<STRONG>variable</STRONG>&gt;
-<P>Derferences a column from the current fetch.</P>
-<P></P>
-<LI>
+Iteration number can be limited.</p>
+<p></p>
+<li></li>
+&lt;$RSQL.<strong>variable</strong>&gt;
+<p>Derferences a column from the current fetch.</p>
+<p></p>
+<li></li>
 &lt;$RINDEX&gt;
-<P>Substitues for the number of the row currently fetched.</P>
-<P></P>
-<LI>
+<p>Substitues for the number of the row currently fetched.</p>
+<p></p>
+<li></li>
 &lt;$RFETCH&gt;
-<P>Fetches another row. Increments the index.</P>
-<P></P>
-<LI>
+<p>Fetches another row. Increments the index.</p>
+<p></p>
+<li></li>
 &lt;$RSTATE&gt;
-<P>Returns the SQL state of the last statement.</P>
-<P></P>
-<LI>
+<p>Returns the SQL state of the last statement.</p>
+<p></p>
+<li></li>
 &lt;$REMPTY&gt;
-<P>Returns a boolean value of whether the last query yielded an empty set.</P>
-<P></P>
-<LI>
+<p>Returns a boolean value of whether the last query yielded an empty set.</p>
+<p></p>
+<li></li>
 &lt;$RDISCONNECT&gt;
-<P>Destroy an engine. This is used if the DB_DATABASE configuration
+<p>Destroy an engine. This is used if the DB_DATABASE configuration
 variable has been changed using the &lt;$RCFGSET&gt; tag to 
-recreate the engine with the new parameters.</P>
-<P></P></UL>
-<P>
-<HR>
-<H1><A NAME="flow tags">FLOW TAGS</A></H1>
-<UL>
-<LI>
-&lt;$RITERATION.LIMIT=<STRONG>number</STRONG>&gt;
-<P>&lt;/$RITERATION&gt;</P>
-<P>Performs a counted loop.</P>
-<P></P>
-<LI>
-&lt;$RIF.'<STRONG>perl code</STRONG>'&gt;
-<P>&lt;$RELSE&gt; (optional)</P>
-<P>&lt;$REND_IF&gt;</P>
-<P>&lt;/$RIF&gt;</P>
-<P>&lt;$RELSIF.'<STRONG>perl code</STRONG>'&gt;</P>
-<P>Perform the code if the perl code evaluates to true.</P>
-<P></P>
-<LI>
-&lt;$RWHILE.'<STRONG>perl code</STRONG>'&gt;
-<P>&lt;/$RWHILE&gt;</P>
-<P>&lt;$REND_WHILE&gt;</P>
-<P>Perform a while loop.</P>
-<P></P>
-<LI>
+recreate the engine with the new parameters.</p>
+<p></p></ul>
+<p>
+</p>
+<hr />
+<h1><a name="flow_tags">FLOW TAGS</a></h1>
+<ul>
+<li></li>
+&lt;$RITERATION.LIMIT=<strong>number</strong>&gt;
+<p>&lt;/$RITERATION&gt;</p>
+<p>Performs a counted loop.</p>
+<p></p>
+<li></li>
+&lt;$RIF.'<strong>perl code</strong>'&gt;
+<p>&lt;$RELSE&gt; (optional)</p>
+<p>&lt;$REND_IF&gt;</p>
+<p>&lt;/$RIF&gt;</p>
+<p>&lt;$RELSIF.'<strong>perl code</strong>'&gt;</p>
+<p>Perform the code if the perl code evaluates to true.</p>
+<p></p>
+<li></li>
+&lt;$RWHILE.'<strong>perl code</strong>'&gt;
+<p>&lt;/$RWHILE&gt;</p>
+<p>&lt;$REND_WHILE&gt;</p>
+<p>Perform a while loop.</p>
+<p></p>
+<li></li>
 &lt;$RBREAK&gt;
-<P>Break out of a loop.</P>
-<P></P>
-<LI>
+<p>Break out of a loop.</p>
+<p></p>
+<li></li>
 &lt;$RCONT&gt;
-<P>Jump to the next iteration of the loop.</P>
-<P></P>
-<LI>
-&lt;$RCOUNT.<STRONG>variable</STRONG>=<STRONG>from</STRONG>:<STRONG>to</STRONG>[,<STRONG>step</STRONG>]&gt;
-<P>&lt;/$RCOUNT&gt;</P>
-<P>Perform a classic variable iteration loop. All parameters are mandatory.</P>
-<P></P>
-<LI>
+<p>Jump to the next iteration of the loop.</p>
+<p></p>
+<li></li>
+&lt;$RCOUNT.<strong>variable</strong>=<strong>from</strong>:<strong>to</strong>[,<strong>step</strong>]&gt;
+<p>&lt;/$RCOUNT&gt;</p>
+<p>Perform a classic variable iteration loop. All parameters are mandatory.</p>
+<p></p>
+<li></li>
 &lt;$REXIT&gt;
-<P>Exit a template in the middle.</P>
-<P></P>
-<LI>
-&lt;$RENUMREQ.<STRONG>iterator variable</STRONG>=<STRONG>value variable</STRONG>&gt;
-<P>Iterate over all request parameters; each time having the first variable contain the parameter name and the second contain the value.</P>
-<P></P>
-<LI>
-&lt;$RENUMQUERY.<STRONG>iterator variable</STRONG>=<STRONG>value variable</STRONG>&gt;
-<P>Iterate over all the columns of a query result. each time having the first variable contain the column name and the second contain the data.</P>
-<P></P></UL>
-<P>
-<HR>
-<H1><A NAME="functional tags">FUNCTIONAL TAGS</A></H1>
-<UL>
-<LI>
-&lt;$RPIC.<STRONG>picture type</STRONG>(<STRONG>instruction set</STRONG>).'<STRONG>string</STRONG>'&gt;
-<P>&lt;$RPIC.F(<STRONG>char</STRONG>).'<STRONG>string</STRONG>'&gt;</P>
-<P>Replace all white spaces by the given char.
+<p>Exit a template in the middle.</p>
+<p></p>
+<li></li>
+&lt;$RENUMREQ.<strong>iterator variable</strong>=<strong>value variable</strong>&gt;
+<p>Iterate over all request parameters; each time having the first variable contain the parameter name and the second contain the value.</p>
+<p></p>
+<li></li>
+&lt;$RENUMQUERY.<strong>iterator variable</strong>=<strong>value variable</strong>&gt;
+<p>Iterate over all the columns of a query result. each time having the first variable contain the column name and the second contain the data.</p>
+<p></p></ul>
+<p>
+</p>
+<hr />
+<h1><a name="functional_tags">FUNCTIONAL TAGS</a></h1>
+<ul>
+<li></li>
+&lt;$RPIC.<strong>picture type</strong>(<strong>instruction set</strong>).'<strong>string</strong>'&gt;
+<p>&lt;$RPIC.F(<strong>char</strong>).'<strong>string</strong>'&gt;</p>
+<p>Replace all white spaces by the given char.
 e.g., &lt;$RPIC.F(+).'Banana, a yellow energy bomb'&gt;
-will yield: Banana,+a+yellow+energy+bomb and so on.</P>
-<P>&lt;$RPIC.R(<STRONG>find</STRONG>=<STRONG>replace</STRONG>, ...).'<STRONG>string</STRONG>'&gt;</P>
-<P>Replace tuples of string-to-find/string-to-replace in the
+will yield: Banana,+a+yellow+energy+bomb and so on.</p>
+<p>&lt;$RPIC.R(<strong>find</strong>=<strong>replace</strong>, ...).'<strong>string</strong>'&gt;</p>
+<p>Replace tuples of string-to-find/string-to-replace in the
 given string.
 e.g., &lt;$RPIC.R('na'='ta').'Banana'&gt; will
-yield Batata and so on.</P>
-<P>&lt;$RPIC.N(<STRONG>width</STRONG>.<STRONG>fraction positions</STRONG>).'<STRONG>number</STRONG>'&gt;</P>
-<P>Left space pad the number, with a fixed number of decimal places.</P>
-<P>&lt;$RPIC.N(0&lt;width&gt;).'<STRONG>number</STRONG>'&gt;</P>
-<P>Left zero pad the number, with a fixed number of decimal places.</P>
-<P>(Hint, the instruction is equal to <EM>printf</EM>ing with %<STRONG>string</STRONG>f)</P>
-<P>&lt;$RPIC.NZ(&lt;format&gt;).'<STRONG>number</STRONG>'&gt;</P>
-<P>Substitute a blank for zero. (Mnemonic: zero suppress)</P>
-<P>&lt;$RPIC.NF(&lt;format&gt;).'<STRONG>number</STRONG>'&gt;</P>
-<P>After formatting the number, add commas.</P>
-<P>Z and F may be combined.</P>
-<P>&lt;$RPIC.A(&lt;width&gt;).'<STRONG>alphanumeric string</STRONG>'&gt;</P>
-<P>Left space pad the number to achieve a width. (Right justify)</P>
-<P>&lt;$RPIC.A(-&lt;width&gt;).'<STRONG>alphanumeric string</STRONG>'&gt;</P>
-<P>Right space pad the number to achieve a width. (Left justify)</P>
-<P>&lt;$RPIC.AC(&lt;format&gt;).'<STRONG>alphanumeric string</STRONG>'&gt;</P>
-<P>Capitalize string.</P>
-<P>&lt;$RPIC.AS(&lt;format&gt;).'<STRONG>alphanumeric string</STRONG>'&gt;</P>
-<P>Convert string to lower case. (Mnemonic: Small)</P>
-<P>&lt;$RPIC.AP(&lt;format&gt;).'<STRONG>alphanumeric string</STRONG>'&gt;</P>
-<P>Convert string to 'proper' case, ie, first and only first letter 
-of each word capitalized.</P>
-<P>&lt;$RPIC.AW(&lt;format&gt;).'<STRONG>alphanumeric string</STRONG>'&gt;</P>
-<P>Trim redundant spaces, ie, convert bulk spaces to one space.</P>
-<P>&lt;$RPIC.AR(&lt;format&gt;).'<STRONG>alphanumeric string</STRONG>'&gt;</P>
-<P>Trim right spaces.</P>
-<P>&lt;$RPIC.AL(&lt;format&gt;).'<STRONG>alphanumeric string</STRONG>'&gt;</P>
-<P>Trim left spaces.</P>
-<P>L, R and W may be combined, and all combinations may be combined with either
-C, S or P.</P>
-<P>&lt;$RPIC.D(<STRONG>format</STRONG>).'<STRONG>date</STRONG>'&gt;</P>
-<P>Format a POSIX time string, requires Date::Format.</P>
-<P>&lt;$RPIC.X(<STRONG>number</STRONG>).'<STRONG>string</STRONG>'&gt;</P>
-<P>Repeats a string the required number of times.</P>
-<P></P>
-<LI>
-&lt;$RDECIDE.'<STRONG>perl code</STRONG>'?'<STRONG>string</STRONG>':'<STRONG>string</STRONG>'&gt;
-<P>Evaluates the code. If true, yields the first string, otherwise the second.</P>
-<P></P>
-<LI>
-&lt;$RMAIL.'<STRONG>From address</STRONG>','<STRONG>To address</STRONG>'[,'<STRONG>Subject</STRONG>']&gt;
-<P>&lt;/$RMAIL&gt;</P>
-<P>Send email, utilizing SMTP connection to localhost.</P>
-<P></P>
-<LI>
+yield Batata and so on.</p>
+<p>&lt;$RPIC.N(<strong>width</strong>.<strong>fraction positions</strong>).'<strong>number</strong>'&gt;</p>
+<p>Left space pad the number, with a fixed number of decimal places.</p>
+<p>&lt;$RPIC.N(0&lt;width&gt;).'<strong>number</strong>'&gt;</p>
+<p>Left zero pad the number, with a fixed number of decimal places.</p>
+<p>(Hint, the instruction is equal to <em>printf</em>ing with %<strong>string</strong>f)</p>
+<p>&lt;$RPIC.NZ(&lt;format&gt;).'<strong>number</strong>'&gt;</p>
+<p>Substitute a blank for zero. (Mnemonic: zero suppress)</p>
+<p>&lt;$RPIC.NF(&lt;format&gt;).'<strong>number</strong>'&gt;</p>
+<p>After formatting the number, add commas.</p>
+<p>Z and F may be combined.</p>
+<p>&lt;$RPIC.A(&lt;width&gt;).'<strong>alphanumeric string</strong>'&gt;</p>
+<p>Left space pad the number to achieve a width. (Right justify)</p>
+<p>&lt;$RPIC.A(-&lt;width&gt;).'<strong>alphanumeric string</strong>'&gt;</p>
+<p>Right space pad the number to achieve a width. (Left justify)</p>
+<p>&lt;$RPIC.AC(&lt;format&gt;).'<strong>alphanumeric string</strong>'&gt;</p>
+<p>Capitalize string.</p>
+<p>&lt;$RPIC.AS(&lt;format&gt;).'<strong>alphanumeric string</strong>'&gt;</p>
+<p>Convert string to lower case. (Mnemonic: Small)</p>
+<p>&lt;$RPIC.AP(&lt;format&gt;).'<strong>alphanumeric string</strong>'&gt;</p>
+<p>Convert string to 'proper' case, ie, first and only first letter 
+of each word capitalized.</p>
+<p>&lt;$RPIC.AW(&lt;format&gt;).'<strong>alphanumeric string</strong>'&gt;</p>
+<p>Trim redundant spaces, ie, convert bulk spaces to one space.</p>
+<p>&lt;$RPIC.AR(&lt;format&gt;).'<strong>alphanumeric string</strong>'&gt;</p>
+<p>Trim right spaces.</p>
+<p>&lt;$RPIC.AL(&lt;format&gt;).'<strong>alphanumeric string</strong>'&gt;</p>
+<p>Trim left spaces.</p>
+<p>L, R and W may be combined, and all combinations may be combined with either
+C, S or P.</p>
+<p>&lt;$RPIC.D(<strong>format</strong>).'<strong>date</strong>'&gt;</p>
+<p>Format a POSIX time string, requires Date::Format.</p>
+<p>&lt;$RPIC.X(<strong>number</strong>).'<strong>string</strong>'&gt;</p>
+<p>Repeats a string the required number of times.</p>
+<p></p>
+<li></li>
+&lt;$RDECIDE.'<strong>perl code</strong>'?'<strong>string</strong>':'<strong>string</strong>'&gt;
+<p>Evaluates the code. If true, yields the first string, otherwise the second.</p>
+<p></p>
+<li></li>
+&lt;$RMAIL.'<strong>From address</strong>','<strong>To address</strong>'[,'<strong>Subject</strong>']&gt;
+<p>&lt;/$RMAIL&gt;</p>
+<p>Send email, utilizing SMTP connection to localhost.</p>
+<p></p>
+<li></li>
 &lt;$RPERL&gt;
-<P>&lt;/$RPERL&gt;</P>
-<P>Embed perl code. <CODE>print()</CODE> may be used.</P>
-<P></P>
-<LI>
+<p>&lt;/$RPERL&gt;</p>
+<p>Embed perl code. <code>print()</code> may be used.</p>
+<p></p>
+<li></li>
 &lt;$RPERL.A&gt;
-<P>&lt;$RPERL.B&gt;</P>
-<P>&lt;$RPERL.C&gt;</P>
-<P>Documentation soon.</P>
-<P></P>
-<LI>
-&lt;$REVAL.'<STRONG>perl code</STRONG>'&gt;
-<P>Evaluates the code.</P>
-<P></P></UL>
-<P>
-<HR>
-<H1><A NAME="source tags">SOURCE TAGS</A></H1>
-<UL>
-<LI>
-&lt;$REM.'<STRONG>string</STRONG>'&gt;
-<P>Add a server side comment.</P>
-<P></P>
-<LI>
-&lt;$RTRACE.'<STRONG>string</STRONG>'&gt;
-<P>Send a string to the log file.</P>
-<P></P>
-<LI>
-&lt;$RINCLUDE.'<STRONG>template name</STRONG>'&gt;
-<P>Include a template in compile time.</P>
-<P></P>
-<LI>
-&lt;$RWEBINCLUDE.'<STRONG>url</STRONG>'&gt;
-<P>Include an external web page in run time.</P>
-<P></P>
-<LI>
-&lt;$RSOURCE.'<STRONG>template</STRONG>'&gt;
-<P>&lt;/$RSOURCE&gt;</P>
-<P>Generate an Anchor for a source view for a template. e.g,
+<p>&lt;$RPERL.B&gt;</p>
+<p>&lt;$RPERL.C&gt;</p>
+<p>Documentation soon.</p>
+<p></p>
+<li></li>
+&lt;$REVAL.'<strong>perl code</strong>'&gt;
+<p>Evaluates the code.</p>
+<p></p></ul>
+<p>
+</p>
+<hr />
+<h1><a name="source_tags">SOURCE TAGS</a></h1>
+<ul>
+<li></li>
+&lt;$REM.'<strong>string</strong>'&gt;
+<p>Add a server side comment.</p>
+<p></p>
+<li></li>
+&lt;$RTRACE.'<strong>string</strong>'&gt;
+<p>Send a string to the log file.</p>
+<p></p>
+<li></li>
+&lt;$RINCLUDE.'<strong>template name</strong>'&gt;
+<p>Include a template in compile time.</p>
+<p></p>
+<li></li>
+&lt;$RWEBINCLUDE.'<strong>url</strong>'&gt;
+<p>Include an external web page in run time.</p>
+<p></p>
+<li></li>
+&lt;$RSOURCE.'<strong>template</strong>'&gt;
+<p>&lt;/$RSOURCE&gt;</p>
+<p>Generate an Anchor for a source view for a template. e.g,
 &lt;$RSOURCE.'&lt;$RTEMPLATE&gt;'&gt;Click here to view
-the source for this template&lt;/$RSOURCE&gt;</P>
-<P></P></UL>
-<P>
-<HR>
-<H1><A NAME="variable tags">VARIABLE TAGS</A></H1>
-<UL>
-<LI>
-&lt;$RVAR.<STRONG>variable</STRONG>&gt;
-<P>Dereferences a local variable, or a CGI variable. (Precedence to the former).</P>
-<P></P>
-<LI>
-&lt;$RSET.<STRONG>variable</STRONG>='<STRONG>perl code</STRONG>'&gt;
-<P>Set a variable to the result of a perl code segment.
-CGI variables may be overwritten.</P>
-<P></P>
-<LI>
-&lt;$RINC.<STRONG>variable</STRONG>&gt;
-<P></P>
-<LI>
-&lt;$RINC.<STRONG>variable</STRONG>+<STRONG>number</STRONG>&gt;
-<P>&lt;$RINC.<STRONG>variable</STRONG>-<STRONG>number</STRONG>&gt;</P>
-<P>Modify a variable.</P>
-<P></P>
-<LI>
-&lt;$RPSET.<STRONG>variable</STRONG>='<STRONG>perl code</STRONG>'&gt;
-<P>&lt;$RPGET.<STRONG>variable</STRONG>&gt;</P>
-<P>Store and retrive session variables. Must be configured in the configuration
-file manually.</P>
-<P></P>
-<LI>
-&lt;$RPIMPORT.<STRONG>variable</STRONG>&gt;
-<P>Copy a persistent variable to a local variable, for faster retrieving.
-Memory variables work much faster than session variables.</P>
-<P></P>
-<LI>
-&lt;$RPEXPORT.<STRONG>variable</STRONG>&gt;
-<P>Copy a regular variable to a persistent variable of the same name.</P>
-<P></P>
-<LI>
+the source for this template&lt;/$RSOURCE&gt;</p>
+<p></p></ul>
+<p>
+</p>
+<hr />
+<h1><a name="variable_tags">VARIABLE TAGS</a></h1>
+<ul>
+<li></li>
+&lt;$RVAR.<strong>variable</strong>&gt;
+<p>Dereferences a local variable, or a CGI variable. (Precedence to the former).</p>
+<p></p>
+<li></li>
+&lt;$RSET.<strong>variable</strong>='<strong>perl code</strong>'&gt;
+<p>Set a variable to the result of a perl code segment.
+CGI variables may be overwritten.</p>
+<p></p>
+<li></li>
+&lt;$RINC.<strong>variable</strong>&gt;
+<p></p>
+<li></li>
+&lt;$RINC.<strong>variable</strong>+<strong>number</strong>&gt;
+<p>&lt;$RINC.<strong>variable</strong>-<strong>number</strong>&gt;</p>
+<p>Modify a variable.</p>
+<p></p>
+<li></li>
+&lt;$RPSET.<strong>variable</strong>='<strong>perl code</strong>'&gt;
+<p>&lt;$RPGET.<strong>variable</strong>&gt;</p>
+<p>Store and retrive session variables. Must be configured in the configuration
+file manually.</p>
+<p></p>
+<li></li>
+&lt;$RPIMPORT.<strong>variable</strong>&gt;
+<p>Copy a persistent variable to a local variable, for faster retrieving.
+Memory variables work much faster than session variables.</p>
+<p></p>
+<li></li>
+&lt;$RPEXPORT.<strong>variable</strong>&gt;
+<p>Copy a regular variable to a persistent variable of the same name.</p>
+<p></p>
+<li></li>
 &lt;$RPCLEAR&gt;
-<P>Erases all session variables.</P>
-<P></P>
-<LI>
-&lt;$RCFG.<STRONG>variable</STRONG>&gt;
-<P>Retrieve a variable from Merge configuration.</P>
-<P></P>
-<LI>
-&lt;$RCFGSET.<STRONG>variable</STRONG>='<STRONG>perl code</STRONG>'&gt;
-<P>Forge a temporary value instead of a configuration variable. Does <STRONG>NOT</STRONG> change the configuration file!</P>
-<P></P>
-<LI>
-&lt;$RCOOKIE.<STRONG>name</STRONG>&gt;
-<P>Retrieve a cookie.</P>
-<P></P>
-<LI>
-&lt;$RCOOKIESET.<STRONG>name</STRONG>='<STRONG>perl expression</STRONG>'&gt;
-<P>&lt;$RCOOKIESET.<STRONG>name</STRONG>='<STRONG>perl expression</STRONG>',<STRONG>minutes</STRONG>&gt;</P>
-<P>&lt;$RCOOKIESET.<STRONG>name</STRONG>='<STRONG>perl expression</STRONG>',<STRONG>non numeric</STRONG>&gt;</P>
-<P>Set a cookie using a HTTP-EQUIV &lt;META&gt; HTML tag.
+<p>Erases all session variables.</p>
+<p></p>
+<li></li>
+&lt;$RCFG.<strong>variable</strong>&gt;
+<p>Retrieve a variable from Merge configuration.</p>
+<p></p>
+<li></li>
+&lt;$RCFGSET.<strong>variable</strong>='<strong>perl code</strong>'&gt;
+<p>Forge a temporary value instead of a configuration variable. Does <strong>NOT</strong> change the configuration file!</p>
+<p></p>
+<li></li>
+&lt;$RCOOKIE.<strong>name</strong>&gt;
+<p>Retrieve a cookie.</p>
+<p></p>
+<li></li>
+&lt;$RCOOKIESET.<strong>name</strong>='<strong>perl expression</strong>'&gt;
+<p>&lt;$RCOOKIESET.<strong>name</strong>='<strong>perl expression</strong>',<strong>minutes</strong>&gt;</p>
+<p>&lt;$RCOOKIESET.<strong>name</strong>='<strong>perl expression</strong>',<strong>non numeric</strong>&gt;</p>
+<p>Set a cookie using a HTTP-EQUIV &lt;META&gt; HTML tag.
 The notations are used for setting a permanent cookie,
 a cookie with an expire date, and a temporary cookie
-that will disappear when the browser exits.</P>
-<P></P>
-<LI>
-&lt;$RENV.<STRONG>variable</STRONG>&gt;
-<P>Get an environment variable.</P>
-<P></P>
-<LI>
-&lt;$RENVSET.<STRONG>variable</STRONG>='<STRONG>perl code</STRONG>'&gt;
-<P>Set an environment variable.</P>
-<P></P></UL>
-<P>
-<HR>
-<H1><A NAME="security tags">SECURITY TAGS</A></H1>
-<P>These tags are impleneted only if the merge database exists.</P>
-<P>IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT 
+that will disappear when the browser exits.</p>
+<p></p>
+<li></li>
+&lt;$RENV.<strong>variable</strong>&gt;
+<p>Get an environment variable.</p>
+<p></p>
+<li></li>
+&lt;$RENVSET.<strong>variable</strong>='<strong>perl code</strong>'&gt;
+<p>Set an environment variable.</p>
+<p></p></ul>
+<p>
+</p>
+<hr />
+<h1><a name="security_tags">SECURITY TAGS</a></h1>
+<p>These tags are impleneted only if the merge database exists.</p>
+<p>IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT 
 These tags are to be used with the Merge security backend which is not written yet.
-IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT</P>
-<UL>
-<LI>
-&lt;$RLOGIN.'<STRONG>user</STRONG>','<STRONG>password</STRONG>'&gt;
-<P>Logs in. Tag outputs a boolean value to notify if login was successful or failed.</P>
-<P></P>
-<LI>
-&lt;$RAUTH.'<STRONG>realm</STRONG>'&gt;
-<P>Check if the user has permission to a specific realm/key.</P>
-<P></P>
-<LI>
-&lt;$RCHPASS.'<STRONG>new password</STRONG>'&gt;
-<P>Change password for the logged in user.</P>
-<P></P>
-<LI>
-&lt;$RADDUSER.'<STRONG>user</STRONG>','<STRONG>password</STRONG>'&gt;
-<P>Add a new user. Use with CAUTION! Any user running the page could create a user with this tag.
+IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT</p>
+<ul>
+<li></li>
+&lt;$RLOGIN.'<strong>user</strong>','<strong>password</strong>'&gt;
+<p>Logs in. Tag outputs a boolean value to notify if login was successful or failed.</p>
+<p></p>
+<li></li>
+&lt;$RAUTH.'<strong>realm</strong>'&gt;
+<p>Check if the user has permission to a specific realm/key.</p>
+<p></p>
+<li></li>
+&lt;$RCHPASS.'<strong>new password</strong>'&gt;
+<p>Change password for the logged in user.</p>
+<p></p>
+<li></li>
+&lt;$RADDUSER.'<strong>user</strong>','<strong>password</strong>'&gt;
+<p>Add a new user. Use with CAUTION! Any user running the page could create a user with this tag.
 If Merge is running on a user shell machine, configuration and templates should be readable to the web server but not world readable!
-Pages using &lt;$RADDUSER&gt; *must* be protected.</P>
-<P></P>
-<LI>
-&lt;$RDELUSER.'<STRONG>user</STRONG>'&gt;
-<P>Remove a user.</P>
-<P></P>
-<LI>
-&lt;$RJOIN.'<STRONG>user</STRONG>','<STRONG>group</STRONG>'&gt;
-<P>&lt;$RPART.'<STRONG>user</STRONG>','<STRONG>group</STRONG>'&gt;</P>
-<P>Add a user to a group and remove a user from a group, accordingly.</P>
-<P></P>
-<LI>
-&lt;$RGRANT.U.'<STRONG>user</STRONG>','<STRONG>realm</STRONG>'&gt;
-<P>&lt;$RGRANT.G.'<STRONG>group</STRONG>','<STRONG>realm</STRONG>'&gt;</P>
-<P>Grant a permission over a realm to a group or a user.</P>
-<P></P>
-<LI>
-&lt;$REVOKE.U.'<STRONG>user</STRONG>','<STRONG>realm</STRONG>'&gt;
-<P>&lt;$REVOKE.G.'<STRONG>group</STRONG>','<STRONG>realm</STRONG>'&gt;</P>
-<P>Revoke a permission over a realm from a group or a user.</P>
-<P></P>
-<LI>
-&lt;$REQUIRE.'<STRONG>template name</STRONG>','<STRONG>list of possible realms</STRONG>'&gt;
-<P>Require users of a specific template to have access for at least one of the templates in the list. (Comma separated)</P>
-<P></P>
-<LI>
+Pages using &lt;$RADDUSER&gt; *must* be protected.</p>
+<p></p>
+<li></li>
+&lt;$RDELUSER.'<strong>user</strong>'&gt;
+<p>Remove a user.</p>
+<p></p>
+<li></li>
+&lt;$RJOIN.'<strong>user</strong>','<strong>group</strong>'&gt;
+<p>&lt;$RPART.'<strong>user</strong>','<strong>group</strong>'&gt;</p>
+<p>Add a user to a group and remove a user from a group, accordingly.</p>
+<p></p>
+<li></li>
+&lt;$RGRANT.U.'<strong>user</strong>','<strong>realm</strong>'&gt;
+<p>&lt;$RGRANT.G.'<strong>group</strong>','<strong>realm</strong>'&gt;</p>
+<p>Grant a permission over a realm to a group or a user.</p>
+<p></p>
+<li></li>
+&lt;$REVOKE.U.'<strong>user</strong>','<strong>realm</strong>'&gt;
+<p>&lt;$REVOKE.G.'<strong>group</strong>','<strong>realm</strong>'&gt;</p>
+<p>Revoke a permission over a realm from a group or a user.</p>
+<p></p>
+<li></li>
+&lt;$REQUIRE.'<strong>template name</strong>','<strong>list of possible realms</strong>'&gt;
+<p>Require users of a specific template to have access for at least one of the templates in the list. (Comma separated)</p>
+<p></p>
+<li></li>
 &lt;$RUSER&gt;
-<P>Yield the username of the currently logged in user.</P>
-<P></P>
-<LI>
+<p>Yield the username of the currently logged in user.</p>
+<p></p>
+<li></li>
 &lt;$RNAME&gt;
-<P>Yield the real name of the currently logged in user.</P>
-<P></P>
-<LI>
+<p>Yield the real name of the currently logged in user.</p>
+<p></p>
+<li></li>
 &lt;$RTAG&gt;
-<P>Yield the tag string of the currently logged in user.</P>
-<P></P>
-<LI>
-&lt;$RATTACH.'<STRONG>template</STRONG>','<STRONG>subsite</STRONG>'&gt;
-<P>Attach a template to a subsite.</P>
-<P></P>
-<LI>
-&lt;$RDETACH.'<STRONG>template</STRONG>','<STRONG>subsite</STRONG>'&gt;
-<P>Detach a template from a subsite.</P>
-<P></P></UL>
-<PRE>
+<p>Yield the tag string of the currently logged in user.</p>
+<p></p>
+<li></li>
+&lt;$RATTACH.'<strong>template</strong>','<strong>subsite</strong>'&gt;
+<p>Attach a template to a subsite.</p>
+<p></p>
+<li></li>
+&lt;$RDETACH.'<strong>template</strong>','<strong>subsite</strong>'&gt;
+<p>Detach a template from a subsite.</p>
+<p></p></ul>
+<pre>
 
-=head1</PRE>
-<P>
-<HR>
-<H1><A NAME="date tags">DATE TAGS</A></H1>
-<UL>
-<LI>
+=head1</pre>
+<p>
+</p>
+<hr />
+<h1><a name="date_tags">DATE TAGS</a></h1>
+<ul>
+<li></li>
 &lt;$RDATE&gt;
-<P>&lt;$RDATE,'<STRONG>number of days ahead</STRONG>'&gt;</P>
-<P>Return the date as a YYMDHmS string. For example: 199912312359 is December 31, 1999, at one minute before midnight.
-The second parameter gives the date for a few days ahead, or beyond, if given negative.</P>
-<P></P>
-<LI>
-&lt;$RSECOND.'<STRONG>date</STRONG>'&gt;
-<P>&lt;$RMINUTE.'<STRONG>date</STRONG>'&gt;</P>
-<P>&lt;$RHOUR.'<STRONG>date</STRONG>'&gt;</P>
-<P>&lt;$RDAY.'<STRONG>date</STRONG>'&gt;</P>
-<P>&lt;$RMONTH.'<STRONG>date</STRONG>'&gt;</P>
-<P>&lt;$RYEAR.'<STRONG>date</STRONG>'&gt;</P>
-<P>Return the corresponding part of the date given.</P>
-<P></P>
-<LI>
-&lt;$RDATEDIFF.D.'<STRONG>earlier date</STRONG>','<STRONG>later date</STRONG>'&gt;
-<P>&lt;$RDATEDIFF.H.'<STRONG>earlier date</STRONG>','<STRONG>later date</STRONG>'&gt;</P>
-<P>&lt;$RDATEDIFF.M.'<STRONG>earlier date</STRONG>','<STRONG>later date</STRONG>'&gt;</P>
-<P>&lt;$RDATEDIFF.S.'<STRONG>earlier date</STRONG>','<STRONG>later date</STRONG>'&gt;</P>
-<P>Return the difference between dates, in days, hours, minutes and seconds, correspondingly.</P>
-<P></P>
-<LI>
-&lt;$RLASTDAY.'<STRONG>date</STRONG>'&gt;
-<P>Give the last day of month related to the specific date.</P>
-<P></P>
-<LI>
-&lt;$RADDDATE.'<STRONG>date</STRONG>','<STRONG>day</STRONG>','<STRONG>month</STRONG>','<STRONG>year</STRONG>'&gt;
-<P>Add the given number of days, then the given number of months and years to the date. Returns a new date.</P>
-<P></P>
-<LI>
-&lt;$RDATE2UTC.'<STRONG>date</STRONG>'&gt;
-<P>&lt;$RUTC2DATE.'<STRONG>UNIX epoch time</STRONG>'&gt;</P>
-<P>Convert between a date string and a universal UNIX time.</P>
-<P></P></UL>
-<P>
-<HR>
-<H1><A NAME="form and html enhancement tags">FORM AND HTML ENHANCEMENT TAGS</A></H1>
-<UL>
-<LI>
-&lt;$RSUBMIT[.'<STRONG>javascript validation code</STRONG>']&gt;
-<P>&lt;/$RSUBMIT&gt;</P>
-<P>Create the HTML code for a POST form pointed at the same merge template
+<p>&lt;$RDATE,'<strong>number of days ahead</strong>'&gt;</p>
+<p>Return the date as a YYMDHmS string. For example: 199912312359 is December 31, 1999, at one minute before midnight.
+The second parameter gives the date for a few days ahead, or beyond, if given negative.</p>
+<p></p>
+<li></li>
+&lt;$RSECOND.'<strong>date</strong>'&gt;
+<p>&lt;$RMINUTE.'<strong>date</strong>'&gt;</p>
+<p>&lt;$RHOUR.'<strong>date</strong>'&gt;</p>
+<p>&lt;$RDAY.'<strong>date</strong>'&gt;</p>
+<p>&lt;$RMONTH.'<strong>date</strong>'&gt;</p>
+<p>&lt;$RYEAR.'<strong>date</strong>'&gt;</p>
+<p>Return the corresponding part of the date given.</p>
+<p></p>
+<li></li>
+&lt;$RDATEDIFF.D.'<strong>earlier date</strong>','<strong>later date</strong>'&gt;
+<p>&lt;$RDATEDIFF.H.'<strong>earlier date</strong>','<strong>later date</strong>'&gt;</p>
+<p>&lt;$RDATEDIFF.M.'<strong>earlier date</strong>','<strong>later date</strong>'&gt;</p>
+<p>&lt;$RDATEDIFF.S.'<strong>earlier date</strong>','<strong>later date</strong>'&gt;</p>
+<p>Return the difference between dates, in days, hours, minutes and seconds, correspondingly.</p>
+<p></p>
+<li></li>
+&lt;$RLASTDAY.'<strong>date</strong>'&gt;
+<p>Give the last day of month related to the specific date.</p>
+<p></p>
+<li></li>
+&lt;$RADDDATE.'<strong>date</strong>','<strong>day</strong>','<strong>month</strong>','<strong>year</strong>'&gt;
+<p>Add the given number of days, then the given number of months and years to the date. Returns a new date.</p>
+<p></p>
+<li></li>
+&lt;$RDATE2UTC.'<strong>date</strong>'&gt;
+<p>&lt;$RUTC2DATE.'<strong>UNIX epoch time</strong>'&gt;</p>
+<p>Convert between a date string and a universal UNIX time.</p>
+<p></p></ul>
+<p>
+</p>
+<hr />
+<h1><a name="form_and_html_enhancement_tags">FORM AND HTML ENHANCEMENT TAGS</a></h1>
+<ul>
+<li></li>
+&lt;$RSUBMIT[.'<strong>javascript validation code</strong>']&gt;
+<p>&lt;/$RSUBMIT&gt;</p>
+<p>Create the HTML code for a POST form pointed at the same merge template
 it is called from. An optional paramater is passed to the onSubmit
-attribute; a typical value would be 'return <EM>function</EM>()' where <EM>function</EM>
-returns a boolean value.</P>
-<P></P>
-<LI>
-&lt;$RTRANSFER.<STRONG>field name</STRONG>&gt;
-<P>Create a HIDDEN input tag, for the parameter with the corresponding name, based on the values the server side parameter with the same name has.
-Useful to transfer input fields among pages.</P>
-<P></P>
-<LI>
-&lt;$RMULTI.'<STRONG>iterator variable</STRONG>'='<STRONG>form field</STRONG>'&gt;
-<P>Iterate over multiple input form fields.</P>
-<P></P>
-<LI>
+attribute; a typical value would be 'return <em>function</em>()' where <em>function</em>
+returns a boolean value.</p>
+<p></p>
+<li></li>
+&lt;$RTRANSFER.<strong>field name</strong>&gt;
+<p>Create a HIDDEN input tag, for the parameter with the corresponding name, based on the values the server side parameter with the same name has.
+Useful to transfer input fields among pages.</p>
+<p></p>
+<li></li>
+&lt;$RMULTI.'<strong>iterator variable</strong>'='<strong>form field</strong>'&gt;
+<p>Iterate over multiple input form fields.</p>
+<p></p>
+<li></li>
 &lt;$RMERGE&gt;
-<P>The name of the Merge CGI.</P>
-<P></P>
-<LI>
+<p>The name of the Merge CGI.</p>
+<p></p>
+<li></li>
 &lt;$RTEMPLATE&gt;
-<P>The name of the current template.</P>
-<P></P></UL>
-<P>
-<HR>
-<H1><A NAME="file tags">FILE TAGS</A></H1>
-<UL>
-<LI>
-&lt;$RGLOB.F.'<STRONG>iterator variable</STRONG>'='<STRONG>base directory or wildcards</STRONG>'&gt;
-<P>&lt;$RGLOB.D.'<STRONG>iterator variable</STRONG>'='<STRONG>base directory</STRONG>'&gt;</P>
-<P>Iterate over a directory. Produces either files only or directories only, accordingly.</P>
-<P></P>
-<LI>
-&lt;$RFTS.'<STRONG>iterator variable</STRONG>'='<STRONG>base directory</STRONG>'&gt;
-<P>Iterate over a subtree of files.</P>
-<P></P>
-<LI>
-&lt;$RDIVERT.'<STRONG>buffer name</STRONG>'&gt;
+<p>The name of the current template.</p>
+<p></p></ul>
+<p>
+</p>
+<hr />
+<h1><a name="file_tags">FILE TAGS</a></h1>
+<ul>
+<li></li>
+&lt;$RGLOB.F.'<strong>iterator variable</strong>'='<strong>base directory or wildcards</strong>'&gt;
+<p>&lt;$RGLOB.D.'<strong>iterator variable</strong>'='<strong>base directory</strong>'&gt;</p>
+<p>Iterate over a directory. Produces either files only or directories only, accordingly.</p>
+<p></p>
+<li></li>
+&lt;$RFTS.'<strong>iterator variable</strong>'='<strong>base directory</strong>'&gt;
+<p>Iterate over a subtree of files.</p>
+<p></p>
+<li></li>
+&lt;$RDIVERT.'<strong>buffer name</strong>'&gt;
 &lt;/$RDIVERT&gt;
-<P>Divert the output into a named buffer. Buffers are store in temporary
+<p>Divert the output into a named buffer. Buffers are store in temporary
 files and do not overlap between processes.
-Subsequent diverting is appended to the existing buffer.</P>
-<P></P>
-<LI>
-&lt;$RDUMP.'<STRONG>buffer name</STRONG>'&gt;
-<P>Dump the named buffer.</P>
-<P></P></UL>
-<P>
-<HR>
-<H1><A NAME="meta tags">META TAGS</A></H1>
-<UL>
-<LI>
+Subsequent diverting is appended to the existing buffer.</p>
+<p></p>
+<li></li>
+&lt;$RDUMP.'<strong>buffer name</strong>'&gt;
+<p>Dump the named buffer.</p>
+<p></p></ul>
+<p>
+</p>
+<hr />
+<h1><a name="meta_tags">META TAGS</a></h1>
+<ul>
+<li></li>
 &lt;$RVERSION&gt;
-<P>Returns Merge version.</P>
-<P></P></UL>
-<P>
-<HR>
-<H1><A NAME="copyright">COPYRIGHT</A></H1>
-<P>Copyright (c) 1999, 2000, 2001, 2002 Raz Information Systems Ltd.
-<A HREF="http://www.raz.co.il">http://www.raz.co.il</A></P>
-<P>This package is distributed under the same terms as Perl itself, see the
-Artistic License on Perl's home page.</P>
+<p>Returns Merge version.</p>
+<p></p></ul>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (c) 1999, 2000, 2001, 2002 Raz Information Systems Ltd.
+<a href="http://www.raz.co.il">http://www.raz.co.il</a></p>
+<p>This package is distributed under the same terms as Perl itself, see the
+Artistic License on Perl's home page.</p>
 
-</BODY>
+</body>
 
-</HTML>
+</html>

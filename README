@@ -80,7 +80,7 @@ COPYRIGHT
     Artistic License on Perl's home page.
 
 SEE ALSO
-    perl(1), the HTML::Merge::Tags manpage, the HTML::Merge::Ext manpage.
+    perl(1), HTML::Merge::Tags, HTML::Merge::Ext.
 
 NAME
     Merge tags - Tag summary for Merge. HTML::Merge - Embedded HTML/SQL/Perl
@@ -612,18 +612,15 @@ TYPES OF TAGS
     Generally, there are four types of tags in Merge.
 
   Output tags
-
     Tags such as <$RVAR> or others, that are substituted by values that
     appear in the output. For example: <$RVAR.x> is substituted by the value
     of the vairable x.
 
   Non block tags
-
     Tags that perform an action, and have no corresponding closing tags. For
     example: <$RSET.x='8'> sets the value 8 into the variable x.
 
   Opening block tags
-
     Tags that usually handle the flow of the template. These tags, together
     with the closing tags, encapsulate a block of HTML and tags between
     them. The data inside the block will be treated as regular output
@@ -633,7 +630,6 @@ TYPES OF TAGS
     everything inside the block 4 times.
 
   Closing block tags
-
     The tags that close blocks beginning in the opening tags. The tags
     <$REND>, <$REND_IF> and <$REND_WHILE> are privilleged as closing tags.
     Other closing tags use the SGML like notation of specifying a slash

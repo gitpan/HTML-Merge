@@ -22,7 +22,7 @@ lib/HTML/Merge/Ext.pm
 lib/HTML/Merge/Filter.pm
 lib/HTML/Merge.pm
 lib/Term/InKey.pm
-lib/Data/Password.pm
+#lib/Data/Password.pm
 
 private/gif/frmback.gif
 private/gif/space.gif
@@ -38,7 +38,7 @@ private/perl/HTML/Merge/Ext.pm
 private/perl/HTML/Merge/Filter.pm
 private/perl/HTML/Merge.pm
 private/perl/Term/InKey.pm
-private/perl/Data/Password.pm
+#private/perl/Data/Password.pm
 
 private/perl/toolbox.pl
 private/perl/viewsource.pl
