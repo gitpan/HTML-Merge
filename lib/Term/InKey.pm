@@ -100,7 +100,7 @@ sub ReadKey {
 	if ($flush) {
 		for (;;) {
 			my $rin;
-			vec($rin, fileno(STDIN), 1) = 1;
+			vec($rin, fileno(I), 1) = 1;
 			last unless select($rin, undef, undef, 0);
 			getc;
 		}
@@ -257,9 +257,12 @@ sub ReadPassword {
 }
 
 sub Choice {
-	my $chars = shift;
+	my ($chars, $default) = @_;
+	$default = uc($default) unless $default =~ /[a-z]/;
 	for (;;) {
-		my $ch = &ReadKey;
+		my $ch = ReadKey();
+		$ch = uc($ch) unless $default =~ /[a-z]/;
+		$ch = $default if ($default && $ch =~ /[\r\n]/);
 		return $ch if index($chars, $ch) >= 0;
 		print "\x7";
 	}

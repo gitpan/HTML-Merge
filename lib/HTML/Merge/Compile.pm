@@ -5,7 +5,7 @@ use vars qw($open %enders %printers %tokenizers $VERSION $DEBUG);
 use Carp;
 use Config;
 
-$VERSION = '3.32';
+$VERSION = '3.33';
 
 BEGIN {
 	eval 'use HTML::Merge::Ext;';

@@ -4,18 +4,52 @@ use strict qw(subs vars);
 use Term::ReadLine;
 use HTML::Merge::Engine qw(:unconfig);
 use Data::Dumper;
-use Term::InKey;
 use Data::Password qw(IsBadPassword);
 use Config;
+use Term::InKey;
 
 my %param;
 
 my $term = new Term::ReadLine('');
 
+$| = 1;
+
 &Clear;
 
-print "Warning: this script works ONLY on UNIX systems!\n\n";
+my $unix = 1;
 
+foreach (qw(win32 vms os390 os2 dos cygwin amiga mac)) {
+	$unix = undef if ($^O =~ /$_/);
+}
+
+unless ($unix) {
+	print "Warning: this script works ONLY on UNIX systems!\n\n";
+	print "Press enter:";
+	scalar(<STDIN>);
+}
+
+print <<EOM;
+Raz Information Systems presents:
+
+ M M  EEEEE RRR   GGG  EEEEE
+M M M E     R  R G     E
+M   M EEE   RRR  G  GG EEE
+M   M E     R  R G   G E
+M   M EEEEE R  R  GGG  EEEEE
+
+This script will create an instance for Merge. Please consult the
+documentation about instances.
+
+Notes: 
+* In order to work with Merge you MUST create at least one instance.
+* To force blank input when a default is suggested, type: NONE
+* If Term::ReadLine::Gnu is installed, directory paths could be
+    easily navigated using the TAB key.
+
+For any information, please refer to http://rmerge.sourceforge.net
+or send mail to raz\@raz.co.il
+
+EOM
 my $default;
 
 my @apache = qw(/home/httpd /usr/local/www /var/www /usr/local/httpd
@@ -102,6 +136,8 @@ unless ($default && -e $default) {
 
 print "\n";
 
+print "Note: enter NONE if you do not wish to modify your httpd.conf!\n\n";
+
 my $conf = getone("Enter the location of your httpd.conf", 'HTTP_CONFIG',
 	$default, sub { die "$_ not found" if $_ && ! -f; });
 
@@ -142,15 +178,19 @@ my $user = &getone("Enter the user id for your web server" , 'WWW_U', $default,
 
 my $uid = $data[2];
 
-$default = $user;
-@data = getgrnam($default);
-unless (@data) {
-	$default = 'nobody';
+$default = $nextdef;
+unless ($default) {
+	$default = $user;
+	@data = getgrnam($default);
+	$default = '' unless (@data);
 }
+
+$default ||= 'nobody';
+
 
 print "\n";
 my $group = &getone("Enter the group id for your web server",
-	'WWW_G', $nextdef, sub {
+	'WWW_G', $default, sub {
 
 	@data = getgrnam($_);
 	die "No group $_" unless (@data);
@@ -175,17 +215,16 @@ foreach (qw(template cache logs pl)) {
 	chown $uid, $gid, "$cgi_bin/$_";
 }
 
-my ($choice, $def);
-do {
-	if ($^O =~ /Win/i) {
-		$choice = 'C';
-		last;
-	}
+my ($choice, $def, $cd, $c2);
 
-	if (-x "$cgi_bin/$script") {
-		$def = "/.No change.";
-	}
-	print "
+if (-x "$cgi_bin/$script") {
+	$def = "/.No change.";
+	$c2 = "\n\r";
+}
+
+$cd = 'C' if $^O =~ /win/i;
+
+print "
 
 
 Symbolic links are easier to maintain, but will work only 
@@ -198,13 +237,10 @@ as a copy of $merge; if you choose Link it will be a symbolic link.
 
 Do you wish to <C>opy $private/private 
 into $cgi_bin or create a symbolic <L>ink? [C/L/None$def]: ";
-	$choice = uc(&ReadKey);
-	die "Aborted" if ($choice eq "\x3" || $choice eq "\e");
-	$choice =~ s/^(.).*$/$1/;
-} until ($choice =~ /[CLN]/ || $choice eq "\r" && $def);
 
-print $choice if ($choice =~ /\S/);
-print "\n\n";
+$choice = Choice("CLN$c2\3", $cd);
+
+exit if $choice eq "\3";
 
 if ($choice eq 'C') {
 	print "Copy\n";
@@ -215,15 +251,20 @@ if ($choice eq 'C') {
 	require File::Copy;
 	File::Copy::copy($merge, "$cgi_bin/$script");
 	chmod 0755, "$cgi_bin/$script";
+	chown $uid, $gid, "$cgi_bin/$script";
 } elsif ($choice eq 'L') {
 	print "Link\n";
 	&scrape;
 	symlink	"$private/private", "$cgi_bin/private" ||
 		die "Could not link $private/private to $cgi_bin/private: $!";
 
+	chmod 0755, "$cgi_bin/private";
+	chown $uid, $gid, "$cgi_bin/private";
 	unlink "$cgi_bin/$script";
 	symlink $merge, "$cgi_bin/$script" || 
 		die "Could not link $merge to $cgi_bin/$script: $!";
+	chmod 0755, "$cgi_bin/$script";
+	chown $uid, $gid, "$cgi_bin/$script";
 } elsif ($choice eq 'N') {
 	print "None\n";
 	unless (-x "$cgi_bin/$script") {
@@ -235,17 +276,15 @@ if ($choice eq 'C') {
 	die "Unknown choice $choice";
 }
 
-do {
-	print "\n\nWould you like to install the samples? [.Y./N]: ";
-	$choice = uc(&ReadKey);
-	$choice =~ s/[\r\n]/Y/;
-	print "$choice\n";
-} until ($choice =~ /^[YN]$/);
+print "\n\nWould you like to install the samples? [.Y./N]: ";
+$choice = Choice("YN\3", 'Y');
+exit if $choice eq "\3";
 
 my $createdb;
 
 $param{'DEFAULT'} = '';
 if ($choice eq 'Y') {
+	print "Yes\n";
 	require File::Copy;
 	foreach (glob("$private/docs/samples/*.html")) {
 		my $dest = $_;
@@ -253,6 +292,8 @@ if ($choice eq 'Y') {
 		File::Copy::copy($_, $dest);
 	}
 	$param{'DEFAULT'} = 'samples.html';
+} else {
+	print "No\n";
 }
 
 my $flag;
@@ -340,6 +381,7 @@ left blank. Type NONE to override the default by an empty string.\n\n";
 
 			if ($mergedb =~ /^\d+$/) {
 				$mergedb = $databases[$mergedb - 1];
+				$param{'MERGE_DB'} = $mergedb;
 			}
 			eval { $dbh->do("CREATE DATABASE $mergedb") };
 
@@ -486,14 +528,16 @@ foreach (qw(S_FROM S_TO)) {
 
 my @params;
 foreach(@lines) {
-	unless (/;\s*#.*$/) {
+	chomp;
+	unless (/;\s*#/) {
 		push(@params, undef);
 	} else {
-		my $pos = length($_) - length($');
+		my $pos = length($_) - length($') - 1;
 		my $extra = substr($_, $pos);
 		substr($_, $pos) = "";
 		push(@params, [$pos, $extra]);
 	}
+	s/\s+$//;
 }
 
 my $cfg = join("\n", @lines);
@@ -570,6 +614,9 @@ file will share it between all instances.
 
 EOM
 
+suggest_edit($conf) if $conf;
+suggest_edit("$cgi_bin/merge.conf");
+
 sub scrape {
 	unlink "$cgi_bin/private" && return; # Erase symlink if any
 	require File::Path;
@@ -615,6 +662,22 @@ sub source {
 		$file = $next;
 	}
 	$file;
+}
+
+sub suggest_edit {
+	my $file = shift;
+	my $editor = $ENV{'EDITOR'} || 'vi';
+	$editor = findpath($editor) unless -x $editor;
+	return unless -x $editor;
+	print "Would you like to edit $file? (Y/N): [N] ";
+	my $ch = Choice("YN\3", 'N');
+	exit if $ch eq "\3";
+	if ($ch eq 'N') {
+		print "No\n";
+		return;
+	}
+	print "Yes\n";
+	system "$editor", $file;
 }
  
 ENDOFPERLCODE
