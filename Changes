@@ -23,9 +23,11 @@ Revision history for Perl extension HTML::Merge.
 	- Content type feature in INI file
 	- Dynamic page header by using the content_type key in the url string
 	- No more use of autoflush in merge
-3.43  Mon Nov 15 06:31:25 IDT
+
+3.44  Mon Nov 15 06:31:25 IDT 2004
 	- Adapted for perl 5.8
 	- Term::Inkey is not used any more
 
-
+3.45  Sat Nov 20 19:11:13 IDT 2004  
+	- New grid in the repository sample application
    

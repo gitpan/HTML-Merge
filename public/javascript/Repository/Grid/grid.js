@@ -8,7 +8,7 @@ function Grid(grid_init)
 {
 	// gui vars
 	this.background = grid_init.background?grid_init.background:'silver';
-	this.width = !(grid_init.veriable_width*1)?grid_init.width:'';
+	this.width = grid_init.width;
 	this.width_str = this.width?'width='+this.width:'';
 	this.height = grid_init.height;
 	this.title_header = '<table border="0" cellspacing="0" cellpadding="1" '+this.width_str+' class="gridRepText__" style="border: 1px outset; border-bottom: 2px outset" id="oTtl_'+ grid_init.name +'" name="oTtl_'+ grid_init.name +'" onselectstart="return false">';
@@ -61,6 +61,10 @@ function Grid(grid_init)
 	this.order_by_dir='';
 	this.dir_gif='';
 	
+	// scroolbar handlers
+	this.vbar;
+	this.current_step = this.step;
+	
 	// grid captions
 	this.cap_record = grid_init.cap_record;
 	this.cap_end_record = grid_init.cap_end_record;
@@ -106,9 +110,8 @@ function Grid(grid_init)
 	p.GetTable = GridGetTable
 	p.GetTitle = GridGetTitle
 	p.UnMarkRow = GridUnMarkRow
-	p.DelCoulmnByID = GridDelCoulmnByID
-	p.DelCoulmnByFieldName = GridDelCoulmnByID
-	p.DelCoulmnOnEmptyHeader = GridDelCoulmnOnEmptyHeader
+	p.DelColumnByID = GridDelColumnByID
+	p.DelColumnByFieldName = GridDelColumnByID
 	p.GetZoomColor = GridGetZoomColor
 	p.SetZoomColor = GridSetZoomColor
 	p.GetCursorColor = GridGetCursorColor
@@ -129,6 +132,7 @@ function Grid(grid_init)
 	p.RemoveRecord = GridRemoveRecord
 	p.Scroll = GridScroll
 	p.GetLength = GridGetLength
+	p.GetCellIDbyID = GridGetCellIDbyID
 }
 /////////////////////////////
 function GridDoUp()
@@ -281,7 +285,7 @@ function GridDoChange()
 	// mark the checked chekboxes
 	if(row.childNodes[1].style.backgroundColor == instance.clr_cursor_mark)
 	{
-		instance.DoDelMark(row,query_index);
+		instance.DoDelMark(row);
 		is_marked = false;
 	}
 	else
@@ -439,7 +443,7 @@ function GridDoLineChk(flag)
 			if(!table.rows[i-1])
 				break;
 
-			this.DoDelMark(table.rows[i-1],this.grid_arr[i][this.uid]);
+			this.DoDelMark(table.rows[i-1]);
 			i++;
 		}
 	}
@@ -450,6 +454,7 @@ function GridOrderTable(element)
 	var img_name = 'c_'+this.name+'_'+element;
 	var src = document.images[img_name].src;
 	var path = this.image_path;
+	var form = document.forms[0] ? document.forms[0] : '';
 
 	if(this.zoomed_row)
 		return;
@@ -483,8 +488,10 @@ function GridOrderTable(element)
 
 	// init the start vars 
 	this.start = 1;
+	this.current_step = this.step;
 	
-	this.Rebuild('','',true);
+	// allways try to trasport by form as the safest way
+	this.Rebuild('','',true,this.start,form);
 }
 /////////////////////////////
 function GridDoSortArrow(image,element)
@@ -546,6 +553,7 @@ function GridDraw()
 	var width;
 	var grid_length = this.GetLength();
 	var height = this.height ? this.height : (this.td_height*1+3)*this.len;
+	var cell_id;
 
 	// do the title line
 	document.writeln(this.title_header);
@@ -556,6 +564,8 @@ function GridDraw()
 
 	for(element in this.grid_arr[0])
 	{
+		cell_id = this.GetCellIDbyID(element);
+
 		// first line
 		if(first)
 		{
@@ -570,15 +580,15 @@ function GridDraw()
 		// build the str_obj element
 		tmp = this.DrawCell(0,element);
 
-		document.writeln("<td id='" + element + "' grid_element='"+element+"' height='"+this.td_height+"' align='baseline' style='width:"+this.grid_width[element]+";height:"+this.td_height+";cursor: hand' nowrap><div class='"+css_class+"' style='overflow: hidden; width:"+this.grid_width[element]+"'>"+tmp+"</div></td>");
+		document.writeln("<td id='" + cell_id + "' grid_element='"+element+"' height='"+this.td_height+"' align='baseline' style='width:"+this.grid_width[element]+";height:"+this.td_height+";cursor: hand' nowrap><div class='"+css_class+"' style='overflow: hidden; width:"+this.grid_width[element]+"'>"+tmp+"</div></td>");
 
 		// build the coll maxlength
-		str_maxlength = table.rows[0].cells[element].childNodes[0].col_maxlength;
+		str_maxlength = table.rows[0].cells[cell_id].childNodes[0].col_maxlength;
 		if(str_maxlength)
 			this.str_obj[element] = str_maxlength;
 			
 		// add title default events
-		this.DoTitleEvents(table.rows[0].cells[element]);
+		this.DoTitleEvents(table.rows[0].cells[cell_id]);
 	}
 	document.writeln('</tr></tbody></table>');
 
@@ -645,7 +655,7 @@ function GridAddRecord(pos,query_index)
 
                 td[i].height = this.td_height;
                 td[i].grid_element = element;
-                td[i].id = element;
+                td[i].id = this.name +'_' + element;
 		
 		tmp = this.DrawCell(query_index,element);
 
@@ -711,13 +721,13 @@ function GridGetTitle()
 /////////////////////////////
 function GridDoMark(row,query_index)
 {
-	this.marked[query_index] = query_index;
+	this.marked[this.GetRowidFromRow(row)] = query_index;
 	this.PaintRow(row,this.clr_cursor_mark);
 }
 /////////////////////////////
-function GridDoDelMark(row,query_index)
+function GridDoDelMark(row)
 {
-	this.marked[query_index] = '';
+	this.marked[this.GetRowidFromRow(row)] = '';
 	this.PaintRow(row,this.clr_cursor_base);
 }
 //////////////////////////// 
@@ -749,7 +759,7 @@ function GridRefresh(line_offset)
 
 			for(element in this.grid_arr[0])
 			{	
-				table.rows[i].cells[element].childNodes[0].innerHTML = this.DrawCell(i+1,element);
+				table.rows[i].cells[this.GetCellIDbyID(element)].childNodes[0].innerHTML = this.DrawCell(i+1,element);
 			}
 		}
 		else
@@ -800,7 +810,7 @@ function GridRebuild(extra,obj,suppress_header_rebuild,line_offset,form)
 	
 	obj.bnd_src = this.bnd_src;
 	obj.uid = this.uid;
-	obj.name = this.name;
+	obj.__grid_name__ = this.name;
 	obj.langug_code = this.langug_code;
 	obj.step = obj.step?obj.step:this.step;
 	obj.extra = extra?extra:'';
@@ -815,12 +825,15 @@ function GridRebuild(extra,obj,suppress_header_rebuild,line_offset,form)
 
 	if(form)
 	{
-		this.BuildFormHiddenFieldsFromObj(form,obj);
-	
 		// save the original settings
 		form_save.action = form.action;
 		form_save.method = form.method;
 		form_save.target = form.target;
+
+		if(form.template)
+			form_save.template = form.template.value;
+
+		this.BuildFormHiddenFieldsFromObj(form,obj);
 
 		form.action = this.merge;
 		form.method = 'post';
@@ -832,6 +845,9 @@ function GridRebuild(extra,obj,suppress_header_rebuild,line_offset,form)
 		form.action = form_save.action;
                 form.method = form_save.method;
                 form.target = form_save.target;
+
+		if(form_save.template)
+			form.template.value = form_save.template;
 	}
 	else
 	{
@@ -975,23 +991,29 @@ function GridGetZoomRowid() { return this.zoomed_row ? this.GetRowidFromRow(this
 ////////////////////////////
 function GridSetHeaderCaptionByID(id,str) 
 { 
-	var table = this.GetTable(); 
-	var obj = table.rows[0].cells[id];
-	var buf = obj.innerHTML;
+	if(!id)
+		return;
+
+	var table = this.GetTitle(); 
+	var cell_id = this.GetCellIDbyID(id);
+	var obj = table.rows[0].cells[cell_id].childNodes[0];
 
 	// if number
-	if((id+1)/1)
-		id=table.rows[0].cells[id].id;
-		
-	// change the buffer
-	buf = buf.substr(0,buf.lastIndexOf('>',buf.lastIndexOf('<'))+1) + str;
-	
-	// update the string
+	if(id*1 == id)
+		id = table.rows[0].cells[cell_id].grid_element;
+
+	var buf = this.grid_arr[0][id];
+	var pre_str_idx = buf.indexOf('>',buf.indexOf('<span')) + 1;
+	var post_str_idx = buf.lastIndexOf('<');
+
+	buf = buf.substring(0,pre_str_idx) + str + buf.substring(post_str_idx);
 	this.grid_arr[0][id] = buf;
+
+	buf = this.DrawCell(0,id);
 	obj.innerHTML = buf;
 }
 ////////////////////////////
-function GridGetHeaderCaptionByID(id){var table = this.GetTable(); return table.rows[0].cells[id].innerText;}
+function GridGetHeaderCaptionByID(id){var table = this.GetTitle(); return table.rows[0].cells[this.GetCellIDbyID(id)].innerText;}
 ////////////////////////////
 function GridGetFieldByRowAndCol(row,col){return (!this.grid_arr[row])?'':this.grid_arr[row][col];}
 ////////////////////////////
@@ -1004,11 +1026,13 @@ function GridUnMarkRow(row)
 	this.DoChk(obj,row*1+1);
 }
 ////////////////////////////
-function GridDelCoulmnByID(id)
+function GridDelColumnByID(id)
 {
 	var row;
 	var table = this.GetTable();
+	var title = this.GetTitle();
 	var i;
+	var cell_id = this.GetCellIDbyID(id);
 
 	// let's delete the specific col from the grid_arr
 	for(row in this.grid_arr)
@@ -1017,37 +1041,14 @@ function GridDelCoulmnByID(id)
 	}
 	
 	// now let's physicaly delete the column
+	title.rows[0].removeChild(title.rows[0].cells[cell_id]);
+	
 	for(i=0;i<table.rows.length;i++)
 	{
-		if(table.rows[i].cells[id])
+		if(table.rows[i].cells[cell_id])
 		{
-			table.rows[i].removeChild(table.rows[i].cells[id]);
+			table.rows[i].removeChild(table.rows[i].cells[cell_id]);
 		}
-		else
-		{
-			table.rows[i].cells[1].colSpan--;
-		}
-		
-	}
-	
-}
-////////////////////////////
-function GridDelCoulmnOnEmptyHeader()
-{
-	var element;
-	var table = this.GetTable();
-	var i=1;
-
-	while(table.rows[0].cells[i])
-	{
-		if(table.rows[0].cells[i].innerText == ' ')
-		{
-			// now let's delete the column
-			this.DelCoulmnByFieldName(table.rows[0].cells[i].id);
-			continue;
-		}
-
-		i++;
 	}
 }
 ////////////////////////////
@@ -1151,4 +1152,6 @@ function GridGetLength()
 
  	return data_length < this.step ? data_length : this.step;
 }
+////////////////////////////
+function GridGetCellIDbyID(id){ return (id*1 == id) ? id : this.name+'_'+id; }
 ////////////////////////////

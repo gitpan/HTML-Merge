@@ -18,13 +18,14 @@ Connect to alternative database. Defaults are taken from the configuration
 file. If two parameters are given in the first token, the database type takes
 precedence.
 
-Perdefined databases from merge.conf can be used like this:
+Predefined databases from merge.conf can be used like this:
 
-E<lt>$RDB='SYSTEM'E<gt> for system datatbase
+E<lt>$RDB='SYSTEM'E<gt> for system database
 If system database (SESSION_DB) is not defined in merge.conf a system wide 
 definition will apply.
 
-E<lt>$RDB='DEFAULT'E<gt> for application database
+E<lt>$RDB='DEFAULT'E<gt> for the application database as defined 
+in merge.conf
 
 =item *
 
@@ -43,7 +44,7 @@ Query can be iterated with E<lt>$RLOOPE<gt> tags.
 
 E<lt>$RERUNE<gt>
 
-Reperforms the query.
+Re-performs the query.
 
 =item *
 
@@ -61,13 +62,14 @@ Iteration number can be limited.
 
 E<lt>$RSQL.B<variable>E<gt>
 
-Derferences a column from the current fetch.
+Dereferences a column from the current fetch. Or in other words
+the variable holds the data fetched from data base.
 
 =item *
 
 E<lt>$RINDEXE<gt>
 
-Substitues for the number of the row currently fetched.
+Substitutes for the number of the row currently fetched.
 
 =item *
 
@@ -121,7 +123,7 @@ E<lt>/$RIFE<gt>
 
 E<lt>$RELSIF.'B<perl code>'E<gt>
 
-Perform the code if the perl code evaluates to true.
+Perform the code if the Perl code evaluates to true.
 
 
 =item *
@@ -271,7 +273,7 @@ Evaluates the code. If true, yields the first string, otherwise the second.
 
 E<lt>/$RMAILE<gt>
 
-Send email, utilizing SMTP connection to localhost.
+Send email, using SMTP to a host configured in merge.conf.
 
 =item *
 
@@ -279,17 +281,59 @@ Send email, utilizing SMTP connection to localhost.
 
 E<lt>/$RPERLE<gt>
 
-Embed perl code. print() may be used.
+Embedded Perl code. print() may be used to write HTML or javascript. 
+
+you may set HTML::Merge variables (E<lt>$RVARE<gt>) using 
+the setvar function e.g : 
+
+C<setvar('test_var',$test1);>
+
+E<lt>$RVAR.test_varE<gt> will hold the value of Perl variable $test1.
+
+All B<merge.conf> settings are available to your Perl code in the
+HTML::Merge::Ini name space e.g. :
+
+C<my $path = $HTML::Merge::Ini::MERGE_ABSOLUTE_PATH;>
+
 
 =item *
 
-<$RPERL.A> 
+E<lt>$RPERL.BE<gt>
 
-<$RPERL.B> 
+E<lt>/$RPERLE<gt>
+
+Embedded Perl with B<before> processing.
+
+Your Perl code can have HTML::Merge output tags and HTML::Merge::Compile will expand your code before it will be passed to Perl. e.g.:
+
+C<my $buf="E<lt>$RVAR.picE<gt>";>
+
+=item *
+
+E<lt>$RPERL.AE<gt>
+
+E<lt>/$RPERLE<gt>
+
+Embedded Perl with B<after> processing. 
+HTML::Merge::Compile will process the value returned by your Perl code. e.g.:
+
+C<return "E<lt>\$RSET.pic=' \"$buf\" 'E<gt>";>
+
+You can use the merge function to enter input to HTML::Merge e.g.:
+
+C<my $data = 'E<lt>$RSET.full_date =\'' . scalar(localtime()) . '\'E<gt>';>
+
+C<merge($data);>
+
+=item *
 
 E<lt>$RPERL.CE<gt>
 
-Documentation soon.
+E<lt>/$RPERLE<gt>
+
+Embedded Perl with after and before processing B<combined>. 
+
+see E<lt>$RPERL.BE<gt> for information about before processing and E<lt>$RPERL.AE<gt> for about after processing.
 
 =item *
 
@@ -374,7 +418,7 @@ E<lt>$RPSET.B<variable>='B<perl code>'>
 
 E<lt>$RPGET.B<variable>E<gt>
 
-Store and retrive session variables. Must be configured in the configuration
+Store and retrieve session variables. Must be configured in the configuration
 file manually.
 
 =item *
@@ -443,7 +487,7 @@ Set an environment variable.
 
 =head1 SECURITY TAGS
 
-These tags are impleneted only if the merge database exists.
+These tags are valid only if the merge database exists.
 
 IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT 
 These tags are to be used with the Merge security backend which is not written yet.
@@ -517,7 +561,7 @@ Require users of a specific template to have access for at least one of the temp
 
 E<lt>$RUSERE<gt>
 
-Yield the username of the currently logged in user.
+Returns the user name of the currently logged in user.
 
 =item *
 
@@ -621,7 +665,7 @@ E<lt>$RSUBMIT[.'B<javascript validation code>']E<gt>
 E<lt>/$RSUBMITE<gt>
 
 Create the HTML code for a POST form pointed at the same merge template
-it is called from. An optional paramater is passed to the onSubmit
+it is called from. An optional parameter is passed to the onSubmit
 attribute; a typical value would be 'return I<function>()' where I<function>
 returns a boolean value.
 
@@ -658,7 +702,7 @@ The name of the current template.
 
 =item *
 
-E<lt>$RGLOB.F.'B<iterator variable>'='B<base directory or wildcards>'E<gt>
+E<lt>$RGLOB.F.'B<iterator variable>'='B<base directory or *>'E<gt>
 
 E<lt>$RGLOB.D.'B<iterator variable>'='B<base directory>'E<gt>
 
@@ -702,8 +746,8 @@ Returns Merge version.
 
 =head1 COPYRIGHT
 
-Copyright (c) 1999, 2000, 2001, 2002 Raz Information Systems Ltd.
-http://www.raz.co.il
+Copyright (c) 1999 -  2004 Raz Information Systems Ltd.
+http://www.raz.co.il/
 
 This package is distributed under the same terms as Perl itself, see the
 Artistic License on Perl's home page.

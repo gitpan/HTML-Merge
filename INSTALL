@@ -1,6 +1,6 @@
-HTML::Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.
+HTML::Merge - Embedded HTML/SQL/Perl system by RAZ Information Systems.
 -----------------------------------------------------------------------
-Copyright (c) 1999 - 2003 Raz Information Systems Ltd.
+Copyright (c) 1999 - 2004 RAZ Information Systems Ltd.
 http://www.raz.co.il
 
 This package is distributed under the same terms as Perl itself, see the
@@ -69,6 +69,7 @@ from the directory where mergecreateinstance is.
 3. After Install - Run merge-create instance
 ==========================================================
 Now as you want to set you own application use the script mergecreateinstance.
+HTML::Merge instance is an application or set of applications.
 
 run:
   mergecreateinstance 
@@ -81,6 +82,20 @@ It is recommended for first time to give mergecreateinstance
 a simple httpd.conf so that it will work for you, and later try it on 
 a more complicated environment. 
 
+mergecreateinstance will set for you:
+  1. merge.conf - your application configuration file. 
+  2. It will try to set for you apache configuration.
+  3. It will create the following sub directories:
+  * cache - Auto generated CGI Perl programs 
+	created by HTML::Merge from templates
+  * template - Your templates (HTML + HTML::Merge tags)
+  * logs - Logs for templates developers (set DEVELOPMENT = 1 in merge.conf)
+  * private - Developers tools files and programs.
+  * public - files shared by all merge instances.
+   	(private and public can be symlinks or real directories) 
+  4. merge.cgi or merge.pl - the web interface to compile and run 
+	the application in the instance
+
 4. Instance install for non Apache web-server users
 =========================================================
 If you are using non apache web server, do the following.
@@ -88,5 +103,5 @@ If you are using non apache web server, do the following.
 rights to run CGI application.
 2. create merge instance using merge-create instance to that directory.
 3. set rights to the directory.
-
+4. Manually edit merge.conf
 

@@ -2,7 +2,7 @@ __END__
 
 =head1 NAME
 
-HTML::Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.
+HTML::Merge - Embedded HTML/SQL/Perl Copyright (c) 1999 - 2004 Raz Information Systems Ltd.
 
 =head1 INSTALLATION
 
@@ -72,27 +72,31 @@ system you can use B<mergecreateinstance> that will do thoes tasks for you.
 
 =item *
 
-Design by Oded Resnik, B<oded@raz.co.il>.
+Design by Oded S. Resnik.
 
 =item *
 
-Versions 1,2,3.35+ written by Roi Illouz, B<roi@raz.co.il>.
+Versions 1,2,3.35 - 3.45 written by Roi Illouz.
+
+Versions 3.46 -  manitained by Oded resnik and Gabor Szabo.
 
 =item *
 
-Version 3 written by Ariel Brosh (till ver 3.34).
+Version 3 written by Ariel Brosh RIP (till ver 3.34).
 
 =item *
 
-Toolbox written by Eial Solodki B<eial@raz.co.il>.
+Toolbox written by Eial Solodki.
 
-Testing & documentation by Noam cassif B<noam@raz.co.il>.
+Testing & documentation by Noam cassif.
+
+New test & version 3.46 - Gabor Szabo.
 
 =back
 
 =head1 COPYRIGHT
 
-Copyright (c) 1999, 2000, 2001, 2002 Raz Information Systems Ltd.
+Copyright (c) 1999 - 2004 Raz Information Systems Ltd.
 http://www.raz.co.il
 
 This package is distributed under the same terms as Perl itself, see the 

@@ -1,5 +1,5 @@
 #
-#HTML::Merge - Embedded HTML/SQL/Perl (c) Raz Information Systems.
+#HTML::Merge - Embedded HTML/SQL/Perl (c) RAZ Information Systems.
 #
 use strict;
 
@@ -11,14 +11,13 @@ print O <<HTML;
 <TITLE>Samples</TITLE>
 </HEAD>
 <BODY BGCOLOR=#FFFFFF>
-<H4>Samples</H4>
+<H4>HTML::Merge Samples</H4>
 <UL>
 HTML
 
 my %hash;
 foreach (glob("docs/samples/*.html")) {
-	s|^samples/||;
-	next if ($_ eq 'samples.html');
+	next if ($_ =~ /samples.html/);
 	open(I, "$_") || die $!;
 	my $text = join("", <I>);
 	close(I);
@@ -34,7 +33,9 @@ foreach (glob("docs/samples/*.html")) {
 }
 
 foreach (sort {$hash{$a} cmp $hash{$b}} keys %hash) {
-	print O qq!\t<LI><A HREF="<\$RMERGE>?template=$_">$hash{$_}</A>&nbsp;-&nbsp;\n!;
+	my $tname = $_;
+	$tname =~ s|^(.*)/||;	
+	print O qq!\t<LI><A HREF="<\$RMERGE>?template=$tname">$hash{$_}</A>&nbsp;-&nbsp;\n!;
 	print O qq!\t\t<\$RSOURCE.'$_'>view source</\$RSOURCE>\n!;
 }
 

@@ -22,7 +22,6 @@ lib/HTML/Merge/Ext.pm
 lib/HTML/Merge/Filter.pm
 lib/HTML/Merge.pm
 
-private/gif/frmback.gif
 private/gif/space.gif
 
 private/perl/HTML/Merge/App/Repository.pm
@@ -79,18 +78,25 @@ public/template/Repository/Grid/grid_build_data.inc
 public/template/Repository/Grid/grid.inc
 public/template/Repository/Grid/grid_refresh.html
 public/template/Repository/get_user_realms.inc
+public/template/Repository/clean_repository.proc
+public/template/Repository/combo_complex_nav.inc
+public/template/blank.html
 public/javascript/razglobal.js
 public/javascript/Repository/Grid/grid.js
-docs/Ext.txt
-docs/Merge.html
-docs/Merge.txt
-docs/Tags.html
-docs/Tags.txt
 docs/samples/samples.html
 docs/samples/autoform.html
 docs/samples/cookie.html
 docs/samples/dates.html
 docs/samples/loops.html
 docs/samples/showdb.html
+docs/other-samples/guest/README
+docs/other-samples/guest/guest.html
+docs/other-samples/guest/guest_line.html
+docs/other-samples/guest/loadme.sql
+docs/other-samples/guest/merge.conf.readme
+docs/other-samples/guest/tableframe.html
+docs/other-samples/Repository/repository.sxw
+docs/other-samples/Repository/repository.html
+docs/other-samples/Repository/repository.txt
 createsamples.pl
 META.yml                                 Module meta-data (added by MakeMaker)

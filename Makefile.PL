@@ -4,12 +4,30 @@ use ExtUtils::MakeMaker;
 use strict;
 
 ########################################
+sub MY::dist_core
+{
+	package MY;
+	my $inherited = shift->SUPER::dist_core;
+	$inherited =~ s/dist : /dist : update_private /;
+		
+$inherited .= << 'DMAKE';
+#
+update_private : 
+	$(CP) lib/HTML/Merge.pm private/perl/HTML/Merge.pm
+	$(CP) lib/HTML/Merge/*.pm private/perl/HTML/Merge/
+	$(CP) lib/HTML/Merge/App/*.pm private/perl/HTML/Merge/App/
+
+DMAKE
+
+$inherited;
+}
+########################################
 sub MY::install 
 {
 	package MY;
 	my $inherited = shift->SUPER::install;
 	$inherited . <<'MAKE';
-# need to chech on perl-5.6.1
+#
 DATA = $(PERLPREFIX)/share
 
 install :: install-private install-public install-docs install-samples
@@ -27,7 +45,7 @@ install-docs :: docs README
 
 install-samples :: docs README
 	$(PERL) createsamples.pl	
-	#$(MOD_INSTALL) samples $(DATA)/merge/docs/samples
+	$(MOD_INSTALL) samples $(DATA)/merge/docs/samples
 
 .SUFFIXES: .txt .pm .html
 
@@ -69,8 +87,7 @@ WriteMakefile(
     'VERSION_FROM' => 'lib/HTML/Merge/Compile.pm', # finds $VERSION
     'EXE_FILES' => [qw(merge.cgi merge.conf mergecreateinstance)],
     'dist' => {'COMPRESS' => 'gzip --best --force'},
-    'PREREQ_PM'  => {'Term::ReadLine::Gnu' => 0,
-			'DBI' => 0,
+    'PREREQ_PM'  => { 'DBI' => 0,
 			'DBD::SQLite' => 0,
 			'Data::Password' => 0,
 			'Term::InKey' => 0}

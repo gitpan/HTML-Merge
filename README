@@ -1,5 +1,6 @@
 NAME
-    HTML::Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.
+    HTML::Merge - Embedded HTML/SQL/Perl Copyright (c) 1999 - 2004 Raz
+    Information Systems Ltd.
 
 INSTALLATION
     After installing the package, activate mergecreateinstance to create an
@@ -62,18 +63,20 @@ FILES
             B<$PREFIX/bin/mergecreateinstance> Instance creating script.
 
 AUTHOR
-    *   Design by Oded Resnik, oded@raz.co.il.
+    *   Design by Oded S. Resnik.
 
-    *   Versions 1,2,3.35+ written by Roi Illouz, roi@raz.co.il.
+    *   Versions 1,2,3.35 - 3.45 written by Roi Illouz.
 
-    *   Version 3 written by Ariel Brosh (till ver 3.34).
+    *   Version 3 written by Ariel Brosh RIP (till ver 3.34).
 
-    *   Toolbox written by Eial Solodki eial@raz.co.il.
+    *   Toolbox written by Eial Solodki.
 
-        Testing & documentation by Noam cassif noam@raz.co.il.
+        Testing & documentation by Noam cassif.
+
+        New test & version 3.46 - Gabor Szabo.
 
 COPYRIGHT
-    Copyright (c) 1999, 2000, 2001, 2002 Raz Information Systems Ltd.
+    Copyright (c) 1999 - 2004 Raz Information Systems Ltd.
     http://www.raz.co.il
 
     This package is distributed under the same terms as Perl itself, see the
@@ -93,12 +96,13 @@ DATABASE TAGS
         configuration file. If two parameters are given in the first token,
         the database type takes precedence.
 
-        Perdefined databases from merge.conf can be used like this:
+        Predefined databases from merge.conf can be used like this:
 
-        <$RDB='SYSTEM'> for system datatbase If system database (SESSION_DB)
+        <$RDB='SYSTEM'> for system database If system database (SESSION_DB)
         is not defined in merge.conf a system wide definition will apply.
 
-        <$RDB='DEFAULT'> for application database
+        <$RDB='DEFAULT'> for the application database as defined in
+        merge.conf
 
     *   <$RS='SQL statement'>
 
@@ -111,7 +115,7 @@ DATABASE TAGS
 
     *   <$RERUN>
 
-        Reperforms the query.
+        Re-performs the query.
 
     *   <$RLOOP[.LIMIT=number]>
 
@@ -124,11 +128,12 @@ DATABASE TAGS
 
     *   <$RSQL.variable>
 
-        Derferences a column from the current fetch.
+        Dereferences a column from the current fetch. Or in other words the
+        variable holds the data fetched from data base.
 
     *   <$RINDEX>
 
-        Substitues for the number of the row currently fetched.
+        Substitutes for the number of the row currently fetched.
 
     *   <$RFETCH>
 
@@ -166,7 +171,7 @@ FLOW TAGS
 
         <$RELSIF.'perl code'>
 
-        Perform the code if the perl code evaluates to true.
+        Perform the code if the Perl code evaluates to true.
 
     *   <$RWHILE.'perl code'>
 
@@ -295,21 +300,61 @@ FUNCTIONAL TAGS
 
         </$RMAIL>
 
-        Send email, utilizing SMTP connection to localhost.
+        Send email, using SMTP to a host configured in merge.conf.
 
     *   <$RPERL>
 
         </$RPERL>
 
-        Embed perl code. print() may be used.
+        Embedded Perl code. print() may be used to write HTML or javascript.
+
+        you may set HTML::Merge variables (<$RVAR>) using the setvar
+        function e.g :
+
+        "setvar('test_var',$test1);"
+
+        <$RVAR.test_var> will hold the value of Perl variable $test1.
+
+        All merge.conf settings are available to your Perl code in the
+        HTML::Merge::Ini name space e.g. :
+
+        "my $path = $HTML::Merge::Ini::MERGE_ABSOLUTE_PATH;"
+
+    *   <$RPERL.B>
+
+        </$RPERL>
+
+        Embedded Perl with before processing.
+
+        Your Perl code can have HTML::Merge output tags and
+        HTML::Merge::Compile will expand your code before it will be passed
+        to Perl. e.g.:
+
+        "my $buf="<$RVAR.pic>";"
 
     *   <$RPERL.A>
 
-        <$RPERL.B>
+        </$RPERL>
 
-        <$RPERL.C>
+        Embedded Perl with after processing. HTML::Merge::Compile will
+        process the value returned by your Perl code. e.g.:
 
-        Documentation soon.
+        "return "<\$RSET.pic=' \"$buf\" '>";"
+
+        You can use the merge function to enter input to HTML::Merge e.g.:
+
+        "my $data = '<$RSET.full_date =\'' . scalar(localtime()) . '\'>';"
+
+        "merge($data);"
+
+    *   <$RPERL.C>
+
+        </$RPERL>
+
+        Embedded Perl with after and before processing combined.
+
+        see <$RPERL.B> for information about before processing and
+        <$RPERL.A> for about after processing.
 
     *   <$REVAL.'perl code'>
 
@@ -363,7 +408,7 @@ VARIABLE TAGS
 
         <$RPGET.variable>
 
-        Store and retrive session variables. Must be configured in the
+        Store and retrieve session variables. Must be configured in the
         configuration file manually.
 
     *   <$RPIMPORT.variable>
@@ -412,7 +457,7 @@ VARIABLE TAGS
         Set an environment variable.
 
 SECURITY TAGS
-    These tags are impleneted only if the merge database exists.
+    These tags are valid only if the merge database exists.
 
     IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT IMPORTANT
     These tags are to be used with the Merge security backend which is not
@@ -469,7 +514,7 @@ SECURITY TAGS
 
     *   <$RUSER>
 
-        Yield the username of the currently logged in user.
+        Returns the user name of the currently logged in user.
 
     *   <$RNAME>
 
@@ -544,7 +589,7 @@ FORM AND HTML ENHANCEMENT TAGS
         </$RSUBMIT>
 
         Create the HTML code for a POST form pointed at the same merge
-        template it is called from. An optional paramater is passed to the
+        template it is called from. An optional parameter is passed to the
         onSubmit attribute; a typical value would be 'return *function*()'
         where *function* returns a boolean value.
 
@@ -567,7 +612,7 @@ FORM AND HTML ENHANCEMENT TAGS
         The name of the current template.
 
 FILE TAGS
-    *   <$RGLOB.F.'iterator variable'='base directory or wildcards'>
+    *   <$RGLOB.F.'iterator variable'='base directory or *'>
 
         <$RGLOB.D.'iterator variable'='base directory'>
 
@@ -594,8 +639,8 @@ META TAGS
         Returns Merge version.
 
 COPYRIGHT
-    Copyright (c) 1999, 2000, 2001, 2002 Raz Information Systems Ltd.
-    http://www.raz.co.il
+    Copyright (c) 1999 - 2004 Raz Information Systems Ltd.
+    http://www.raz.co.il/
 
     This package is distributed under the same terms as Perl itself, see the
     Artistic License on Perl's home page.
