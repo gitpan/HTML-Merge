@@ -1,32 +1,33 @@
 ##################################################################
 package HTML::Merge::Error;
 ##################################################################
-# Error.pm -   Contains functions DoError & DoWarning            #
+# Error.pm -  Contains functions DoError & DoWarning   	         #
 # Authors : Roi Illouz & Eial Solodki                            #
-# All right reserved - Raz Information Systems Ltd.(c) 1999-2002 #
+# All right reserved - Raz Information Systems Ltd.(c) 1999	 #
 # Date : 12/06/2000                                              #
 # Updated : 03/07/2000 14/02/2001 10/10/2001                     #
 ##################################################################
+# Modules ########################################################
 
-# perl modules ###################################################
+use strict;
+
+# My Modules #####################################################
 
 use HTML::Merge::Compile;
-use strict;
-use vars qw($OPEN_BOX $CLOSE_BOX $mergerrLogFlag $year);
-
-$year = (localtime)[5] + 1900;
 
 # Constants ######################################################
 
+use vars qw($OPEN_BOX $CLOSE_BOX $mergerrLogFlag $year);
+
 $OPEN_BOX = "<HR><PRE>";
 $CLOSE_BOX = "</PRE><HR>";
-#$OPEN_BOX = "<TEXTAREA ROWS=15 COLS=80>";
-#$CLOSE_BOX = "</TEXTAREA>";
+
+$year = (localtime)[5] + 1900;
 
 ##################################################################
 sub HandleError
 {
-	my ($type,$message,$info)=@_;
+	my ($type,$message,$info) = @_;
 
 	return unless $HTML::Merge::Ini::DEBUG =~ /$type/i;
 		
@@ -45,7 +46,8 @@ sub HandleError
 ##################################################################
 sub DoWarn
 {
-	my ($message,$extra)=@_;
+	my ($message,$extra) = @_;
+
 	my ($template, $line_num) = @$HTML::Merge::context;
 	my $date = localtime();
 	my $buf = '';
@@ -75,7 +77,8 @@ sub DoWarn
 ###############################################################################
 sub DoInfo
 {
-	my ($message,$type)=@_;
+	my ($message,$type) = @_;
+
 	my ($template, $line_num) = @$HTML::Merge::context;
 	my $date = localtime();
 	my $buf = '';
@@ -103,7 +106,7 @@ sub DoInfo
 ###############################################################################
 sub DoError
 {
-	my ($message)=@_;
+	my ($message) = @_;
 	my ($template, $line_num) = @$HTML::Merge::context;
 	my $date = localtime();
 	my $buf = '';
@@ -171,11 +174,13 @@ EOM
 # open the log file for the Merge Error log
 sub OpenMergeErrorLog
 {
-        my ($template, $line_num) = @$HTML::Merge::context;
-	$template =~ s|^.*/||;
+	my ($template, $line_num) = @$HTML::Merge::context;
 	my $file = GetLogName();
+
+	$template =~ s|^.*/||;
 	
-	HTML::Merge::Compile::safecreate($file);
+	HTML::Merge::Compile::SafeCreate($file);
+
 	if(open(OUTPUT,">$file"))
 	{
 		$mergerrLogFlag = 1;
@@ -188,7 +193,6 @@ sub OpenMergeErrorLog
 	if($mergerrLogFlag)
 	{
 		print OUTPUT CGI::start_html("Merge Log - $template") . "\n";
- 		require HTML::Merge::Compile;
         print OUTPUT <<EOM;
 <BODY BGCOLOR='white' onLoad=window.focus()>
 <FONT FACE=Arial SIZE=6 COLOR=black><CENTER><B>Merge Log</B></CENTER></FONT><BR><FONT FACE=Arial SIZE=5 COLOR=black><CENTER><I>$template</I></FONT></CENTER><BR>
@@ -214,9 +218,8 @@ HTML
 # get the file name for the Merge Log
 sub GetLogName
 {
-	my $i = undef;
-	my $file = undef;
         my ($template, $line_num) = @$HTML::Merge::context;
+
 	$template =~ s/^$HTML::Merge::Ini::TEMPLATE_PATH//;
 		
 	return "$HTML::Merge::Ini::MERGE_ABSOLUTE_PATH/$HTML::Merge::Ini::MERGE_ERROR_LOG_PATH/$ENV{'REMOTE_ADDR'}/$template.html";

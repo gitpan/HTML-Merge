@@ -587,8 +587,8 @@ function GridMarkChkRow(obj)
 function GridOrderTable(element)
 {
 	var src = document.images[element].src;
-	var path = this.image_path;
-
+	var path = src.substring(0,src.lastIndexOf('/'));
+	
 	if(this.marked_obj)
 		return;
 	
@@ -616,7 +616,7 @@ function GridOrderTable(element)
 		this.order_by=element.substring(('c_'+this.name).length+1);
 		
 	this.dir_gif=path+'/'+src;
-
+	
 	// init the start vars 
 	this.start=1;
 	this.current_step = this.step;
@@ -631,7 +631,7 @@ function GridDoSortArrow(image,element)
 {
 	var grid_img=document.images[element];
 	
-	//this.ClearImg();
+	this.ClearImg();
 	
 	grid_img.src=image;
 	
@@ -653,9 +653,6 @@ function GridDoSortArrow(image,element)
 /////////////////////////////
 function GridClearImg()
 {
-	// function need to be checked
-	return;
-
 	var i=0;
 	
 	while(document.images[i])
@@ -917,7 +914,6 @@ function GridRebuild(extra,obj,suppress_header_rebuild,line_offset)
 	obj.order_by=this.order_by;
 	obj.dir_gif=this.dir_gif;
 	obj.charset=this.charset;
-	obj.__image_path__=this.image_path;
 
 	// create the var buffer 
 	for(element in obj)
@@ -1131,4 +1127,3 @@ function GridGetCursorColor(){return this.clr_cursor;}
 ////////////////////////////
 function GridSetCursorColor(val){this.clr_cursor = val;}
 ////////////////////////////
-

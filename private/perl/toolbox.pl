@@ -139,8 +139,6 @@ function Defreeze()
 <table cellspacing="0" cellpadding="0">
 HTML
 
-## mod_perl refuses the __DATA__ notation
-
 my $data = <<DATA;
 ShowLogsList()|Merge Logs|The logs of the last pages viewed. (only if Development set to True)
 ShowSourceList('view')|Template source|View source code of templates.

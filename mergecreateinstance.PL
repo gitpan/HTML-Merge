@@ -8,6 +8,7 @@ use strict qw(subs vars);
 use FileHandle;
 use Term::ReadLine;
 use Data::Dumper;
+use Data::Password qw(IsBadPassword);
 use Config;
 use Term::InKey;
 
@@ -54,13 +55,6 @@ my @apache = qw(/home/httpd
 		/usr/local/etc/apache 
 		/usr/local/etc/httpd
 		/usr/local/etc/www);
-my $have_data_password;
-                                                                                
-# require Data password if installed
-$@ = undef;
-eval{ require Data::Password; };
-$have_data_password = 1 unless $@;
-
 
 foreach (qw(in32 vms os390 os2 dos amiga mac))
 {
@@ -608,9 +602,9 @@ to the instance applications and develpment toolbox\n";
 	}	
 	exit unless defined $p;
 
-	if ($p && $p !~ /^none$/i && ! $win32 && $have_data_password)
+	if ($p && $p !~ /^none$/i && ! $win32)
 	{
-		my $reason = Data::Password::IsBadPassword($p);
+		my $reason = IsBadPassword($p);
 		if ($reason) 
 		{
 			print "Bad password: It $reason\7\n";

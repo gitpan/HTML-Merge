@@ -311,8 +311,7 @@ sub GetPersistent
 	my ($self, $var) = @_;
 	my ($sql, $val);
 	my $id;
-	my $db = ($HTML::Merge::Ini::SESSION_DB)?"$HTML::Merge::Ini::SESSION_DB.":'';
-	my $table = $db."sessions";
+	my $table = "sessions";
 	my $dbh = $self->SYS_DBH();
 
 	$self->ValidatePersistent;
@@ -339,11 +338,8 @@ sub SetPersistent
 sub ErasePersistent
 {
 	my $self = shift;
-
 	$self->ValidatePersistent;
-
-	my $db = ($HTML::Merge::Ini::SESSION_DB)?"$HTML::Merge::Ini::SESSION_DB.":'';
-	my $table = $db."sessions";
+	my $table = "sessions";
 	my $id = $self->{session_id};
 	my $sql = "DELETE FROM $table
                    WHERE session_id = '$id'";
@@ -357,8 +353,7 @@ sub ValidatePersistent
 
 	my ($id, $sql);
 	my $now = time;
-	my $db = ($HTML::Merge::Ini::SESSION_DB)?"$HTML::Merge::Ini::SESSION_DB.":'';
-	my $table = $db."sessions";
+	my $table = "sessions";
 	my ($sql, $sth, @other, $other);
 	my $expire = YMD(time - 60 * $HTML::Merge::Ini::SESSION_TIMEOUT);
 	$self->CheckSessionTable;
@@ -382,8 +377,7 @@ sub CreateSessionTable
 	my $self = shift;
 
 	my $dbh;
-	my $db = ($HTML::Merge::Ini::SESSION_DB)?"$HTML::Merge::Ini::SESSION_DB.":'';
-	my $table = $db."sessions";
+	my $table = "sessions";
 	my $ddl = "CREATE TABLE $table (
 			session_id VARCHAR(20) NOT NULL,
 			varname VARCHAR(30) NOT NULL,
@@ -408,9 +402,7 @@ sub CreateSessionTable
 sub CheckSessionTable
 {
 	my $self = shift;
-
-	my $db = ($HTML::Merge::Ini::SESSION_DB)?"$HTML::Merge::Ini::SESSION_DB.":'';
-	my $table = $db."sessions";
+	my $table = "sessions";
 	my $sql = "SELECT Count(*) FROM $table";
 	my $sth;
 
@@ -440,8 +432,7 @@ sub GetSessionID
 	my $created = $self->MakeSessionID;
 	return if $created;
 	my $id = $self->{session_id};
-	my $db = ($HTML::Merge::Ini::SESSION_DB)?"$HTML::Merge::Ini::SESSION_DB.":'';
-	my $table = $db."sessions";
+	my $table = "sessions";
 	my $sql = "SELECT Count(*) 
 		FROM $table
                 WHERE session_id = '$id'
@@ -460,8 +451,7 @@ sub MakeSessionID
 	my $self = shift;
 	my ($key, $val);
 	my $sql;
-	my $db = ($HTML::Merge::Ini::SESSION_DB)?"$HTML::Merge::Ini::SESSION_DB.":'';
-	my $table = $db."sessions";
+	my $table = "sessions";
 	my $expire=undef;
 
 	return 0 if $self->{session_id};
@@ -510,8 +500,7 @@ sub SetField
 	my ($self, $key, $val) = @_;
 
 	my ($sql, $count, $sth);
-	my $db = ($HTML::Merge::Ini::SESSION_DB)?"$HTML::Merge::Ini::SESSION_DB.":'';
-	my $table = $db."sessions";
+	my $table = "sessions";
 	my $id = $self->{session_id};
 	
 	$sql = "SELECT Count(*)
@@ -603,69 +592,14 @@ sub SetCookie
 	$ENV{'HTTP_COOKIE'} .= "$name=$value";
 }
 ###########################################
-sub ReadConfig 
-{
-	my $self = $0;
-	$self =~ s/\.\w+$/.conf/;
-	my @conf = ($self, "/etc/merge.conf", &GetHome . "/.merge");
-
-	foreach my $f (@conf) 
-	{
-        	if (open(CFG, $f))
-	 	{
-			no strict;
-			my $code = join("", <CFG>);
-			close(CFG);
-			eval $code;
-			if ($@) 
-			{
-				print "Status: 501 Server error\n";
-				print "Content-type: text/plain\n\n";
-				print "$f caused error: $@";
-				exit;
-			}
-
-			$HTML::Merge::config = $f;
-        	        last;
-	        }
-	}
-
-	$self =~ s/\.\w+$/.ext/;
-	foreach my $ext (($self, "/etc/merge.ext")) 
-	{
-		if (-f $self) 
-		{
-			package HTML::Merge::Ext;
-			eval 'require $self;';
-			if ($@) 
-			{
-				print "Status: 501 Server error\n";
-				print "Content-type: text/plain\n\n";
-				print "$self caused error: $@";
-				exit;
-			}
-		}
-	}
-}
-###############################################################################
-sub GetHome 
-{
-	return if ($^O =~ /Win/);
-
-	my ($name,$passwd,$uid,$gid,
-        $quota,$comment,$gcos,$dir,$shell,$expire) = getpwuid($>);
-
-	return $dir;
-}
-###############################################################################
-sub import 
-{
-	my (@param) = @_;
-
-	return if ($param[1] eq ':unconfig');
-
-	&ReadConfig;
-}
+#sub import 
+#{
+#	my (@param) = @_;
+#
+#	return if ($param[1] eq ':unconfig');
+#
+#	&ReadConfig;
+#}
 ###########################################
 sub Convert 
 {
@@ -713,14 +647,9 @@ sub AddUser
 	croak "Invalid password length: $password" unless ($password =~ /^\S{3,15}$/);
 	unless ($HTML::Merge::Ini::ALLOW_EASY_PASSWORDS) 
 	{
-		$@ = undef;
-		eval{ require Data::Password; };
-
-		unless($@)
-		{
-			my $reason = Data::Password::IsBadPassword($password);
-			croak "Bad password $password: $reason" if $reason;
-		}
+		require Data::Password;
+		my $reason = Data::Password::IsBadPassword($password);
+		croak "Bad password $password: $reason" if $reason;
 	}
 
 	croak "Can't change user $user"
@@ -1657,4 +1586,3 @@ sub LoadSysTableFromFile
 ###########################################
 1;
 ###########################################
-
