@@ -71,11 +71,6 @@ while (-f "$cgi_bin/merge.conf") {
 	last;
 }
 
-foreach (qw(template cache logs pl)) {
-	mkdir "$cgi_bin/$_", 0755;
-	chown $uid, $gid, "$cgi_bin/$_";
-}
-
 print "\n";
 
 $default = $cgi_bin;
@@ -174,6 +169,11 @@ delete $param{'SUFFIX'};
 
 my $script = $ext ? "merge.$ext" : 'merge';
 $param{'SCRIPT'} = $script;
+
+foreach (qw(template cache logs pl)) {
+	mkdir "$cgi_bin/$_", 0755;
+	chown $uid, $gid, "$cgi_bin/$_";
+}
 
 my ($choice, $def);
 do {

@@ -16,7 +16,7 @@ if (length($title) > 20) {
 	$title = join("/", @tokens[0 .. 2], "...", @tokens[-2 .. -1]);
 }
 
-print header, start_html(-title => "Browsing $dir", -bgcolor => 'Silver');
+print "Content-type: text/html\n\n", start_html(-title => "Browsing $dir", -bgcolor => 'Silver');
 
 print <<HTML;
 <FORM>

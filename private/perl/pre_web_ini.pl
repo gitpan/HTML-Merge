@@ -41,7 +41,7 @@ $HTML::Merge::Ini::DB_PASSWORD
 	= $HTML::Merge::Ini::DB_PASSWORD 
 	unless defined($HTML::Merge::Ini::DB_PASSWORD);
 
-print header;
+print "Content-type: text/html\n\n";
 
 my @tokens = split(/\//, $file);
 

@@ -12,7 +12,7 @@ ReadConfig();
 
 my $template = param('template');
 
-print header;
+print "Content-type: text/html\n\n";
 print start_html({-bgcolor => 'Silver'}, "Source for $template");
 
 unless ($template) {

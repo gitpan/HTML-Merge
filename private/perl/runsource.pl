@@ -27,7 +27,7 @@ for (;;) {
 my $string = join("&", @tokens);
 $string = "&$string" if $string;
 
-print header;
+print "Content-type: text/html\n\n";
 
 print <<HTML;
 

@@ -5,7 +5,7 @@ use CGI qw/:standard/;
 
 ReadConfig();
 
-print header;
+print "Content-type: text/html\n\n";
 
 my $r = param('r');
 

@@ -3,7 +3,7 @@
 use CGI qw/:standard/;
 use strict;
 
-print header;
+print "Content-type: text/html\n\n";
 
 unless (open(I, "../../docs/Tags.html")) {
 	print <<HTML;

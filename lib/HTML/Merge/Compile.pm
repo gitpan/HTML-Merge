@@ -5,7 +5,7 @@ use vars qw($open %enders %printers %tokenizers $VERSION $DEBUG);
 use Carp;
 use Config;
 
-$VERSION = '3.31';
+$VERSION = '3.32';
 
 BEGIN {
 	eval 'use HTML::Merge::Ext;';
@@ -17,7 +17,7 @@ $open = '\$R';
 my @printers = qw(VAR SQL GET PGET PVAR INDEX PIC STATE CFG INI LOGIN 
 	AUTH DECIDE EMPTY DATE DAY MONTH YEAR DATEDIFF LASTDAY ADDDATE
 	USER MERGE TEMPLATE TRANSFER DUMP NAME TAG COOKIE
-	DATE2UTC UTC2DATE ENV DATEF EVAL);
+	DATE2UTC UTC2DATE ENV DATEF EVAL HOUR MINUTE SECOND);
 @printers{@printers} = @printers;
 #my @stringers = qw(IF SET PSET SETCFG);
 #@stringers{@stringers} = @stringers;
@@ -1053,13 +1053,15 @@ EOM
 sub PictureA {
 	my ($self, $param) = @_;
 	my %opts;
-	while ($param =~ s/^([LRCSPW])//) {
+	while ($param =~ s/^([LRCSPWDE])//) {
 		$opts{$1}++;
 	}
-	my $count;
-	foreach (qw(S C P)) {
-		$self->Die("Illegal flag combinations") 
-			if ($opts{$_} && $count++);
+	foreach (qw(SCP DE)) {
+		my $count;
+		foreach (split(//)) {
+			$self->Die("Illegal flag combinations") 
+				if ($opts{$_} && $count++);
+		}
 	}
 	unless ($param =~ s/^\\\((.*?)\\\)//s) {
 		$self->Syntax;
@@ -1077,6 +1079,8 @@ sub PictureA {
 	"$opts{'L'}" && \$__s =~ s/^\\s+//,
 	"$opts{'R'}" && \$__s =~ s/\\s+\$//,
 	"$opts{'W'}" && \$__s =~ s/\\s{2,}/ /g,
+	"$opts{'E'}" && (\$__s =~ s/([^ _A-Za-z0-9-\\/])/sprintf("%%%02X", ord(\$1))/ge, \$__s =~ s/ /+/g),
+	"$opts{'D'}" && (\$__s =~ s/\\+/ /g, \$__s =~ s/%(..)/chr(hex(\$1))/ge),
 	sprintf("%${format}s", \$__s))[-1]
 EOM
 }
@@ -1450,6 +1454,31 @@ sub DoYEAR {
 	qq{substr("$2", 0, 4)};
 }
 
+sub DoMINUTE {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.\\(['"])(.*)\\\1$/s) {
+		$self->Syntax;
+	}
+	qq{substr("$2", 10, 2) * 1};
+}
+
+sub DoHOUR {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.\\(['"])(.*)\\\1$/s) {
+		$self->Syntax;
+	}
+	qq{substr("$2", 8, 2) * 1};
+}
+
+
+sub DoSECOND {
+	my ($self, $engine, $param) = @_;
+	unless ($param =~ /^\\\.\\(['"])(.*)\\\1$/s) {
+		$self->Syntax;
+	}
+	qq{substr("$2", 12, 2) * 1};
+}
+
 sub DoDATEDIFF {
 	my ($self, $engine, $param) = @_;
 	unless ($param =~ /^\\\.([HSMD])\\\.(\\['"])?(.*)\2\\,(\\['"])?(.*)\4$/s) {
@@ -1714,11 +1743,12 @@ sub Syntax {
 	my $step = 0;
 	my $sub;
 	my $pkg = ref($self);
-	do {
+	for (;;) {
 		$step++;
 		my @c = caller($step);
 		$sub = $c[3];
-	} until ($sub =~ s/^${pkg}\::Do// || $sub =~ s/^HTML::Merge::Compile\::Do//);
+		last if $sub =~ s/^(.*)::Do// && UNIVERSAL::isa($self, $1);
+	} 
 	$self->Die("Syntax error on $sub: $DB::args[2]");
 }
 

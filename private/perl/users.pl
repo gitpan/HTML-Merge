@@ -99,13 +99,13 @@ sub doADD {
 sub perREALM {
 	my ($user, $realm) = @_;
 	$engine->GrantUser($user, $realm);
-	print "User $_ has been granted realm $realm.<BR>\n";
+	print "User $user has been granted realm $realm.<BR>\n";
 }
 
 sub perGROUP {
 	my ($user, $group) = @_;
 	$engine->JoinGroup($user, $group);
-	print "User $_ has joined group $group.<BR>\n";
+	print "User $user has joined group $group.<BR>\n";
 }
 
 sub doJOIN {

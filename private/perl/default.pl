@@ -9,7 +9,7 @@ use strict;
 my $sub = param("sub");
 my $fun = "Default$sub";
 
-print header;
+print "Content-type: text/html\n\n";
 
 print "This script is obsolete\n";
 exit;

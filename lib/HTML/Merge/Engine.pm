@@ -558,11 +558,11 @@ sub DBH {
 sub AddUser {
 	my ($self, $user, $password, $realname, $tag) = @_;
 	croak "Invalid username: $user" unless ($user =~ /^\S{3,15}$/);
-	croak "Invalid password: $password" unless ($password =~ /^\S{3,15}$/);
+	croak "Invalid password length: $password" unless ($password =~ /^\S{3,15}$/);
 	unless ($HTML::Merge::Ini::ALLOW_EASY_PASSWORDS) {
 		require Data::Password;
 		my $reason = Data::Password::IsBadPassword($password);
-		croak "Bad password $password: $reason";
+		croak "Bad password $password: $reason" if $reason;
 	}
 
 	croak "Can't change user $user"

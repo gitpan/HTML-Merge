@@ -5,6 +5,7 @@ use CGI qw/:standard/;
 use HTML::Merge::Compile;
 use HTML::Merge::Error;
 use HTML::Merge::Engine;
+use HTML::Merge::Development;
 use strict qw(subs vars);
 use vars qw(%code $mod_perl);
 
@@ -26,13 +27,12 @@ if (exists $ENV{'GATEWAY_INTERFACE'}
 }
 
 
-print header;
+print "Content-type: text/html\n\n";
 
 if (param('__default__')) {
 	my $sub = param("sub");
 	my $fun = "Default$sub";
 
-	require HTML::Merge::Development;
 	my $code = UNIVERSAL::can('HTML::Merge::Development', $fun);
 
 	if ($code) {
@@ -81,7 +81,6 @@ if ($template) {
 			$HTML::Merge::context = [$template, 0];
 
 			unless ($engine->CanEnter) {
-				require HTML::Merge::Development;
 				$template = $HTML::Merge::Ini::SECURITY_ACCESS_DENIED_TEMPLATE;
 				unless ($template) {
 					&HTML::Merge::Development::DefaultForbidden;
@@ -201,7 +200,6 @@ if ($input) {
 		eval ' require $output; ';
 	}
 } else {
-	require HTML::Merge::Development;
 	&HTML::Merge::Development::DefaultPage;
 }
 
@@ -228,7 +226,6 @@ if ($HTML::Merge::Ini::DEVELOPMENT && !$candidate) {
 		$re =~ s/,\s*/|/g;
 		if ($template =~ /\.($re)$/
 				|| !$input) {
-			require HTML::Merge::Development;
 			HTML::Merge::Development::OpenToolBox();
 		}
 	}

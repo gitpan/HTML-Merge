@@ -1,5 +1,5 @@
 sub backend_header {
-	print header;
+	print "Content-type: text/html\n\n";
 	print <<HTML;
 <HTML>
 <HEAD>

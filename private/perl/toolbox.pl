@@ -6,7 +6,7 @@ use strict;
 
 ReadConfig();
 
-print header;
+print "Content-type: text/html\n\n";
 
 my $winstuff = ",status=no,scrollbars=yes,toolbar=no,menubar=no,copyhistory=no,resizable=no";
 print <<HTML;

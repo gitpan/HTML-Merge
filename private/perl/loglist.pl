@@ -72,7 +72,7 @@ if ($alt eq 'view') {
 	}
 }
 
-print header; 
+print "Content-type: text/html\n\n"; 
 print <<HTML;
 <HTML>
 <HEAD>

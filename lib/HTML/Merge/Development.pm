@@ -18,6 +18,8 @@ use CGI qw/:standard/;
 @ISA = qw(Exporter);
 @EXPORT = qw($merge_absolute_path $merge_script $extra ReadConfig $file $year);
 
+package HTML::Merge::Development;
+
 $year = (localtime)[5] + 1900;
 ##################################################################
 sub OpenToolBox

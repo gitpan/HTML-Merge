@@ -552,6 +552,12 @@ The second parameter gives the date for a few days ahead, or beyond, if given ne
 
 =item *
 
+E<lt>$RSECOND.'B<date>'E<gt>
+
+E<lt>$RMINUTE.'B<date>'E<gt>
+
+E<lt>$RHOUR.'B<date>'E<gt>
+
 E<lt>$RDAY.'B<date>'E<gt>
 
 E<lt>$RMONTH.'B<date>'E<gt>
@@ -582,7 +588,7 @@ Give the last day of month related to the specific date.
 
 E<lt>$RADDDATE.'B<date>','B<day>','B<month>','B<year>'E<gt>
 
-Add the gievn number of days, then the given number of months and years to the date. Returns a new date.
+Add the given number of days, then the given number of months and years to the date. Returns a new date.
 
 =item *
 

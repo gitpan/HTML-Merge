@@ -7,7 +7,7 @@ use File::Find;
 ReadConfig();
 
 if (fork) {
-	print header;
+	print "Content-type: text/html\n\n";
 	print <<HTML;
 <HTML>
 <BODY onLoad="init()">

@@ -11,7 +11,7 @@ my $template = param('template');
 my $from = param('from');
 my $title = ($from eq 'view') ? 'Source for' : 'Run';
 
-print header;
+print "Content-type: text/html\n\n";
 
 unless ($template) {
 	&HTML::Merge::Error::ForceError("No template specified");

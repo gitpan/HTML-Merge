@@ -11,7 +11,7 @@ my $log = param('log');
 
 my $file = "$HTML::Merge::Ini::MERGE_ABSOLUTE_PATH/$HTML::Merge::Ini::MERGE_ERROR_LOG_PATH/$log";
 
-print header;
+print "Content-type: text/html\n\n";
 
 unless (open(FILE, $file)) {
 	&HTML::Merge::Error::ForceError("Could not open $file: $!");

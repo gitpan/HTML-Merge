@@ -406,7 +406,13 @@ DATE TAGS
         parameter gives the date for a few days ahead, or beyond, if given
         negative.
 
-    *   <$RDAY.'date'>
+    *   <$RSECOND.'date'>
+
+        <$RMINUTE.'date'>
+
+        <$RHOUR.'date'>
+
+        <$RDAY.'date'>
 
         <$RMONTH.'date'>
 
@@ -431,7 +437,7 @@ DATE TAGS
 
     *   <$RADDDATE.'date','day','month','year'>
 
-        Add the gievn number of days, then the given number of months and
+        Add the given number of days, then the given number of months and
         years to the date. Returns a new date.
 
     *   <$RDATE2UTC.'date'>

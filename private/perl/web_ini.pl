@@ -148,7 +148,7 @@ if (defined($root_pass)) {
 }
 
 if ($ENV{'HTTP_REFERER'} =~ /chpass\.pl/) {
-	print header;
+	print "Content-type: text/html\n\n";
 	print <<HTML;
 <HTML>
 <BODY onLoad="doit();">
