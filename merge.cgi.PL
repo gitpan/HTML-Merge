@@ -1,6 +1,8 @@
-
 use strict;
 my $code = <<'ENDOFPERLCODE';
+##################################
+# Modules ########################
+
 use CGI qw/:standard/;
 use HTML::Merge::Compile;
 use HTML::Merge::Error;
@@ -9,33 +11,47 @@ use HTML::Merge::Development;
 use strict qw(subs vars);
 use vars qw(%code $mod_perl);
 
-BEGIN {
-my $stash = eval("*HTML::Merge::Ini::");
-unless (%$stash) {
-        print "Status: 501 Config file not found or incorrect\n";
-        print "Content-type: text/plain\n\n";
-        print "Merge could not find the configuration file.\n";
-        exit;
+##################################
+BEGIN 
+{
+	my $stash = eval("*HTML::Merge::Ini::");
+
+	unless (%$stash) 
+	{
+        	print "Status: 501 Config file not found or incorrect\n";
+        	print "Content-type: text/plain\n\n";
+        	print "Merge could not find the configuration file.\n";
+        	exit;
+	}
+
+	if (exists $ENV{'GATEWAY_INTERFACE'} &&
+    		($ENV{'GATEWAY_INTERFACE'} =~ /^CGI-Perl\//)) 
+	{
+		$mod_perl = 1;
+	}
+
 }
+# Main ###########################
 
-if (exists $ENV{'GATEWAY_INTERFACE'}
-    &&
-    ($ENV{'GATEWAY_INTERFACE'} =~ /^CGI-Perl\//)) {
-	$mod_perl = 1;
-}
+my $content_type_param=param('content_type') || $HTML::Merge::Ini::CONTENT_TYPE;
+my $content_type=$content_type_param ? $content_type_param : 'text/html';
+my $input;		# the input template
+my $output;		# the perl compiled output
+my $candidate;
+my $private;
+my $path;
 
-}
+print "Content-type: $content_type\n\n" if $ENV{'REQUEST_METHOD'} && 
+	uc($content_type) ne 'NONE';
 
-
-print "Content-type: text/html\n\n" if $ENV{'REQUEST_METHOD'};
-
-if (param('__default__')) {
+if (param('__default__')) 
+{
 	my $sub = param("sub");
 	my $fun = "Default$sub";
-
 	my $code = UNIVERSAL::can('HTML::Merge::Development', $fun);
 
-	if ($code) {
+	if ($code) 
+	{
         	&$code;
 	 	exit;
 	}
@@ -53,36 +69,43 @@ my $template = param('template') || $HTML::Merge::Ini::DEF_TEMPLATE;
 
 $HTML::Merge::template = $template;
 
-unless ($mod_perl) {
+unless ($mod_perl) 
+{
 	my $candidate = $ENV{'PATH_INFO'};
 	# CAUTION - this can contain the session id
-	if ($candidate && $candidate =~ /\./) {
+	if ($candidate && $candidate =~ /\./) 
+	{
 		$template = $candidate;
 	}
 }
 
-my $input;
-my $output;
-
-if ($HTML::Merge::Ini::SESSION_METHOD eq 'U') {
+if ($HTML::Merge::Ini::SESSION_METHOD eq 'U') 
+{
 	my $e = HTML::Merge::Engine->CreateObject;
 	require HTML::Merge::Filter;
-	tie *FIO, 'HTML::Merge::Filter', $e, select;
-	select \*FIO;
+	require Symbol;
+	my $sym = Symbol::gensym();
+	untie *$sym if (tied(*$sym));
+	tie *$sym, 'HTML::Merge::Filter', $e, select;
+	select $sym;
 }
  
-if ($template) {
-
+if ($template) 
+{
 	if ($HTML::Merge::Ini::DB_DATABASE && $HTML::Merge::Ini::SESSION_DB
-			&& $HTML::Merge::Ini::USE_SECURITY) {
+			&& $HTML::Merge::Ini::USE_SECURITY) 
+	{
 		my $signal = 'STOP';
+
 		eval {
 			my $engine = HTML::Merge::Engine->CreateObject;
 			$HTML::Merge::context = [$template, 0];
 
-			unless ($engine->CanEnter) {
+			unless ($engine->CanEnter) 
+			{
 				$template = $HTML::Merge::Ini::SECURITY_ACCESS_DENIED_TEMPLATE;
-				unless ($template) {
+				unless ($template) 
+				{
 					&HTML::Merge::Development::DefaultForbidden;
 					die $signal;			
 				}
@@ -91,19 +114,17 @@ if ($template) {
 		exit if ($@ =~ /$signal/);
 	}
 
-
-	$input = "$HTML::Merge::Ini::TEMPLATE_PATH/$template";
+	# put all posible paths in importents order for checking
+	$input = HTML::Merge::Compile::GetTemplateFromPath($template);
 	$output = "$HTML::Merge::Ini::CACHE_PATH/$template.pl";
+
 	my $candidate = "$HTML::Merge::Ini::PRECOMPILED_PATH/$template.pl";
-	if (-e $candidate) {
+	if (-e $candidate) 
+	{
 		$output = $candidate;
 		$input = [];
 	}
 }
-
-my $candidate;
-my $private;
-my $path;
 
 # private_ convention is obsolete
 
@@ -111,27 +132,35 @@ my %candidates = ('log' => $HTML::Merge::Ini::MERGE_ERROR_LOG_PATH,
 		  'error' => $HTML::Merge::Ini::MERGE_ERROR_PATH,
 		  'toolbox' => $HTML::Merge::Ini::TOOLBOX_PATH);
 
-if (undef) {
-	while (($private, $path) = each %candidates) {
+if (undef) 
+{
+	while (($private, $path) = each %candidates) 
+	{
 		$candidate = param("private_$private");
 		last if $candidate;
 	}
 
 
 	if ($candidate && ($HTML::Merge::Ini::DEVELOPMENT
-		|| $private eq 'error')) {
-		if ($private eq 'toolbox' || $private eq 'log') {
+		|| $private eq 'error')) 
+	{
+		if ($private eq 'toolbox' || $private eq 'log') 
+		{
 			HTML::Merge::Error::ForceError("private_$private deprecated");
 			exit;
 		}
+
 		$template = $candidate;
 		$input = "$HTML::Merge::Ini::MERGE_ABSOLUTE_PATH/$path/$template";
 		$output = "$HTML::Merge::Ini::CACHE_PATH/private/$private/$template.pl";
 	}
 }
 
-foreach (split/\//, $template) {
-	if ($_ eq '..') {
+# check for security britch
+foreach (split/\//, $template) 
+{
+	if ($_ eq '..') 
+	{
 		HTML::Merge::Error::ForceError("Template name $template is invalid");
 		exit; # Under mod_perl calls Apache::exit
 		print "Status: 403 Permission denied\n";
@@ -144,14 +173,16 @@ foreach (split/\//, $template) {
 &HTML::Merge::Compile::safecreate($output) unless -e $output;
 
 # Force parameters to be extracted
-
 my @keys = param;
-foreach (@keys) {
+foreach (@keys) 
+{
 	my $dummy = param($_);
 }
 
-unless (ref($input)) {
-	unless (-f $input || !$input) {
+unless (ref($input)) 
+{
+	unless (-f $input || !$input) 
+	{
 		HTML::Merge::Error::ForceError("$template not found");
 		exit; # Under mod_perl calls Apache::exit
 		print "Status: 404 File not found\n";
@@ -165,11 +196,21 @@ unless (ref($input)) {
 
 	$HTML::Merge::context = [$template, 0];
 
-	if ($source > $dest || $HTML::Merge::Ini::ALWAYS_COMPILE) {
+	if ($source > $dest || $HTML::Merge::Ini::ALWAYS_COMPILE) 
+	{
+		# Clear extensions in case we are under mod_perl
+
+		foreach (keys %HTML::Merge::Ext) {
+		        undef &{"HTML::Merge::Ext::$_"};
+		}
+
+		&HTML::Merge::Engine::ReadConfig;
 		eval {
 			&HTML::Merge::Compile::CompileFile($input, $output);
 		} if $input;
-		if ($@) {
+
+		if ($@) 
+		{
 			unlink $output;
 			HTML::Merge::Error::ForceError("$template: $@");
 			exit; # Under mod_perl calls Apache::exit
@@ -181,65 +222,89 @@ unless (ref($input)) {
 	}
 }
 
-if ($HTML::Merge::Ini::DEVELOPMENT && !$candidate && $input) {
+if ($HTML::Merge::Ini::DEVELOPMENT && !$candidate && $input) 
+{
 	HTML::Merge::Error::OpenMergeErrorLog();
 }
 
-if ($candidate || param('__MERGE_DEV_LIVE__')) {
+if ($candidate || param('__MERGE_DEV_LIVE__')) 
+{
 	$HTML::Merge::Ini::STOP_ON_ERROR = undef;
 }
 
 @HTML::Merge::cleanups = ();
 
-$| = 1;
+# auto flush STDIN not used for preformance reason
+#$| = 1;
 
-if ($input) {
-	if ($mod_perl) {
+if ($input) 
+{
+	if ($mod_perl) 
+	{
 		eval ' do $output; ';
-	} else {
+	} 
+	else 
+	{
 		eval ' require $output; ';
 	}
-} else {
+} 
+else 
+{
 	&HTML::Merge::Development::DefaultPage;
-}
-
-my $fh = select;
-if (tied($fh)) {
-	select $fh->{'out'};
-	$fh->Close;
 }
 
 my $error = $@;
 
-if ($@ && $@ !~ /STOP_ON_ERROR/) {
+if ($@ && $@ !~ /STOP_ON_ERROR/) 
+{
 	eval 'HTML::Merge::Error::HandleError("ERROR", $error);';
 }
 
-foreach (@HTML::Merge::cleanups) {
-	if (UNIVERSAL::isa($_, 'CODE')) {
+foreach (@HTML::Merge::cleanups) 
+{
+	if (UNIVERSAL::isa($_, 'CODE')) 
+	{
 		eval '&$_';
-	} else {
+	} 
+	else 
+	{
 		eval $_;
 	}
 }
 
-if ($HTML::Merge::Ini::DEVELOPMENT && !$candidate) {
+if ($HTML::Merge::Ini::DEVELOPMENT && !$candidate) 
+{
 	HTML::Merge::Error::CloseMergeErrorLog() if $input;
-	unless (param('__MERGE_DEV_LIVE__') || $candidate || $error) {
+
+	unless (param('__MERGE_DEV_LIVE__') || $candidate || $error) 
+	{
 		my $re = $HTML::Merge::Ini::DEV_EXTENSION;
 		$re =~ s/,\s*/|/g;
+
 		if ($template =~ /\.($re)$/
-				|| !$input) {
+				|| !$input) 
+		{
 			HTML::Merge::Development::OpenToolBox();
 		}
 	}
 }
 
-sub date {
+my $fh = select;
+my $candidate = tied(*$fh); 
+if ($candidate && UNIVERSAL::isa($candidate, 'HTML::Merge::Filter'))
+{
+	select $candidate->{'out'};
+	$candidate->Close;
+	untie *$fh;
+}
+
+############################################
+sub date 
+{
 	my @s = stat(shift);
 	$s[9];
 }
-
+############################################
 ENDOFPERLCODE
 
 use Config;

@@ -1,28 +1,47 @@
 use strict;
 my $code = <<'ENDOFPERLCODE';
+##################################
+# Modules ########################
+
 use strict qw(subs vars);
+use FileHandle;
 use Term::ReadLine;
-use HTML::Merge::Engine qw(:unconfig);
 use Data::Dumper;
 use Data::Password qw(IsBadPassword);
 use Config;
 use Term::InKey;
 
-my %param;
+# My Modules ######################
 
-my $term = new Term::ReadLine('');
+use HTML::Merge::Engine qw(:unconfig);
+use HTML::Merge::App::Repository;
 
+# Def #############################
+# auto flush
 $| = 1;
+
+# which auto flush is better ?
+#STDOUT->autoflush(1);
+#STDERR->autoflush(1);
+
+# Main ############################
+
+my %param;
+my $term = new Term::ReadLine('');
+my @files;
+my $unix = 1;
+my $is_internal = 0;
+
 
 &Clear;
 
-my $unix = 1;
-
-foreach (qw(win32 vms os390 os2 dos cygwin amiga mac)) {
+foreach (qw(win32 vms os390 os2 dos cygwin amiga mac)) 
+{
 	$unix = undef if ($^O =~ /$_/);
 }
 
-unless ($unix) {
+unless ($unix) 
+{
 	print "Warning: this script works ONLY on UNIX systems!\n\n";
 	print "Press enter:";
 	scalar(<STDIN>);
@@ -55,15 +74,19 @@ my $default;
 my @apache = qw(/home/httpd /usr/local/www /var/www /usr/local/httpd
 	/usr/local/apache /usr/local/etc/apache /usr/local/etc/httpd
 		/usr/local/etc/www);
-foreach (@apache) {
-	if (-d "$_/cgi-bin") {
+
+foreach (@apache) 
+{
+	if (-d "$_/cgi-bin") 
+	{
 		$default = "$_/cgi-bin";
 		last;
 	}
 }
 
 my $cgi_bin = &getone("Enter your cgi-bin directory, full path", 
-		'CGI_BIN', $default, sub {
+		'CGI_BIN', $default, sub 
+{
 	s/^\s+//;
 	s/\s+$//;
 	s|/$||;
@@ -72,36 +95,44 @@ my $cgi_bin = &getone("Enter your cgi-bin directory, full path",
 });
 
 my $merge = findpath('merge.cgi', $Config{'installscript'});
-
 die "Could not find merge.cgi in PATH" unless (-x $merge);
 
 my $private = $merge;
 $private =~ s|/bin/merge.cgi|/share/merge|;
-
 die "Could not find merge data at $private" unless (-d $private);
-while (-f "$cgi_bin/merge.conf") {
+
+while (-f "$cgi_bin/merge.conf") 
+{
 	require "$cgi_bin/merge.conf";
+
 	last if $@;
-	while (my ($var, $val) = each %$HTML::Merge::Ini::FACTORY) {
+
+	while (my ($var, $val) = each %$HTML::Merge::Ini::FACTORY) 
+	{
 		$param{$var} = $val;
 	}
+
 	open(I, "$private/private/perl/input.frm") || last;
-	while (<I>) {
+	while (<I>) 
+	{
 		chop;
 		my ($title, $name, $type, $opts, $default) = split(/\|/);
-		if ($default =~ s/\@(.*?)\@/\0/) {
+		if ($default =~ s/\@(.*?)\@/\0/) 
+		{
 			my $item = $1;
 			my $re = quotemeta($default);
 			$re =~ s/\\\0/(.*)/;
 			my $val = ${"HTML::Merge::Ini::$name"};
-			if ($val =~ /^$re$/) {
+			if ($val =~ /^$re$/) 
+			{
 				$param{$item} = $1;
 			}
 		}
 	}
 	close(I);
-	$param{'__DB_PASS'} = 
-		HTML::Merge::Engine::Convert($param{'DB_PASSWORD'});
+
+	$param{'__DB_PASS'}=HTML::Merge::Engine::Convert($param{'DB_PASSWORD'});
+
 	last;
 }
 
@@ -126,9 +157,12 @@ $default = `httpd -V | grep SERVER_CONFIG_FILE`;
 $default =~ s/^\s*-D\s+SERVER_CONFIG_FILE=\"(.*)\"\s*$/$1/;
 
 $default = "$root/$default" if (-f "$root/$default");
-unless ($default && -e $default) {
-	foreach (@apache) {
-		if (-f "$_/conf/httpd.conf") {
+unless ($default && -e $default) 
+{
+	foreach (@apache) 
+	{
+		if (-f "$_/conf/httpd.conf") 
+		{
 			$default = "$_/conf/httpd.conf";
 		}
 	}
@@ -143,9 +177,11 @@ my $conf = getone("Enter the location of your httpd.conf", 'HTTP_CONFIG',
 
 $default = 'nobody';
 
-foreach (qw(apache www httpd)) {
+foreach (qw(apache www httpd)) 
+{
 	my @data = getpwnam($_);
-	if (@data) {
+	if (@data) 
+	{
 		$default = $_;
 		last;
 	}
@@ -154,13 +190,17 @@ foreach (qw(apache www httpd)) {
 print "\n";
 
 my $nextdef;
-if ($conf) {
+if ($conf) 
+{
 	open(I, $conf) || die "Cannot open $conf: $!";
-	while (<I>) {
-		if (/^\s*User\s+(.*?)\s*((?:#.*)?)$/) {
+	while (<I>) 
+	{
+		if (/^\s*User\s+(.*?)\s*((?:#.*)?)$/) 
+		{
 			$default = $1;
 		}
-		if (/^\s*Group\s+(.*?)\s*((?:#.*)?)$/) {
+		if (/^\s*Group\s+(.*?)\s*((?:#.*)?)$/) 
+		{
 			$nextdef = $1;
 		}
 	}
@@ -179,7 +219,8 @@ my $user = &getone("Enter the user id for your web server" , 'WWW_U', $default,
 my $uid = $data[2];
 
 $default = $nextdef;
-unless ($default) {
+unless ($default) 
+{
 	$default = $user;
 	@data = getgrnam($default);
 	$default = '' unless (@data);
@@ -210,14 +251,16 @@ delete $param{'SUFFIX'};
 my $script = $ext ? "merge.$ext" : 'merge';
 $param{'SCRIPT'} = $script;
 
-foreach (qw(template cache logs pl)) {
+foreach (qw(template cache logs pl)) 
+{
 	mkdir "$cgi_bin/$_", 0755;
 	chown $uid, $gid, "$cgi_bin/$_";
 }
 
 my ($choice, $def, $cd, $c2);
 
-if (-x "$cgi_bin/$script") {
+if (-x "$cgi_bin/$script") 
+{
 	$def = "/.No change.";
 	$c2 = "\n\r";
 }
@@ -232,47 +275,63 @@ on UNIX systems and Apache servers that have the FollowSymLinks
 directive applied. If they are not an option, choose Copy.
 If you are recreating an existent instance with a linked directory,
 or if you do not wish to have development mode on, choose None.
-If you chosse None or Copy, $cgi_bin/$script will be created
-as a copy of $merge; if you choose Link it will be a symbolic link.
+If you choose None or Copy, $cgi_bin/$script will be created
+as a copy of $merge if you choose Link it will be a symbolic link.
 
-Do you wish to <C>opy $private/private 
-into $cgi_bin or create a symbolic <L>ink? [C/L/None$def]: ";
+Do you wish to <C>opy Merge files into $cgi_bin 
+or create a symbolic <L>ink? [C/L/None$def]: ";
 
 $choice = Choice("CLN$c2\3", $cd);
 
 exit if $choice eq "\3";
 
-if ($choice eq 'C') {
+if ($choice eq 'C') 
+{
 	print "Copy\n";
 	&scrape;
 	require ExtUtils::Install;
-	ExtUtils::Install::install({"$private/private" => $cgi_bin}, 1, 0);
-	unlink "$cgi_bin/$script";
 	require File::Copy;
+
+	ExtUtils::Install::install({"$private/private" => $cgi_bin}, 1, 0);
+	ExtUtils::Install::install({"$private/public" => $cgi_bin}, 1, 0);
+	unlink "$cgi_bin/$script";
 	File::Copy::copy($merge, "$cgi_bin/$script");
 	chmod 0755, "$cgi_bin/$script";
 	chown $uid, $gid, "$cgi_bin/$script";
-} elsif ($choice eq 'L') {
+} 
+elsif ($choice eq 'L') 
+{
 	print "Link\n";
 	&scrape;
+
 	symlink	"$private/private", "$cgi_bin/private" ||
 		die "Could not link $private/private to $cgi_bin/private: $!";
-
 	chmod 0755, "$cgi_bin/private";
 	chown $uid, $gid, "$cgi_bin/private";
+
+	symlink	"$private/public", "$cgi_bin/public" ||
+		die "Could not link $private/public to $cgi_bin/public: $!";
+	chmod 0755, "$cgi_bin/public";
+	chown $uid, $gid, "$cgi_bin/public";
+
 	unlink "$cgi_bin/$script";
 	symlink $merge, "$cgi_bin/$script" || 
 		die "Could not link $merge to $cgi_bin/$script: $!";
 	chmod 0755, "$cgi_bin/$script";
 	chown $uid, $gid, "$cgi_bin/$script";
-} elsif ($choice eq 'N') {
+} 
+elsif ($choice eq 'N') 
+{
 	print "None\n";
-	unless (-x "$cgi_bin/$script") {
+	unless (-x "$cgi_bin/$script") 
+	{
 		require File::Copy;
 		File::Copy::copy($merge, "$cgi_bin/$script");
 		chmod 0755, "$cgi_bin/$script";
 	}
-} elsif ($choice ne "\r") {
+} 
+elsif ($choice ne "\r") 
+{
 	die "Unknown choice $choice";
 }
 
@@ -280,58 +339,78 @@ print "\n\nWould you like to install the samples? [.Y./N]: ";
 $choice = Choice("YN\3", 'Y');
 exit if $choice eq "\3";
 
-my $createdb;
-
 $param{'DEFAULT'} = '';
-if ($choice eq 'Y') {
+
+if ($choice eq 'Y') 
+{
 	print "Yes\n";
 	require File::Copy;
-	foreach (glob("$private/docs/samples/*.html")) {
+	foreach (glob("$private/docs/samples/*.html")) 
+	{
 		my $dest = $_;
 		$dest =~ s|^$private/docs/samples|$cgi_bin/template|;
 		File::Copy::copy($_, $dest);
 	}
+
 	$param{'DEFAULT'} = 'samples.html';
-} else {
+} 
+else 
+{
 	print "No\n";
 }
 
 my $flag;
 eval {
 	require DBI;
-	for (;;) {
+
+	for (;;) 
+	{
 		my @drivers = DBI->available_drivers;
 		print "Available DBI drivers:\n";
 		my $i = 0;
-		foreach (@drivers) {
+
+		foreach (@drivers) 
+		{
 			print ++$i, ") $_\n";
 		}
 	
 		my $drv = &getone("Choose DBI driver",
 			'DRIVER', undef, undef, 1);
-		if ($drv =~ /^\d+$/) {
+		if ($drv =~ /^\d+$/) 
+		{
 			$drv = $drivers[$drv - 1];
 		}
 		last unless ($drv);
+
 		print "$drv chosen.\n";
+
 		my @databases;
 		eval { @databases = DBI->data_sources($drv); 
-			foreach(@databases) {
+			foreach(@databases) 
+			{
 				s/^.*?:.*?://;
 			}
 		};
+
 		$i = 0;
-		if (@databases) {	
-			foreach (@databases) {
+
+		if (@databases) 
+		{
+			foreach (@databases) 
+			{
 				print ++$i, ") $_\n";
 			}
 		}
+
 		my $default = $drv eq $param{'DRIVER'} ? $param{'DB'} : '';
 		my $db = getone("Choose application database:",
 			undef, $default);
-		if ($db =~ /^\d+$/) {
+
+		if ($db =~ /^\d+$/) 
+		{
 			$db = $databases[$db - 1];
 		}
+
 		print "DSN is dbi:$drv:$db\n\n";
 
 		print "Note: on some databases username and password could be
@@ -352,7 +431,9 @@ left blank. Type NONE to override the default by an empty string.\n\n";
 		my $dbh;
 		eval { $dbh = DBI->connect("dbi:$drv:$db", $duser, $dpass) 
 			|| die $DBI::errstr;};
-		if ($@) {
+
+		if ($@) 
+		{
 			print "\nError: $DBI::errstr\n";
 			next;
 		}
@@ -366,28 +447,50 @@ left blank. Type NONE to override the default by an empty string.\n\n";
 		print "\n";
 
 		$i = 0;
-		if (@databases) {	
-			foreach (@databases) {
+		if (@databases) 
+		{
+			foreach (@databases) 
+			{
 				print ++$i, ") $_\n";
 			}
 		}
+		print "
+
+Note: if you want Merge to handle security and session features internally      choose NONE and merge will not create a system database\n\n";
 
 		my $mergedb = getone("Choose system database",
 			'MERGE_DB', 'merge');
 
-		if ($mergedb) {
-
+		if ($mergedb) 
+		{
 			&Clear;
 
-			if ($mergedb =~ /^\d+$/) {
+			if ($mergedb =~ /^\d+$/) 
+			{
 				$mergedb = $databases[$mergedb - 1];
 				$param{'MERGE_DB'} = $mergedb;
 			}
-			eval { $dbh->do("CREATE DATABASE $mergedb") };
 
-			$dbh->disconnect;
-			$createdb = 1;
+			eval { $dbh->do("CREATE DATABASE $mergedb") };
 		}
+		else
+	  	{
+			my $internal_dbh;
+                	eval { $internal_dbh = DBI->connect("dbi:SQLite:dbname=$cgi_bin/merge.db","","") 
+				|| die $DBI::errstr;};
+	 
+                	if ($@)
+                	{
+                        	print "\nError: $DBI::errstr\n";
+                        	next;
+                	}
+
+			$internal_dbh->disconnect();
+
+			$is_internal=1;
+		}	
+
+		$dbh->disconnect();
 		last;
 	}
 };
@@ -397,24 +500,31 @@ left blank. Type NONE to override the default by an empty string.\n\n";
 my $savep = $param{'ROOT_PASSWORD'};
 my $nextp = '';
 
-for (;;) {
+for (;;) 
+{
 	my $p;
 	my $save = $param{'ROOT_USER'};
 	my $ru = getone("Enter default root user" , 'ROOT_USER', 'admin');
 
 	my ($default, $s_default);
-	if (exists $param{'ROOT_PASSWORD'} && $save eq $ru) {
+	if (exists $param{'ROOT_PASSWORD'} && $save eq $ru) 
+	{
 		$s_default = '<no change>';
-	} else {
+	} 
+	else 
+	{
 		$s_default = $default = $ru;
 	}
 
 	print "Choose root password [$s_default]: ";
 	$p = &ReadPassword;
 	exit unless defined $p;
-	if ($p && $p !~ /^none$/i) {
+
+	if ($p && $p !~ /^none$/i) 
+	{
 		my $reason = IsBadPassword($p);
-		if ($reason) {
+		if ($reason) 
+		{
 			print "Bad password: It $reason\7\n";
 			next;
 		}
@@ -422,14 +532,18 @@ for (;;) {
 		print "Reenter root password: ";
 		my $pp = &ReadPassword;
 		exit unless defined $pp;
-		if ($p ne $pp) {
+		if ($p ne $pp) 
+		{
 			print "Not identical!\7\n";
 			next;
 		}
 	}
+
         $p ||= $default;
 	$p =~ s/^none$//i;
-	unless ($p) {
+
+	unless ($p) 
+	{
 		$nextp = $param{'ROOT_PASSWORD'} = '';
 		last;
 	}
@@ -444,30 +558,53 @@ print "\n\nYou must configure your webserver to alias $url
 as $cgi_bin and run .pl files over there 
 as CGI scripts\n";
 
-if ($conf) {
+if ($conf) 
+{
 	open(I, $conf) || die "Cannot open $conf: $!";	
 	my $temp = "/tmp/$$-merge-httpd";
 	open(O, ">$temp") || die "Cannot ope $temp: $!";
 	my $need = 1;
 	my $flag = undef;
-	while (<I>) {
-		if (/^\s*(Script)?Alias\s+$url\/?\s/i) {
+
+	while (<I>) 
+	{
+		if (/^\s*(Script)?Alias\s+$url\/?\s/i) 
+		{
 			$need = undef;
 		}
+
 		$flag = 1 if (/^#\s*BEGIN MERGE $cgi_bin\b/);
 		print O unless $flag;
 		$flag = undef if (/^#\s*END MERGE $cgi_bin\b/);
 	}
+
 	print O "# BEGIN MERGE $cgi_bin\n";
-	if ($need) {
+
+	if ($need) 
+	{
 		print O "ScriptAlias $url/ $cgi_bin/\n";
 	}
+
 	my $pwd = "$cgi_bin/.htmerge";
 	print O <<EOM;
+
+# this is a simple cgi directory definition. 
+# uncomment this if you haven't defined a Merge instance directory.
+# ScriptAlias $url/ "$cgi_bin/"
+# <Directory "$cgi_bin">
+#        AllowOverride None
+#        Options +ExecCGI
+#        Order allow,deny      
+#        Allow from all
+# </Directory>
+
 <Location $url/.htmerge>
     Order deny,allow
     Deny from all
 </Location>
+<Directory $cgi_bin/public>
+        SetHandler default-handler
+</Directory>
 <Directory $cgi_bin/private>
   AuthType Basic
   AuthName "Merge instance $url"
@@ -487,15 +624,19 @@ EOM
 	close(O);
 	close(I);
 
-	if ($savep ne $param{'ROOT_PASSWORD'}) {
+	if ($savep ne $param{'ROOT_PASSWORD'}) 
+	{
 		open(O, ">>$pwd") || die "Cannot open $pwd: $!";
 		close(O);
 		my @save;
+
 		open(I, "$pwd") || die "Cannot open $pwd: $!";
-		while (<I>) {
+		while (<I>) 
+		{
 			push(@save, $_) unless (/^$param{'ROOT_USER'}:/);
 		}
 		close(I);
+
 		open(O, ">$pwd") || die "Cannot open $pwd: $!";
 		print O "$param{'ROOT_USER'}:$nextp\n";
 		print O join("", @save);
@@ -515,23 +656,29 @@ my $set = $param{'S_FROM'} = join("", 'A' .. 'Z', 'a' .. 'z', '-_',
 
 $param{'S_TO'} = '';
 
-while ($set) {
+while ($set) 
+{
 	my $r = int(rand(length($set)));
 	$param{'S_TO'} .= substr($set, $r, 1);
 	substr($set, $r, 1) = '';
 }
 
-foreach (qw(S_FROM S_TO)) {
+foreach (qw(S_FROM S_TO)) 
+{
 	$param{$_} = join("", map {sprintf("%02X", $_);} unpack("C*", $param{$_}));
 	${"HTML::Merge::Ini::$_"} = $param{$_};
 }
 
 my @params;
-foreach(@lines) {
+foreach(@lines) 
+{
 	chomp;
-	unless (/;\s*#/) {
+	unless (/;\s*#/) 
+	{
 		push(@params, undef);
-	} else {
+	} 
+	else 
+	{
 		my $pos = length($_) - length($') - 1;
 		my $extra = substr($_, $pos);
 		substr($_, $pos) = "";
@@ -546,18 +693,21 @@ $param{'DB_PASSWORD'} = HTML::Merge::Engine::Convert($param{'__DB_PASS'}, 1);
 delete $param{'__DB_PASS'};
 $param{'SCRIPT'} = $script;
 
-while (my ($var, $val) = each %param) {
+while (my ($var, $val) = each %param) 
+{
 	$cfg =~ s/\@$var\@/$val/gi;
 }
 
 @lines = split(/\n/, $cfg);
 
 my $i = 0;
-foreach (@lines) {
+foreach (@lines) 
+{
 	s/\s+$//;
 	my $this = $params[$i];
 
-	if ($this) {
+	if ($this) 
+	{
 		my ($pos, $extra) = @$this;
 
 		$_ = sprintf("%-${pos}s", $_);
@@ -576,17 +726,23 @@ print O '$FACTORY = ' . Dumper(\%param) . "\n1;\n";
 close(O);
 chmod 0644, "$cgi_bin/merge.conf";
 
-if ($createdb) {
-	Clear();
-	print "Your $param{'MERGE_DB'} database will be created now.\n";
-	print "Please ignore any error messages\n.";
+do "$cgi_bin/merge.conf";
+require HTML::Merge::Engine;
 
-	require HTML::Merge::Engine;
-	do "$cgi_bin/merge.conf";
-	HTML::Merge::Engine::InitDatabase;
-	Clear();
-}
-foreach (qw(template cache logs merge.conf)) {
+Clear();
+print "Your $param{'MERGE_DB'} database will be created now.\n";
+print "Please ignore any error messages.\n";
+
+HTML::Merge::Engine::InitDatabase();
+HTML::Merge::App::Repository::InitDatabase();
+Clear();
+
+@files = qw(template cache logs merge.conf);
+
+#push(@files,'merge.db') if $is_internal;
+
+foreach (@files) 
+{
 	chown $uid, $gid, "$cgi_bin/$_" || die  "Could not change ownership on $cgi_bin/$_ to $user.$group: $!";
 }
 
@@ -617,25 +773,36 @@ EOM
 suggest_edit($conf) if $conf;
 suggest_edit("$cgi_bin/merge.conf");
 
-sub scrape {
-	unlink "$cgi_bin/private" && return; # Erase symlink if any
+#############################################
+sub scrape 
+{
 	require File::Path;
-	File::Path::rmtree("$cgi_bin/private");
-}
 
-sub getone {
+	unlink "$cgi_bin/private" && return; # Erase symlink if any
+	File::Path::rmtree("$cgi_bin/private");
+
+	unlink "$cgi_bin/public" && return; # Erase symlink if any
+	File::Path::rmtree("$cgi_bin/public");
+}
+#############################################
+sub getone 
+{
 	my ($msg, $key, $default, $code, $dont) = @_;
 	$default = $param{$key} if (exists $param{$key} && defined($key));
 	$default = "NONE" unless ($default || $default =~ /0/);
 	local ($_);
-	for (;;) {
+
+	for (;;) 
+	{
 		$_ = $term->readline("$msg [$default]: ");
 		exit unless defined $_;
 		$_ = $default if ($_ eq "");
 		s/^none$//i;
-		if ($code) {
+		if ($code) 
+		{
 			eval '&$code;';
-			if ($@) {
+			if ($@) 
+			{
 				$@ =~ s/at \S+ line.*$//;
 				print "\007Error: $@\n";
 				next;
@@ -646,25 +813,30 @@ sub getone {
 	$param{$key} = $_ if defined($key) && !$dont;
 	$_;
 }
-
-sub findpath {
+#############################################
+sub findpath 
+{
 	my $prog = shift;
-	foreach (@_, split(/[:;]/, $ENV{'PATH'})) {
+	foreach (@_, split(/[:;]/, $ENV{'PATH'})) 
+	{
 		my $candidate = "$_/$prog";
 		return source($candidate) if (-x $candidate);
 	}
 	undef;
 }
-
-sub source {
+#############################################
+sub source 
+{
 	my $file = shift;
-	while (my $next = readlink($file)) {
+	while (my $next = readlink($file)) 
+	{
 		$file = $next;
 	}
 	$file;
 }
-
-sub suggest_edit {
+#############################################
+sub suggest_edit 
+{
 	my $file = shift;
 	my $editor = $ENV{'EDITOR'} || 'vi';
 	$editor = findpath($editor) unless -x $editor;
@@ -672,14 +844,16 @@ sub suggest_edit {
 	print "Would you like to edit $file? (Y/N): [N] ";
 	my $ch = Choice("YN\3", 'N');
 	exit if $ch eq "\3";
-	if ($ch eq 'N') {
+
+	if ($ch eq 'N') 
+	{
 		print "No\n";
 		return;
 	}
 	print "Yes\n";
 	system "$editor", $file;
 }
- 
+#############################################
 ENDOFPERLCODE
 
 use Config;

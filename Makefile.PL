@@ -62,5 +62,7 @@ WriteMakefile(
     'VERSION_FROM' => 'lib/HTML/Merge/Compile.pm', # finds $VERSION
     'EXE_FILES' => [qw(merge.cgi merge.conf mergecreateinstance)],
     'dist' => {'COMPRESS' => 'gzip --best --force'},
-    'PREREQ_PM'  => {'Term::ReadLine::Gnu' => 0},
+    'PREREQ_PM'  => {'Term::ReadLine::Gnu' => 0,
+			'DBI' => 0,
+			'DBD::SQLite' => 0}
 );

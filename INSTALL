@@ -1,3 +1,13 @@
+HTML::Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.
+-----------------------------------------------------------------------
+Copyright (c) 1999, 2000, 2001, 2002 Raz Information Systems Ltd.
+http://www.raz.co.il
+
+This package is distributed under the same terms as Perl itself, see the
+Artistic License on Perl's home page.
+-----------------------------------------------------------------------
+                        INSTALL
+
 If you are on a system where you can run the Makefile.PL and use make,
 then the package can be installed using the normal MakeMaker process,
 that is
@@ -27,9 +37,21 @@ On many other systems this could be written as:
   make test
   make install
 
-After install is completed, to actually create an application instance
+At this stage HTML::Merge modules are installed for system wide use.
+You can read the man pages for HTML::Merge and HTML::Merge:Tags for
+more information.
+
+Now as you want to set you own application use the script mergecreateinstance.
+
 run:
   mergecreateinstance 
+
+For first time users we reccomand to install samples and to use NONE option
+when mergecreateinstance prompt you for security.
+
+It is recommended for first time to give mergecreateinstance
+a simple httpd.conf so that it will work for you, and later try it on 
+a more complicated environment. 
 
 Note: mergecreateinstance works better if the module Term::ReadKey::Gnu
 is installed.

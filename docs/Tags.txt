@@ -1,5 +1,6 @@
 NAME
-    Merge tags - Tag summary for Merge.
+    Merge tags - Tag summary for Merge. HTML::Merge - Embedded HTML/SQL/Perl
+    system by Raz Information Systems.
 
 DATABASE TAGS
     *   <$RDB='[Database type:]Database name[:Host][,User[,Password]]'>
@@ -7,6 +8,13 @@ DATABASE TAGS
         Connect to alternative database. Defaults are taken from the
         configuration file. If two parameters are given in the first token,
         the database type takes precedence.
+
+        Perdefined databases from merge.conf can be used like this:
+
+        <$RDB='SYSTEM'> for system datatbase If system database (SESSION_DB)
+        is not defined in merge.conf a system wide definition will apply.
+
+        <$RDB='DEFAULT'> for application database
 
     *   <$RS='SQL statement'>
 
@@ -72,7 +80,7 @@ FLOW TAGS
 
         </$RIF>
 
-        </$RELSIF.'perl code'>
+        <$RELSIF.'perl code'>
 
         Perform the code if the perl code evaluates to true.
 
@@ -492,9 +500,19 @@ FILE TAGS
         temporary files and do not overlap between processes. Subsequent
         diverting is appended to the existing buffer.
 
-        <$RDUMP.'buffer name'>
+    *   <$RDUMP.'buffer name'>
 
         Dump the named buffer.
 
-SYNOPSIS
-DESCRIPTION
+META TAGS
+    *   <$RVERSION>
+
+        Returns Merge version.
+
+COPYRIGHT
+    Copyright (c) 1999, 2000, 2001, 2002 Raz Information Systems Ltd.
+    http://www.raz.co.il
+
+    This package is distributed under the same terms as Perl itself, see the
+    Artistic License on Perl's home page.
+

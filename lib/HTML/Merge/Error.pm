@@ -45,7 +45,7 @@ sub HandleError
 ##################################################################
 sub DoWarn
 {
-	my ($message)=@_;
+	my ($message,$extra)=@_;
 	my ($template, $line_num) = @$HTML::Merge::context;
 	my $date = localtime();
 	my $buf = '';
@@ -56,7 +56,8 @@ sub DoWarn
 		    'ILLEGAL_FETCH', "Fetch attempted on an unopen cursor",
 		    'INVALID_ENG', "Number of engin is illegal",
 		    'NO_SQL_MATCH', "One of the vars specified in the line is not in the select clause",
-		    'CANT_OUTPUT', "cannot write Merge Error log file - $file - probably no write permissions.");
+		    'CANT_OUTPUT', "cannot write Merge Error log file - $file - probably no write permissions.",
+		    'NO_TEMPLATE', "No template $extra found");
 
 	$buf = "[$date] [warn] $hash{$message}";
 	if ($message eq 'CANT_OUTPUT') {

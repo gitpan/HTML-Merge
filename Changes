@@ -15,3 +15,12 @@ Revision history for Perl extension HTML::Merge.
 3.31  Thu Mar 21 14:19:44 2002
         - Freezing option for all templates in an instance
 
+3.35  Thu Jun 25 20:30:00 2002
+	- Dynamic engine naming is now available
+
+3.36  Mon Jul  1 18:41:36 IDT 2002
+	- Sticky cookie interface enhancement 
+	- Content type feature in INI file
+	- Dynamic page header by using the content_type key in the url string
+	- No more use of autoflush in merge
+   

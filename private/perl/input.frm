@@ -30,7 +30,7 @@ Session timeout|SESSION_TIMEOUT|T||60
 Session timeout template|SESSION_TIME_OUT_TEMPLATE|T||
 Session method|SESSION_METHOD|L|C:Cookies,I:IP Tracking,U:URL Filter|C
 Session cookie|SESSION_COOKIE|T||RZCKMRGSSN
-Sticky session cookie life time|COOKIE_LIFETIME|T|Z|
+Sticky session cookie|STICKY_COOKIE|B||0
 Use security|USE_SECURITY|B||0
 Access denied template|SECURITY_ACCESS_DENIED_TEMPLATE|T||
 Root user|ROOT_USER|H||@ROOT_USER@
@@ -41,5 +41,6 @@ LWP present|WEB|B||1
 Mail server|SMTP_SERVER|T||127.0.0.1
 Internal||S||
 Always compile pages|ALWAYS_COMPILE|B||0
+Content Type|CONTENT_TYPE|T||
 Thousand seperator|THOUSAND_SEPARATOR|O||,
 Decimal separator|DECIMAL_SEPARATOR|O||.

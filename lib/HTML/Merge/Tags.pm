@@ -3,6 +3,8 @@ __END__
 =head1 NAME
 
 Merge tags - Tag summary for Merge.
+HTML::Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.
+ 
 
 =head1 DATABASE TAGS
 
@@ -15,6 +17,14 @@ E<lt>$RDB='[B<Database type>:]B<Database name>[:B<Host>][,B<User>[,B<Password>]]
 Connect to alternative database. Defaults are taken from the configuration 
 file. If two parameters are given in the first token, the database type takes
 precedence.
+
+Perdefined databases from merge.conf can be used like this:
+
+E<lt>$RDB='SYSTEM'E<gt> for system datatbase
+If system database (SESSION_DB) is not defined in merge.conf a system wide 
+definition will apply.
+
+E<lt>$RDB='DEFAULT'E<gt> for application database
 
 =item *
 
@@ -109,7 +119,7 @@ E<lt>$REND_IFE<gt>
 
 E<lt>/$RIFE<gt>
 
-E<lt>/$RELSIF.'B<perl code>'E<gt>
+E<lt>$RELSIF.'B<perl code>'E<gt>
 
 Perform the code if the perl code evaluates to true.
 
@@ -669,16 +679,34 @@ Divert the output into a named buffer. Buffers are store in temporary
 files and do not overlap between processes.
 Subsequent diverting is appended to the existing buffer.
 
+=item *
+
 E<lt>$RDUMP.'B<buffer name>'E<gt>
 
 Dump the named buffer.
 
 =back 4
 
-=head1 SYNOPSIS
+=head1 META TAGS
 
-=head1 DESCRIPTION
+=over 4
 
+=item *
+
+E<lt>$RVERSIONE<gt>
+
+Returns Merge version.
+
+=back 4
+
+
+=head1 COPYRIGHT
+
+Copyright (c) 1999, 2000, 2001, 2002 Raz Information Systems Ltd.
+http://www.raz.co.il
+
+This package is distributed under the same terms as Perl itself, see the
+Artistic License on Perl's home page.
 
 =cut
 

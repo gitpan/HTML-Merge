@@ -32,18 +32,20 @@ sub WinReadKey {
 }
 
 sub BadReadKey {
+	my ($flush, $nowait) = @_;
 	system "stty raw -echo";
 	open(I, "/dev/tty");
-	my $ch = getc(I);
+	my $ch;
+	sysread(I, $ch, 1) unless $nowait && !waiting();
 	close(I);
 	system "stty -raw echo";
 	$ch;
 }
 
 sub ReadKey {
-	my $flush = shift;
+	my ($flush, $nowait) = @_;
 	if ($^O =~ /Win32/i) {
-		return &WinReadKey;
+		return &WinReadKey(@_);
 	};
 
 	my $save;
@@ -54,7 +56,7 @@ sub ReadKey {
 
 		$save = new POSIX::Termios;
 	};
-	return &BadReadKey if $@;
+	return &BadReadKey(@_) if $@;
 
 	$save->getattr(0);
 
@@ -105,7 +107,7 @@ sub ReadKey {
 			getc;
 		}
 	} else {
-		sysread(I, $ch, 1);
+		sysread(I, $ch, 1) unless $nowait && !waiting();
 	}
 	close(I);
 
@@ -266,6 +268,12 @@ sub Choice {
 		return $ch if index($chars, $ch) >= 0;
 		print "\x7";
 	}
+}
+
+sub waiting {
+	my $r = undef;
+	vec($r, fileno(STDIN), 1) = 1;
+	select($r, undef, undef, 0);
 }
 
 1;

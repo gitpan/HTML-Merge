@@ -34,6 +34,8 @@ __END__
 
 Merge extensions - Writing your own tags to be used in Merge pages.
 
+HTML::Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.
+
 =head1 DESCRIPTION
 
 This file contains instructions as to how to create your own Merge tags.
@@ -283,6 +285,13 @@ Merge implements the extensions by compiling them as Perl code into
 Merge itself. Therefore, on a mod_perl driven web server with several
 instances, extensions will be shared among all instances.
 
-=head1 SYNOPSIS
+
+=head1 COPYRIGHT
+
+Copyright (c) 1999, 2000, 2001, 2002 Raz Information Systems Ltd.
+http://www.raz.co.il
+
+This package is distributed under the same terms as Perl itself, see the
+Artistic License on Perl's home page.
 
 =cut
