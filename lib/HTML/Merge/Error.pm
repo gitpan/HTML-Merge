@@ -12,16 +12,16 @@ package HTML::Merge::Error;
 
 use HTML::Merge::Compile;
 use strict;
-use vars qw($OPEN_BOX $CLOSE_BOX $mergerrLogFlag $year);
+use vars qw($OPEN_BOX $CLOSE_BOX $mergerrLogFlag $year $VERSION);
 
 $year = (localtime)[5] + 1900;
+
+$VERSION = 1.01;
 
 # Constants ######################################################
 
 $OPEN_BOX = "<HR><PRE>";
 $CLOSE_BOX = "</PRE><HR>";
-#$OPEN_BOX = "<TEXTAREA ROWS=15 COLS=80>";
-#$CLOSE_BOX = "</TEXTAREA>";
 
 ##################################################################
 sub HandleError

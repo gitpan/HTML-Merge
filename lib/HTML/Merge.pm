@@ -2,11 +2,11 @@ __END__
 
 =head1 NAME
 
-HTML::Merge - Embedded HTML/SQL/Perl Copyright (c) 1999 - 2004 Raz Information Systems Ltd.
+HTML::Merge - Embedded HTML/SQL/Perl system.
 
 =head1 INSTALLATION
 
-After installing the package, activate B<mergecreateinstance> to create an instance in your cgi-bin (or modperl) directory.
+After installing the package, activate B<mergecreateinstance> to create an instance in your cgi-bin (or mod_perl) directory.
 Follow the directions you get from B<mergecreateinstance> in order to configure
 your web server.
 
@@ -24,7 +24,9 @@ You must edit the merge.conf created for you.
 
 =head1 DESCRIPTION
 
-Merge is an embedded HTML/Perl/SQL tool used to create dynamic web content.
+Merge is an embedded HTML/Perl/SQL tool for creating dynamic web content.
+merge.pl compiles HTML with embeded Perl to Perl CGI programs and run them.
+
 All Merge pages are referred to by B<cgi-bin-dir>/merge.pl?template=B<file.html>
 
 (Important: file.html is a HTML template that located in a directory you choose
@@ -90,7 +92,7 @@ Toolbox written by Eial Solodki.
 
 Testing & documentation by Noam cassif.
 
-New test & version 3.46 - Gabor Szabo.
+New test & version 3.46 - Gabor Szabo and Oded Resnik.
 
 =back
 
@@ -107,3 +109,4 @@ Artistic License on Perl's home page.
 perl(1), L<HTML::Merge::Tags>, L<HTML::Merge::Ext>.
 
 =cut
+1;
