@@ -15,6 +15,7 @@ $inherited .= << 'DMAKE';
 update_private : 
 	$(CP) lib/HTML/Merge.pm private/perl/HTML/Merge.pm
 	$(CP) lib/HTML/Merge/*.pm private/perl/HTML/Merge/
+	$(CP) lib/HTML/Merge/*.pod private/perl/HTML/Merge/
 	$(CP) lib/HTML/Merge/App/*.pm private/perl/HTML/Merge/App/
 
 DMAKE
@@ -47,26 +48,32 @@ install-samples :: docs README
 	$(PERL) createsamples.pl	
 	$(MOD_INSTALL) docs/samples $(DATA)/merge/docs/samples
 
-.SUFFIXES: .txt .pm .html
+.SUFFIXES: .txt .pm .html .pod
 
-docs/%.txt: lib/HTML/Merge/%.pm
+docs/%.txt: lib/HTML/Merge/%.pm 
 	@$(PERL) -MPod::Text -e "pod2text('$<');" > $@
 
-docs/%.html: lib/HTML/Merge/%.pm
+docs/%.html: lib/HTML/Merge/%.pm 
 	@$(PERL) -MPod::Html -e "pod2html('$<');" | perl -np -e 's|/HTML/(Merge/)?||g' > $@
 
-docs/%.txt: lib/HTML/%.pm 
+docs/%.txt: lib/HTML/Merge/%.pod
 	@$(PERL) -MPod::Text -e "pod2text('$<');" > $@
 
-docs/%.html: lib/HTML/%.pm
+docs/%.html: lib/HTML/Merge/%.pod
+	@$(PERL) -MPod::Html -e "pod2html('$<');" | perl -np -e 's|/HTML/(Merge/)?||g' > $@
+
+docs/%.txt: lib/HTML/%.pm  
+	@$(PERL) -MPod::Text -e "pod2text('$<');" > $@
+
+docs/%.html: lib/HTML/%.pm 
 	@$(PERL) -MPod::Html -e "pod2html('$<');" | perl -np -e 's|/HTML/(Merge/)?||g' > $@
 
 docs :
 	$(MKPATH) docs
 
-DOCUMENTS_NEEDED = docs/Merge.txt docs/Tags.txt docs/Ext.txt
-README :: docs $(DOCUMENTS_NEEDED) $(DOCUMENTS_NEEDED:.txt=.html)
-	cat $(DOCUMENTS_NEEDED) > $@
+# DOCUMENTS_NEEDED = docs/Merge.txt docs/Tags.txt docs/Ext.txt 
+# README :: docs $(DOCUMENTS_NEEDED) $(DOCUMENTS_NEEDED:.txt=.html)
+#	cat $(DOCUMENTS_NEEDED) > $@
 
 MAKE
 }
@@ -75,7 +82,7 @@ sub MY::dist_dir
 {
 	package MY;
 	my $inherited = shift->SUPER::dist_dir;
-	$inherited =~ s/^\s*distdir\s*\:/distdir : README/;
+#	$inherited =~ s/^\s*distdir\s*\:/distdir : README/;
 	$inherited;
 }
 ########################################

@@ -7,7 +7,7 @@ OVERVIEW
 README
 test.pl
 merge.cgi.PL
-mergecreateinstance.PL
+mergecreateinstance
 merge.conf
 updateshebang.pl
 
@@ -29,11 +29,13 @@ private/perl/HTML/Merge/Compile.pm
 private/perl/HTML/Merge/Engine.pm
 private/perl/HTML/Merge/Error.pm
 private/perl/HTML/Merge/Development.pm
+private/perl/HTML/Merge/Repository.pod
 private/perl/HTML/Merge/Tags.pm
 private/perl/HTML/Merge/Mail.pm
 private/perl/HTML/Merge/Ext.pm
 private/perl/HTML/Merge/Filter.pm
 private/perl/HTML/Merge.pm
+
 
 private/perl/toolbox.pl
 private/perl/viewsource.pl
@@ -83,9 +85,17 @@ public/template/Repository/combo_complex_nav.inc
 public/template/blank.html
 public/javascript/razglobal.js
 public/javascript/Repository/Grid/grid.js
+public/javascript/Repository/Grid/dynlayer.js
+public/javascript/Repository/Grid/scrollbar.js
+
 docs/Ext.html  
+docs/Ext.txt
 docs/Merge.html  
+docs/Merge.txt  
 docs/Tags.html
+docs/Tags.txt
+docs/Repository.html
+docs/Repository.txt
 docs/samples/samples.html
 docs/samples/autoform.html
 docs/samples/cookie.html

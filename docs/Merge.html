@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>HTML::Merge - Embedded HTML/SQL/Perl Copyright 1999 - 2004 Raz Information Systems Ltd.</title>
+<title>HTML::Merge - Embedded HTML/SQL/Perl system.</title>
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
@@ -27,12 +27,12 @@
 <p>
 </p>
 <h1><a name="name">NAME</a></h1>
-<p>HTML::Merge - Embedded HTML/SQL/Perl Copyright (c) 1999 - 2004 Raz Information Systems Ltd.</p>
+<p>HTML::Merge - Embedded HTML/SQL/Perl system.</p>
 <p>
 </p>
 <hr />
 <h1><a name="installation">INSTALLATION</a></h1>
-<p>After installing the package, activate <strong>mergecreateinstance</strong> to create an instance in your cgi-bin (or modperl) directory.
+<p>After installing the package, activate <strong>mergecreateinstance</strong> to create an instance in your cgi-bin (or mod_perl) directory.
 Follow the directions you get from <strong>mergecreateinstance</strong> in order to configure
 your web server.</p>
 <p>You must edit the merge.conf created for you.</p>
@@ -52,8 +52,9 @@ your web server.</p>
 </p>
 <hr />
 <h1><a name="description">DESCRIPTION</a></h1>
-<p>Merge is an embedded HTML/Perl/SQL tool used to create dynamic web content.
-All Merge pages are referred to by <strong>cgi-bin-dir</strong>/merge.pl?template=<strong>file.html</strong></p>
+<p>Merge is an embedded HTML/Perl/SQL tool for creating dynamic web content.
+merge.pl compiles HTML with embeded Perl to Perl CGI programs and run them.</p>
+<p>All Merge pages are referred to by <strong>cgi-bin-dir</strong>/merge.pl?template=<strong>file.html</strong></p>
 <p>(Important: file.html is a HTML template that located in a directory you choose
 and name it on the merge.conf file. Notice for better security, the web server 
 must not be able to display the templates dirctory).
@@ -110,13 +111,13 @@ Version 3 written by Ariel Brosh RIP (till ver 3.34).
 <li></li>
 Toolbox written by Eial Solodki.
 <p>Testing &amp; documentation by Noam cassif.</p>
-<p>New test &amp; version 3.46 - Gabor Szabo.</p>
+<p>New test &amp; version 3.46 - Gabor Szabo and Oded Resnik.</p>
 <p></p></ul>
 <p>
 </p>
 <hr />
 <h1><a name="copyright">COPYRIGHT</a></h1>
-<p>Copyright (c) 1999 - 2004 Raz Information Systems Ltd.
+<p>Copyright (c) 1999 - 2005 Raz Information Systems Ltd.
 <a href="http://www.raz.co.il">http://www.raz.co.il</a></p>
 <p>This package is distributed under the same terms as Perl itself, see the 
 Artistic License on Perl's home page.</p>

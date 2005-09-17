@@ -104,11 +104,11 @@ CREATE TABLE ${db}$table (
 DDL
   	$dbh->do($ddl);
 
-        $ddl = "CREATE UNIQUE INDEX ux_${table} ON ${db}${table} (repository_id,language_code)";
+        $ddl = "CREATE UNIQUE INDEX ux_${table} ON ${db}${table} (repository_id,langug_code)";
   	$dbh->do($ddl);
         $ddl = "CREATE INDEX x_${table}_repos ON ${db}${table} (repository_id)";
   	$dbh->do($ddl);
-        $ddl = "CREATE INDEX x_${table}_language ON ${db}${table} (language_code)";
+        $ddl = "CREATE INDEX x_${table}_language ON ${db}${table} (langug_code)";
   	$dbh->do($ddl);
         $ddl = "CREATE INDEX x_${table}_caption ON ${db}${table} (caption)";
   	$dbh->do($ddl);

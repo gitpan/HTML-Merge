@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 #
 # fixed for security vulnerability.
 # This script is not secure - and when not in a development environment

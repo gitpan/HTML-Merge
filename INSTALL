@@ -57,7 +57,6 @@ read chapter 3).
 ==========================================================
 Open the tar file to an empty directory (e.g C:\MERGE).
 
-perl mergecreateinstance.PL
 perl merge.cgi.PL
 
 Now you will be able to create your instance by typing 

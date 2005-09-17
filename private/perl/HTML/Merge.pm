@@ -1,4 +1,5 @@
-__END__
+package HTML::Merge;
+1;
 
 =head1 NAME
 
@@ -98,7 +99,7 @@ New test & version 3.46 - Gabor Szabo and Oded Resnik.
 
 =head1 COPYRIGHT
 
-Copyright (c) 1999 - 2004 Raz Information Systems Ltd.
+Copyright (c) 1999 - 2005 Raz Information Systems Ltd.
 http://www.raz.co.il
 
 This package is distributed under the same terms as Perl itself, see the 
@@ -109,4 +110,3 @@ Artistic License on Perl's home page.
 perl(1), L<HTML::Merge::Tags>, L<HTML::Merge::Ext>.
 
 =cut
-1;

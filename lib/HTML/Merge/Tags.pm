@@ -1,11 +1,10 @@
+package HTML::Merge::Tags;
 1;
 __END__
 
 =head1 NAME
 
-Merge tags - Tag summary for Merge.
-HTML::Merge - Embedded HTML/SQL/Perl system.
- 
+HTML::Merge::Tags - A summary of the available tags in Merge
 
 =head1 DATABASE TAGS
 
@@ -747,7 +746,7 @@ Returns Merge version.
 
 =head1 COPYRIGHT
 
-Copyright (c) 1999 -  2004 Raz Information Systems Ltd.
+Copyright (c) 1999 -  2005 Raz Information Systems Ltd.
 http://www.raz.co.il/
 
 This package is distributed under the same terms as Perl itself, see the

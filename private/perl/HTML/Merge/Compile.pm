@@ -15,7 +15,7 @@ use Config;
 use subs qw(quotemeta);
 
 #####################################
-$VERSION = '3.49';
+$VERSION = '3.50';
 #####################################
 # Globals ###########################
 $open = '\$R';
@@ -285,7 +285,7 @@ sub Do$un$tag
 }
 EOM
 			eval $extend;
-			\$self->Die($@) if $@;
+			$self->Die($@) if $@;
 			$printers{$tag} = ($api eq 'OUT');
 			return $self->WantTag($tag, $inv);
 		}
@@ -363,10 +363,10 @@ sub Line {
 	my $self = shift;
 	my $force = $self->{'force line'};
 	return $force if $force;
-	my $lines = scalar(split(/\n/, $self->{'save'}));
+	my @lines = split(/\n/, $self->{'save'});
 	my $left = substr($self->{'save'}, -length($self->{'source'}));
-	my $ll = scalar(split(/\n/, $left));
-	my $this = $lines - $ll + 1;
+	my @ll = split(/\n/, $left);
+	my $this = @lines - @ll + 1;
 }
 #####################################
 sub Mark {
@@ -987,7 +987,7 @@ sub DoPEXPORT {
 }
 
 
-*DoREM =&DoEM;
+*DoREM = \&DoEM;
 sub DoEM {}
 
 sub DoTRACE {
@@ -1234,11 +1234,12 @@ sub DoUnCOUNT {
 }
 
 sub DoPIC {
-        my ($self, $engine, $param) = @_;
+	my ($self, $engine, $param) = @_;
+	my $type;
 	unless ($param =~ s/^\\\.([FRNADX])(.*)$//is) {
 		$self->Syntax;
 	}
-	my ($type, $param) = (uc($1), $2);
+	($type, $param) = (uc($1), $2);
 	my $code = &UNIVERSAL::can($self, "Picture$type");
 	&$code($self, $param);
 }
@@ -1424,10 +1425,10 @@ sub DoMAIL {
 <<EOM;
 	\$__from = "$from";
 	\$__from =~ s/^.*\<(.*)\>\$/\$1/;
-	\$__from =~ s/^(.*?)\s+\(\".*\"\)\$/\$1/;
+	\$__from =~ s/^(.*?)\\s+\(\".*\"\)\$/\$1/;
 	\$__to = "$to";
 	\$__to =~ s/^.*\<(.*)\>\$/\$1/;
-	\$__to =~ s/^(.*?)\s+\(\".*\"\)\$/\$1/;
+	\$__to =~ s/^(.*?)\\s+\(\".*\"\)\$/\$1/;
 	use HTML::Merge::Mail;
 	eval '\$__mail = OpenMail(\$__from, \$__to, \$HTML::Merge::Ini::SMTP_SERVER);';
 

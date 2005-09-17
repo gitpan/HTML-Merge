@@ -32,9 +32,7 @@ __END__
 
 =head1 NAME
 
-Merge extensions - Writing your own tags to be used in Merge pages.
-
-HTML::Merge - Embedded HTML/SQL/Perl system by Raz Information Systems.
+HTML::Merge::Ext -  Extending Merge by writing your own tags
 
 =head1 DESCRIPTION
 
@@ -288,7 +286,7 @@ instances, extensions will be shared among all instances.
 
 =head1 COPYRIGHT
 
-Copyright (c) 1999, 2000, 2001, 2002 Raz Information Systems Ltd.
+Copyright (c) 1999 - 2005 Raz Information Systems Ltd.
 http://www.raz.co.il
 
 This package is distributed under the same terms as Perl itself, see the

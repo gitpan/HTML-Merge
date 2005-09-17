@@ -33,3 +33,7 @@ Revision history for Perl extension HTML::Merge.
    
 3.47  Sat Dec 18 12:22:14 ITD 2004
 	- Updated documenation
+
+3.50  Mon Dec 12 19:08:22 ITD 2005
+	- Minor instalation bug fix
+	- mergecreateinstance changed 

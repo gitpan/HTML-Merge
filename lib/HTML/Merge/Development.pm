@@ -1,32 +1,15 @@
-##################################################################
 package HTML::Merge::Development;
-##################################################################
-# Development.pm - Contains functions for the developmnet        #
-# Author : Eial Solodki                                          #
-# All right reserved - Raz Information Systems Ltd.(c) 1999-2002 #
-# Date : 15/02/2001                                              #
-# Updated :                                                      #
-##################################################################
-
-# Modules ########################################################
 
 use CGI qw/:standard/;
 use HTML::Merge::Error;
 use strict qw(vars subs);
+use warnings;
 require Exporter;
-
-# My Modules #####################################################
-
-use HTML::Merge::Error;
-
-# Globals ########################################################
 
 use vars qw(@ISA @EXPORT $merge_absolute_path $merge_script $extra $file $year);
 
 @ISA = qw(Exporter);
 @EXPORT = qw($merge_absolute_path $merge_script $extra ReadConfig $file $year);
-
-#package HTML::Merge::Development; # bizzare left over ?
 
 $year = (localtime)[5] + 1900;
 
@@ -100,8 +83,7 @@ sub Transfer
 {
 	foreach (qw(merge_absolute_path merge_script)) 
 	{
-		print "<INPUT TYPE=HIDDEN NAME=\"$_\" VALUE=\""
-			. param($_) . "\">\n";
+		printf qq(<INPUT TYPE=HIDDEN NAME="%s" VALUE="%s">\n), $_, (param($_)||"");
 	}
 }
 ##################################################################
@@ -226,6 +208,16 @@ package HTML::Merge::Ini;
 #####################################################################
 EOM
 }
-##################################################################
 1;
-##################################################################
+
+=head1 NAME
+
+HTML::Merge::Development - Contains functions for the developmnet
+
+=head1 AUTHOR
+
+Eial Solodki 
+
+=cut
+
+

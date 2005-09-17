@@ -1,13 +1,11 @@
-use strict;
-my $code = <<'ENDOFPERLCODE';
+#!/usr/bin/perl
 ##################################
 # Modules ########################
 
-use lib qw(private/perl);
+use lib qw(lib private/perl);
 use strict qw(subs vars);
 use FileHandle;
 use Term::ReadLine;
-use Term::InKey;
 use Data::Dumper;
 use Config;
 
@@ -79,6 +77,7 @@ unless ($unix || $win32)
 }
 
 print <<EOM;
+
 Raz Information Systems presents:
 
  M M  EEEEE RRR   GGG  EEEEE
@@ -98,11 +97,9 @@ Notes:
 For any information, please refer to http://rmerge.sourceforge.net
 or send mail to raz\@raz.co.il
 
-Hit [ENTER] continue:
 EOM
 
-# wait for enter
-getc();
+pause();
 
 $is_root =  IsRoot($>);
 
@@ -134,8 +131,14 @@ else
 	$private = $merge;
 	$private =~ s|/bin/merge.cgi|/share/merge|;
 	$private =~ s|\\bin\\merge.cgi|\\share\\merge| if $win32;
-
-	die "Could not find merge data at $private" unless (-d $private);
+	
+	do{
+	   warn "Faild to find merge data at $private \n";
+	   $private = $Config{installprefixexp} | $Config{prefix}; 
+	   $private .= '/merge';
+	   die "Could not find merge data at $private" unless (-d $private); 
+	} unless (-d $private);
+	print "\nInfo: Merge data is in $private\n\n";
 }
 
 # let's look for a default cgi-bin dir
@@ -198,8 +201,8 @@ print "\n";
 $default = $cgi_bin;
 $default =~ s|^.*[/\\]|/|;
 
-my $url = getone("Enter the web url (without http://server)
-for that cgi-bin directory", 
+print "Enter the web url (without http://server) for that cgi-bin directory\n"; 
+my $url = getone("Web url", 
 		'URL', 
 		$default, 
 		sub {
@@ -297,6 +300,7 @@ if ($win32 || $local)
 }
 else 
 {
+	$cd = 'L';
 	print "
 
 Symbolic <L>inks are recommended , but will work only 
@@ -308,7 +312,7 @@ will be created as a copy of $merge
 if you choose Link it will be a symbolic link.
 Do you wish to <C>opy HTML::Merge files into $cgi_bin 
 or create a symbolic <L>ink? \n";
-print "\n[C/L/None$def]: ";
+print "\n(C/L/None$def) [$cd]: ";
 
 	$choice = nChoice("CLN", $cd);
 }
@@ -373,9 +377,8 @@ if ($win32)
 }
 else 
 {
-  print "\n\nWould you like to install the samples? [.Y./N]: ";
-  $choice = nChoice("YN\3", 'Y');
-  exit if $choice eq "\3";
+  print "\n\nWould you like to install the samples? (Y/N) [Y]: ";
+  $choice = nChoice("YN",'Y');
 }
 
 $param{'DEFAULT'} = '';
@@ -401,11 +404,17 @@ else
 	print "No\n";
 }
 
+my $has_dbi = 0;
+
 eval {
 	require DBI;
+	$has_dbi = 1;
+     };
 
 	for (;;) 
 	{
+	last unless $has_dbi;
+
 		@drivers = DBI->available_drivers;
 		$i = 0;
 
@@ -456,7 +465,7 @@ if you don't want to configure a database at the moment:\n";
 			$db = $databases[$db - 1];
 		}
 
-		print "DSN is dbi:$drv:$db\n\n";
+		print "\nInfo: DSN is dbi:$drv:$db\n\n";
 
 		print "Note: on some databases username and password could be
 left blank. Type NONE to override the default by an empty string.\n\n";
@@ -467,15 +476,7 @@ left blank. Type NONE to override the default by an empty string.\n\n";
 		$default = $param{'__DB_PASS'};
 		$default =~ s/./*/g;
   	my $dpass;
-		if ($win32) 
-		{
-			$dpass = getone("Password for username '$duser'",'__DB_PASS', $duser, undef, 1);
-		}
-		else 
-		{
-			print "Password for username '$duser' [$default]: ";
-			$dpass = &ReadPassword;
-		}
+		$dpass = getone("Password for username '$duser'",'__DB_PASS', $duser, undef, 1);
    
 		exit unless defined $dpass;
 		$dpass ||= $param{'__DB_PASS'};
@@ -484,13 +485,16 @@ left blank. Type NONE to override the default by an empty string.\n\n";
 		print "\n\nTrying...";
 
 		$@ = undef;
-		eval { $dbh = DBI->connect("dbi:$drv:$db", $duser, $dpass) 
+		eval { $dbh = DBI->connect("dbi:$drv:$db", $duser, $dpass, { RaiseError => 1, AutoCommit => 0 }) 
 			|| die $DBI::errstr;};
 
 		if ($@) 
 		{
 			print "\nError: $DBI::errstr\n";
 			next;
+		} else 
+		{
+		   print "\nInfo: Database looks parametters OK !\n";
 		}
 
 		$param{'DRIVER'} = $drv;
@@ -499,7 +503,16 @@ left blank. Type NONE to override the default by an empty string.\n\n";
 		$param{'__DB_PASS'} = $dpass;
 		$flag = 1;
 
-		print "\n";
+		print "\n\n
+As we fineshed definig the applicatin database we are now about to define
+system data base. The system database sotres 'merge security backed feature'
+and pesistant server side context. For new users we recomand using SQLite.
+If you want to use SQLite type NONE. If you want merge internal tables
+in other database you may change the default values on the next option\n",
+"\n";
+
+pause();
+my $sys_db_def = 'merge';
 
 		$i = 0;
 		if (@databases) 
@@ -527,25 +540,32 @@ to use HTML::Merge's security and session features.\n\n";
 		}
 		else
 		{
-			print "
-Note: if you want HTML::Merge to handle security and session features internally
-choose NONE and HTML::Merge will use DBD::SQLite for system database\n\n";
+		   $sys_db_def = 'NONE';
+		   print "
+Note: choose NONE and HTML::Merge will use DBD::SQLite for system database\n\n";
 		}
 
 		my $mergedb = getone("Choose system database",
-			'MERGE_DB', 'merge');
+			'MERGE_DB', $sys_db_def);
 
 		if ($mergedb) 
 		{
-			&Clear;
-
+			
+			$mergedb =~ s/\s//g;
 			if ($mergedb =~ /^\d+$/) 
 			{
 				$mergedb = $databases[$mergedb - 1];
 				$param{'MERGE_DB'} = $mergedb;
+			print "\nInfo: '$mergedb' is the system database\n";
 			}
-
+			print "\nInfo: tring to create $mergedb DATABASE\n";
 			eval { $dbh->do("CREATE DATABASE $mergedb") };
+                	if ($@)
+                	{
+                           print "\nError: $DBI::errstr\n";
+			   print "\nInfo: you may need to create $mergedb DATABASE manualy\n and try again\n"
+				unless $@ =~ /exist/i;
+                	}
 		}
 		else
 	  	{
@@ -559,31 +579,36 @@ choose NONE and HTML::Merge will use DBD::SQLite for system database\n\n";
                         	next;
                 	}
 
-			$internal_dbh->disconnect();
+			print "\nInfo: SQLite file $cgi_bin/merge.db is the system databse\n";
+			eval {$internal_dbh->disconnect(); };
 
 			$is_internal=1;
 		}	
 
-		$dbh->disconnect();
+		eval {$dbh->disconnect(); };
 		last;
-	}
-};
+	} # for 
 
 @param{qw(DB_USER DB_PASS DRIVER DB MERGE_DB)} = () unless $flag;
 
 my $savep = $param{'ROOT_PASSWORD'};
 my $nextp = '';
 
+print " \n
+Merge instance web user can access merge toolbox
+when merge is in development mode. \n","
+After the instance creation is complete you may use apache 'htpasswd'
+to set password or add other web users. see '.htmerge' file
+in your instance direcory : $cgi_bin\n\n";
+
+pause();
+
 for (;;) 
 {
 	my $p;
 	my $save = $param{'ROOT_USER'};
-	my $ru = getone("Enter Merge instance root user",'ROOT_USER','admin');
+	my $ru = getone("Enter Merge instance web user",'ROOT_USER','admin');
 	my ($default, $s_default);
-
-	print "
-Note: You must define an instance superuser user this user has unlimeted access
-to the instance applications and develpment toolbox\n"; 
 
 	if (exists $param{'ROOT_PASSWORD'} && $save eq $ru) 
 	{
@@ -594,36 +619,21 @@ to the instance applications and develpment toolbox\n";
 		$s_default = $default = $ru;
 	}
 
-	if ($win32) 
-	{
-		$p = getone("Enter superuser password [$s_default]: ",
-			'ROOT_PASSWORD',
-		 	$ru);
-	}
-	else 
-	{
-		print "Enter superuser password [$s_default]: ";
-		$p = &ReadPassword;
-	}	
-	exit unless defined $p;
+	$p = getone("Enter Merge instance web user password",
+		undef,
+	 	$s_default,undef,1);
 
-	if ($p && $p !~ /^none$/i && ! $win32 && $have_data_password)
+	$p = $savep if $p eq '<no change>';
+
+	if ($p && $p !~ /^none$/i && ! $win32 && $have_data_password && $p ne $savep)
 	{
 		my $reason = Data::Password::IsBadPassword($p);
 		if ($reason) 
 		{
-			print "Bad password: It $reason\7\n";
+			print "\nError: Bad password: It $reason\7\n";
 			next;
 		}
 
-		print "Reenter root password: ";
-		my $pp = &ReadPassword;
-		exit unless defined $pp;
-		if ($p ne $pp) 
-		{
-			print "Not identical!\7\n";
-			next;
-		}
 	}
 
         $p ||= $default;
@@ -635,7 +645,7 @@ to the instance applications and develpment toolbox\n";
 		last;
 	}
  
- 	if ($win32) 
+ 	if ($win32 || $savep eq $p) 
 	{
  		$param{'ROOT_PASSWORD'} = $p;
  		$nextp = $p;
@@ -717,6 +727,7 @@ EOM
 	close(O);
 	open(I, $temp) || die "Cannot open $temp: $!";
 	open(O, ">$conf") || die "Cannot open $conf: $!";
+	print "\nInfo: Updating $conf\n";
 	print O <I>;
 	close(O);
 	close(I);
@@ -728,6 +739,7 @@ EOM
 		my @save;
 
 		open(I, "$pwd") || die "Cannot open $pwd: $!";
+		print "\nInfo: Updating $pwd\n";
 		while (<I>) 
 		{
 			push(@save, $_) unless (/^$param{'ROOT_USER'}:/);
@@ -818,6 +830,7 @@ foreach (@lines)
 $cfg = join("\n", @lines);
 
 open(O, ">$cgi_bin/merge.conf") || die $!;
+print "\nInfo: Creating $cgi_bin/merge.conf\n";
 print O "$cfg\n";
 print O '$FACTORY = ' . Dumper(\%param) . "\n1;\n";
 close(O);
@@ -830,7 +843,7 @@ require HTML::Merge::Engine;
 
 if($param{'DB'}) 
 {
-	print "Your $param{'MERGE_DB'} database will be created now.\n";
+	print "\nInfo: Your $param{'MERGE_DB'} database will be created now.\n";
 	print "Please ignore any error messages.\n";
 	eval { HTML::Merge::Engine::InitDatabase();
                HTML::Merge::App::Repository::InitDatabase(); };
@@ -852,7 +865,7 @@ print <<EOM;
 
 * READ THIS FIRST * READ THIS FIRST * READ THIS FIRST * READ THIS FIRST *
 
-*** You must edit $cgi_bin/merge.conf !!! ***
+*** You advised to edit $cgi_bin/merge.conf !!! ***
 It is recommended that templates are stored in a directory where they cannot be
 retrieved by simple HTTP requests. The simplest way is if the installation
 directory is a CGI enabled (or mod perl enabled) directory.
@@ -1007,6 +1020,7 @@ sub nChoice ($;$$)
                 }
      		if ($sOptions =~ /\:${sResult}\:/) 
 		{
+			getc(); #kill \n 
                 	last; 
 		}
 	 	else 
@@ -1136,14 +1150,8 @@ sub EditHttpdConf
 	return [$conf ,$default, $nextdef];
 }
 #############################################
-ENDOFPERLCODE
-
-use Config;
-my $shebang = $Config{'startperl'};
-$ARGV[0] = "mergecreateinstance" unless $ARGV[0];
-open(O, ">$ARGV[0]") || die $!;
-print O "$shebang\n$code";
-close(O);
-chmod 0755, $ARGV[0];
-
-# END #######################################
+sub pause {
+ my $msg = shift | 'Hit [ENTER] continue:';
+ print $msg;
+ getc(); #wait for ENTER
+}
