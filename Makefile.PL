@@ -87,7 +87,13 @@ sub MY::dist_dir
 }
 ########################################
 
-eval { require Term::ReadLine; };
+print "\n";
+eval{ require Data::Password; };
+print "Install Data::Password if you need strong password checking\n" if $@;
+eval{ require DBI; require DBD::SQLite; };
+print "DBD::SQLite is highly recomanded!\n You should have good understanding of HTML::Merge \n",
+      " if you decide to install with out it or you will not be able use built in security\n",
+      " and context management.\n"  if $@;
 
 WriteMakefile(
     'NAME'	=> 'HTML::Merge',
@@ -95,7 +101,7 @@ WriteMakefile(
     'EXE_FILES' => [qw(merge.cgi merge.conf mergecreateinstance)],
     'dist' => {'COMPRESS' => 'gzip --best --force'},
     'PREREQ_PM'  => { 'DBI' => 0,
+                        'Term::ReadLine' => 0,
 			'DBD::SQLite' => 0,
-			'Data::Password' => 0,
-			'Term::InKey' => 0}
+			}
 );

@@ -37,3 +37,8 @@ Revision history for Perl extension HTML::Merge.
 3.50  Mon Dec 12 19:08:22 ITD 2005
 	- Minor instalation bug fix
 	- mergecreateinstance changed 
+
+3.51  Fri Oct 14 12:07:44
+	- mergecreateinstance write logs
+	- mergecreateinstance creates *.inc files
+	- mergecreateinstance allow to create instance directory

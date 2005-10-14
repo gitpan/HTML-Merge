@@ -95,12 +95,26 @@ mergecreateinstance will set for you:
   4. merge.cgi or merge.pl - the web interface to compile and run 
 	the application in the instance
 
+You can find some usefull information in the log file 
+mergecreateinstance.log.
+
+When creating or updating configuration files in not possible
+mergecreateinstance will create local files with configuration
+in *.inc files. 
+ 
+merge.conf.inc - merge.conf for last session. 
+merge-httpd.inc - httpd.conf configuration for the last session.
+htmerge.inc - password file.
+
+You then must edit or create configuration
+files yourself.
+
 4. Instance install for non Apache web-server users
 =========================================================
 If you are using non apache web server, do the following.
 1. Create a script web directory (like cgi-bin) from which you have 
 rights to run CGI application.
-2. create merge instance using merge-create instance to that directory.
+2. create merge instance using mergecreateinstance to that directory.
 3. set rights to the directory.
 4. Manually edit merge.conf
 

@@ -355,11 +355,10 @@ sub ValidatePersistent
 {
 	my $self = shift;
 
-	my ($id, $sql);
+	my ($id, $sql, $sth, @other, $other);
 	my $now = time;
 	my $db = ($HTML::Merge::Ini::SESSION_DB)?"$HTML::Merge::Ini::SESSION_DB.":'';
 	my $table = $db."sessions";
-	my ($sql, $sth, @other, $other);
 	my $expire = YMD(time - 60 * $HTML::Merge::Ini::SESSION_TIMEOUT);
 	$self->CheckSessionTable;
 	$self->GetSessionID;
@@ -369,7 +368,7 @@ sub ValidatePersistent
                 FROM $table
                 WHERE varname = ''
                 AND vardata < '$expire'";
-	my @other = $self->LoadArray($sql);
+	@other = $self->LoadArray($sql);
 	return unless @other;
 	$sql = "DELETE FROM $table WHERE session_id IN ('" .
 		join("','", @other) . "')";
@@ -662,6 +661,7 @@ sub import
 {
 	my (@param) = @_;
 
+	$param[1] |= '';
 	return if ($param[1] eq ':unconfig');
 
 	&ReadConfig;
