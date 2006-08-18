@@ -91,9 +91,12 @@ print "\n";
 eval{ require Data::Password; };
 print "Install Data::Password if you need strong password checking\n" if $@;
 eval{ require DBI; require DBD::SQLite; };
-print "DBD::SQLite is highly recomanded!\n You should have good understanding of HTML::Merge \n",
-      " if you decide to install with out it or you will not be able use built in security\n",
-      " and context management.\n"  if $@;
+print "DBD::SQLite is highly recomanded!\n",
+  "You are expected to have good understanding of HTML::Merge \n",
+  " if you decide to install with out DBD::SQLite.\n",
+  "You will not be able use built in security\n",
+      " and context management.\n",
+  " As these functions are dependent of SQLite\n\n"  if $@;
 
 WriteMakefile(
     'NAME'	=> 'HTML::Merge',

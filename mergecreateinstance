@@ -13,6 +13,7 @@ use FileHandle;
 use Term::ReadLine;
 use File::Copy;
 use Data::Dumper;
+$Data::Dumper::Terse = 1;
 use Config;
 use Carp;
 
@@ -25,10 +26,6 @@ use HTML::Merge::App::Repository;
 # Def #############################
 # auto flush
 $| = 1;
-
-# which auto flush is better ?
-#STDOUT->autoflush(1);
-#STDERR->autoflush(1);
 
 ##################################
 sub nChoice ($;$$);
@@ -213,21 +210,43 @@ while (-f "$cgi_bin/merge.conf")
 
 	last if $@;
 
-no warnings;
-	while (my ($var, $val) = each %$HTML::Merge::Ini::FACTORY) 
-	{
-		$param{$var} = $val;
-	}
-use warnings;
+# Read factory settings to %param
+   user_msg("Merge instance was found in $cgi_bin");
+   user_msg("
+   We can use your 'FACTORY' settings during reinstall 
+   Those are settings you made set last time when using $me 
+   or we can use your current settings\n",'None');
+   user_msg("\n\nWould you like to use 'FACTORY' settings ? (Y/N) [N]: ",'None');
 
-	open(I, "$private/private/perl/input.frm") || last;
-	while (<I>) 
+no warnings;
+   my $choice = nChoice("YN",'N');
+   if ($choice eq 'Y') {
+      Log('DEBUG',"Reading FACTORY from $cgi_bin/merge.conf");
+         while (my ($var, $val) = each %$HTML::Merge::Ini::FACTORY) 
+            {
+            $param{$var} = $val;
+            }
+      }
+use warnings;
+   if ($choice eq 'N') {
+# Override with user's some settings 
+      Log('DEBUG',"Reading Settings from $cgi_bin/merge.conf");
+      while (my ($var,$val) = each (%{"HTML::Merge::Ini::"})) {
+         if ($$val and not(ref($$val))) {
+            $param{$var} = $$val; 
+            Log('DEBUG',"Reading: $var=$$val");
+            }
+      } # while
+   } # choice eq 'N'
+      open(I, "$private/private/perl/input.frm") || last;
+      while (<I>) 
 	{
 		chop;
 		my ($title, $name, $type, $opts, $default) = split(/\|/);
 		if ($default =~ s/\@(.*?)\@/\0/) 
 		{
 			my $item = $1;
+			next if $param{$item};
 			my $re = quotemeta($default);
 			$re =~ s/\\\0/(.*)/;
 			my $val = ${"HTML::Merge::Ini::$name"} || '';
@@ -324,7 +343,7 @@ delete $param{'SUFFIX'};
 my $script = $ext ? "merge.$ext" : 'merge';
 $param{'SCRIPT'} = $script;
 
-foreach (qw(template cache logs)) 
+foreach (qw(template cache logs pl)) 
 {
 	mkdir "$cgi_bin/$_", 0755;
 	chown $uid, $gid, "$cgi_bin/$_";
@@ -422,14 +441,14 @@ elsif ($choice ne "\r")
 	die "Unknown choice $choice";
 }
 
-if (-w "$cgi_bin/template") {
+if (-w "$cgi_bin/template" && !$param{'DEF_TEMPLATE'}) {
 	user_msg("\n\nWould you like to install the samples? (Y/N) [Y]: ",'None');
 	$choice = nChoice("YN",'Y');
 	} else {
 	$choice = 'N';
 	}
 
-$param{'DEFAULT'} = '';
+$param{'DEF_TEMPLATE'} = '' unless $param{'DEF_TEMPLATE'};
 
 if ($choice eq 'Y') 
 {
@@ -445,7 +464,7 @@ if ($choice eq 'Y')
 		File::Copy::copy($_, $dest);
 	}
 
-	$param{'DEFAULT'} = 'samples.html';
+	$param{'DEF_TEMPLATE'} = 'samples.html';
 } 
 else 
 {
@@ -907,7 +926,13 @@ $param{'DB_PASSWORD'} = HTML::Merge::Engine::Convert($param{'__DB_PASS'}, 1);
 delete $param{'__DB_PASS'};
 $param{'SCRIPT'} = $script;
 
+# Some common defaults
+$param{PRECOMPILED_PATH} ||= $cgi_bin . '/pl' ;
+$param{SUPPORT_SITE}  ||= 'http://www.raz.co.il/'; 
+$param{TEMPLATE_PATH} ||= "$cgi_bin/template";           
+
 no warnings;
+
 while (my ($var, $val) = each %param) 
 {
 	$cfg =~ s/\@$var\@/$val/gi;
@@ -937,6 +962,7 @@ foreach (@lines)
 $cfg = join("\n", @lines);
 
 user_msg("Creating $cgi_bin/merge.conf",'Info');
+
 unless (open(O, ">$cgi_bin/merge.conf")) {
 	if ($is_root) {	
 		Log('FATAL','Open merge.conf: ' . $!);
@@ -948,8 +974,10 @@ unless (open(O, ">$cgi_bin/merge.conf")) {
 	}
 }
 print O "$cfg\n";
-print O '$FACTORY = ' . Dumper(\%param) . "\n1;\n";
+print O "# FACTORY settings: $me \[$$\]",scalar(localtime),"\n";
+print O '$FACTORY = ' . Dumper(\%param) . ";\n1;\n";
 close(O);
+
 if ($unix) {
 	chmod 0644, "$cgi_bin/merge.conf" if $is_root;
 	chmod 0666, "merge.conf.inc" unless $is_root;

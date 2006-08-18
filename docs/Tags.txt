@@ -139,6 +139,11 @@ FUNCTIONAL TAGS
         string. e.g., <$RPIC.R('na'='ta').'Banana'> will yield Batata and so
         on.
 
+        <$RPIC.C(find=replace, ...).'string'>
+
+        Change words word-to-find/word-to-replace in the given string. e.g.,
+        <$RPIC.C('Banana'='Orange').'Banana'> will yield Orange and so on.
+
         <$RPIC.N(width.fraction positions).'number'>
 
         Left space pad the number, with a fixed number of decimal places.

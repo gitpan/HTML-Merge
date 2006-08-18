@@ -197,6 +197,13 @@ given string.
 e.g., E<lt>$RPIC.R('na'='ta').'Banana'E<gt> will
 yield Batata and so on.
 
+E<lt>$RPIC.C(B<find>=B<replace>, ...).'B<string>'E<gt>
+
+Change words  word-to-find/word-to-replace in the
+given string.
+e.g., E<lt>$RPIC.C('Banana'='Orange').'Banana'E<gt> will
+yield Orange and so on.
+
 E<lt>$RPIC.N(B<width>.B<fraction positions>).'B<number>'E<gt>
 
 Left space pad the number, with a fixed number of decimal places.

@@ -1657,4 +1657,67 @@ sub LoadSysTableFromFile
 ###########################################
 1;
 ###########################################
+__END__
+
+=head1 NAME
+
+HTML::Merge::Engine - Run time Engine
+
+=head1 FUNCTIONS
+
+
+=head2 Order
+
+Given two scalars (most likely names of tables), swaps the
+values of the two if they don't make up a Matrix table.
+
+
+=head2 IsMatrix(CHILD, PARENT)
+
+Can be called both directly as a function call and as a method call
+$self->IsMatrix
+
+returns true if CHILD_PARENT is one of the "matrix"-like tables.
+
+
+=head2 LoadArray(SQL, @EXTRA)
+
+Received an SQL statement and optional values to be
+parameters of the SQL statement (I have not seen this used)
+Prepares and executes a query and return the array of the
+first column (!) as either an array or an array ref depending
+on the calling context.
+
+
+=head2 Links
+
+
+
+=head2 $self->HasKey(REALM, USERNAME)
+
+Returns if the given user is connected to the REALM directly or 
+through being a member of a group.
+
+This is the translation of the $RAUTH directive.  
+TODO -> test and update the docs of RAUTH 
+
+If no username is given, the currently logged in user is used.
+
+returns 0 if no user given and not logged in
+returns 1 if the user is connected to the REALM
+returns undef otherwise
+
+
+=head2 $self->CanEnter(TEMPLATE, USERNAME)
+
+Invoked from the main script of merge.cgi
+this checks if the given user can access the given template.
+
+
+=head2 Login(USERNAME, PASSWORD)
+
+
+Checks if the given username/password pair is in the database
+(or if the user is the admin user with the admin password in the conf file)
+
 

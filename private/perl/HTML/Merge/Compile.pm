@@ -15,7 +15,7 @@ use Config;
 use subs qw(quotemeta);
 
 #####################################
-$VERSION = '3.51';
+$VERSION = '3.52';
 #####################################
 # Globals ###########################
 $open = '\$R';
@@ -1236,7 +1236,7 @@ sub DoUnCOUNT {
 sub DoPIC {
 	my ($self, $engine, $param) = @_;
 	my $type;
-	unless ($param =~ s/^\\\.([FRNADX])(.*)$//is) {
+	unless ($param =~ s/^\\\.([CFRNADX])(.*)$//is) {
 		$self->Syntax;
 	}
 	($type, $param) = (uc($1), $2);
@@ -1254,6 +1254,39 @@ sub PictureF {
 	<<EOM;
 "" . (\$__s = "$text", \$__s =~ s/\\s/$ch/g, \$__s)[-1]
 EOM
+}
+
+sub PictureC {
+	my ($self, $param) = @_;
+	my @ary;
+	my $flag;
+	$param =~ s/^\\\((.*)\\\)\\\.\\(['"])(.*?)\\\2$/$1\\.\\$2$3\\$2/s;
+	while ($param =~ 
+			s/^\s*\\(['"])(.*?)\\\1\s*\\=\s*\\(['"])(.*?)\\\3\s*//s) {
+		push(@ary, [$2, $4]);
+		if ($param =~ s/^\\\.//) {
+			$flag = 1;
+			last;
+		}
+		unless ($param =~ s/^\\,//) {
+			$self->Syntax;
+		}
+	}
+	$self->Die("Syntax error in PIC.C") unless ($flag);
+	unless ($param =~ s/^\\(["'])(.*?)\\\1$//s) {
+		$self->Syntax;
+	}
+	my $text = $2;
+	my $code = <<EOM;
+"" . (\$__s = "$text",
+EOM
+	foreach (@ary) {
+		my ($from, $to) = @$_;
+		$code .= <<EOM;
+\$__s =~ s/^$from\$/$to/g,
+EOM
+	}
+	$code . ", \$__s)[-1]";
 }
 
 sub PictureR {
