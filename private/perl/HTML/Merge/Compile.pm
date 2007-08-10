@@ -15,7 +15,7 @@ use Config;
 use subs qw(quotemeta);
 
 #####################################
-$VERSION = '3.52';
+$VERSION = '3.53';
 #####################################
 # Globals ###########################
 $open = '\$R';
@@ -24,7 +24,7 @@ $open = '\$R';
 
 my @printers = qw(VERSION VAR SQL GET PGET PVAR INDEX PIC STATE CFG INI LOGIN 
 	AUTH DECIDE EMPTY DATE DAY MONTH YEAR DATEDIFF LASTDAY ADDDATE
-	USER MERGE TEMPLATE TRANSFER DUMP NAME TAG COOKIE
+	USER MERGE TEMPLATE TRANSFER DUMP NAME TAG COOKIE SOURCE
 	DATE2UTC UTC2DATE ENV DATEF EVAL HOUR MINUTE SECOND);
 @printers{@printers} = @printers;
 
@@ -396,7 +396,7 @@ sub Die {
 #####################################
 sub Main {
 	my $self = shift;
-	$self->{'source'} =~ s/<(BODY)/<META NAME="GENERATOR" CONTENT="Merge v. $VERSION (c) Raz Information systems www.raz.co.il">\n<$1/i;
+	$self->{'source'} =~ s/<(BODY)/<!-- GENERATOR: "Merge v. $VERSION (c) Raz Information systems www.raz.co.il" -->\n<$1/i;
 	while  ($self->EatOne) {}
 	$self->PrePrint($self->{'source'});
 	$self->{'source'} = '';
@@ -1967,18 +1967,15 @@ sub DoSOURCE {
 	}
 	$self->Syntax if $param;
 	$self->Push('source', $engine);
-	<<EOM;
-	require HTML::Merge::Development;
-	print '<A HREF="' . 
-	  HTML::Merge::Development::MakeLink('printsource.pl', "template=$file")
-		. '" TITLE="view source">';
-EOM
+	qq!'<A HREF="' . 
+	 HTML::Merge::Development::MakeLink('printsource.pl', "template=$file")
+		. '" TITLE="view source">'!;
 }
 
 sub DoUnSOURCE {
         my ($self, $engine, $param) = @_;
 	$self->Expect($engine, 'source');
-	qq!print "</A>";!;
+	qq!"</A>"!;
 }
 
 sub safecreate {

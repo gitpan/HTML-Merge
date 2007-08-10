@@ -47,3 +47,7 @@ Revision history for Perl extension HTML::Merge.
 	- mergecreateinstance keeps users settings on reinstall
 	- added contributed documents
         - added PIC.C tag
+
+3.53  Fri Aug 10 20:30:44 ITD 2007
+	- Meta generetor message was replaced by HTML remark
+        - SOURCE in now an output tag (can now be modified by PIC)
