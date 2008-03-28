@@ -29,44 +29,44 @@ sub MY::install
 	my $inherited = shift->SUPER::install;
 	$inherited . <<'MAKE';
 #
-DATA = $(PERLPREFIX)/share
+DATA = $(DESTDIR)$(PERLPREFIX)/share
 
 install :: install-private install-public install-docs install-samples
 
 install-private ::
-	$(PERL) updateshebang.pl private/perl
+	$(FULLPERLRUNINST) updateshebang.pl private/perl
 	$(MOD_INSTALL) private $(DATA)/merge/private
 
 install-public :: 
-	$(PERL) updateshebang.pl public/perl
+	$(FULLPERLRUNINST) updateshebang.pl public/perl
 	$(MOD_INSTALL) public $(DATA)/merge/public
 
 install-docs :: docs README
 	$(MOD_INSTALL) docs $(DATA)/merge/docs
 
 install-samples :: docs README
-	$(PERL) createsamples.pl	
+	$(FULLPERLRUNINST) createsamples.pl	
 	$(MOD_INSTALL) docs/samples $(DATA)/merge/docs/samples
 
 .SUFFIXES: .txt .pm .html .pod
 
 docs/%.txt: lib/HTML/Merge/%.pm 
-	@$(PERL) -MPod::Text -e "pod2text('$<');" > $@
+	@$(FULLPERLRUNINST) -MPod::Text -e "pod2text('$<');" > $@
 
 docs/%.html: lib/HTML/Merge/%.pm 
-	@$(PERL) -MPod::Html -e "pod2html('$<');" | perl -np -e 's|/HTML/(Merge/)?||g' > $@
+	@$(FULLPERLRUNINST) -MPod::Html -e "pod2html('$<');" | perl -np -e 's|/HTML/(Merge/)?||g' > $@
 
 docs/%.txt: lib/HTML/Merge/%.pod
-	@$(PERL) -MPod::Text -e "pod2text('$<');" > $@
+	@$(FULLPERLRUNINST) -MPod::Text -e "pod2text('$<');" > $@
 
 docs/%.html: lib/HTML/Merge/%.pod
-	@$(PERL) -MPod::Html -e "pod2html('$<');" | perl -np -e 's|/HTML/(Merge/)?||g' > $@
+	@$(FULLPERLRUNINST) -MPod::Html -e "pod2html('$<');" | perl -np -e 's|/HTML/(Merge/)?||g' > $@
 
 docs/%.txt: lib/HTML/%.pm  
-	@$(PERL) -MPod::Text -e "pod2text('$<');" > $@
+	@$(FULLPERLRUNINST) -MPod::Text -e "pod2text('$<');" > $@
 
 docs/%.html: lib/HTML/%.pm 
-	@$(PERL) -MPod::Html -e "pod2html('$<');" | perl -np -e 's|/HTML/(Merge/)?||g' > $@
+	@$(FULLPERLRUNINST) -MPod::Html -e "pod2html('$<');" | perl -np -e 's|/HTML/(Merge/)?||g' > $@
 
 docs :
 	$(MKPATH) docs

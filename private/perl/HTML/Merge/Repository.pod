@@ -386,7 +386,7 @@ even compiled templates in the cache directory.
 
 =head1 COPYRIGHT
 
-(c) RAZ Information Systems Ltd 1999 - 2005.
+(c) RAZ Information Systems Ltd 1999 - 2008.
 
 The HTML::Merge::App::Repository is licensed under the same terms Perl is licensed.
 

@@ -99,7 +99,7 @@ New test & version 3.46 - Gabor Szabo and Oded Resnik.
 
 =head1 COPYRIGHT
 
-Copyright (c) 1999 - 2006 Raz Information Systems Ltd.
+Copyright (c) 1999 - 2008 Raz Information Systems Ltd.
 http://www.raz.co.il
 
 This package is distributed under the same terms as Perl itself, see the 

@@ -126,7 +126,7 @@ sub DefaultError
 
 <BODY BGCOLOR='white'>
 
-<FONT FACE=Arial SIZE=6 COLOR=black><CENTER><B>Merge Error Message</B>
+<FONT FACE=Arial SIZE=6 COLOR=black><CENTER><B>Merge ver. ($HTML::Merge::Compile::VERSION) Error Message</B>
 </CENTER></FONT><BR>
 <CENTER><TABLE BGCOLOR=yellow><TR><TD><FONT FACE=Arial SIZE=5 COLOR=black>
 RAZ Information System LTD.
@@ -221,7 +221,7 @@ This module is used by developers' web based user interface cgi scripts.
 
 =head1 COPYRIGHT
 
-Copyright (c) 1999 - 2005 Raz Information Systems Ltd.
+Copyright (c) 1999 - 2008 Raz Information Systems Ltd.
 http://www.raz.co.il
 
 This package is distributed under the same terms as Perl itself, see the
